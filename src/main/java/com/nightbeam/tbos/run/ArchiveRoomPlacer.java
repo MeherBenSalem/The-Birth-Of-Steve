@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -24,6 +25,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
 
@@ -511,6 +513,7 @@ public final class ArchiveRoomPlacer {
             }
         }
         placeCrateProps(placements, run, room, template);
+        placeRoomSetDressing(placements, run, room, template, palette);
 
         int sigil = room.templateId().hashCode();
         for (int bit = 0; bit < 9; bit++) {
@@ -646,10 +649,6 @@ public final class ArchiveRoomPlacer {
         }
         RandomSource random = RandomSource.create(ArchiveRunGenerator.encounterSeedFor(
                 run.seed(), room.index(), 0x43524154));
-        double chance = crateChance(room.category());
-        if (random.nextDouble() > chance) {
-            return;
-        }
         BoundingBox bounds = roomBounds(run, room.index());
         int width = template.size().width();
         int depth = template.size().depth();
@@ -661,26 +660,28 @@ public final class ArchiveRoomPlacer {
                 new BlockPos(width / 2 - 5, 1, 4),
                 new BlockPos(width / 2 + 5, 1, depth - 5),
                 new BlockPos(4, 1, depth / 2 - 5),
-                new BlockPos(width - 5, 1, depth / 2 + 5));
-        Set<BlockPos> reserved = java.util.stream.Stream.of(
-                        template.monsterMarkers(),
-                        template.chestMarkers(),
-                        template.lootMarkers(),
-                        template.trapMarkers(),
-                        template.puzzleMarkers(),
-                        template.secretWallMarkers(),
-                        template.bossMarkers(),
-                        template.playerEntryMarkers())
-                .flatMap(List::stream)
-                .map(marker -> localToWorld(run, room, room.placement().transform().apply(marker, template.size())))
-                .collect(java.util.stream.Collectors.toSet());
-        int target = 1 + random.nextInt(maxCrates(room.category()));
+                new BlockPos(width - 5, 1, depth / 2 + 5),
+                new BlockPos(6, 1, 3),
+                new BlockPos(width - 7, 1, 3),
+                new BlockPos(6, 1, depth - 4),
+                new BlockPos(width - 7, 1, depth - 4),
+                new BlockPos(3, 1, 6),
+                new BlockPos(3, 1, depth - 7),
+                new BlockPos(width - 4, 1, 6),
+                new BlockPos(width - 4, 1, depth - 7));
+        Set<BlockPos> reserved = reservedPositions(run, room, template);
+        List<BlockPos> doors = doorPositions(run, room.index());
+        int target = minimumCrates(room.category())
+                + random.nextInt(maxCrates(room.category()) - minimumCrates(room.category()) + 1);
         int start = random.nextInt(candidates.size());
         int placed = 0;
         for (int index = 0; index < candidates.size() && placed < target; index++) {
             BlockPos local = candidates.get((start + index) % candidates.size());
             BlockPos world = localToWorld(run, room, room.placement().transform().apply(local, template.size()));
-            if (!bounds.isInside(world) || reserved.contains(world) || doorPositions(run, room.index()).contains(world)) {
+            if (!bounds.isInside(world)
+                    || isNearAny(world, reserved, 2)
+                    || isNearAny(world, doors, 3)
+                    || placements.containsKey(world)) {
                 continue;
             }
             placements.remove(world.above());
@@ -689,28 +690,579 @@ public final class ArchiveRoomPlacer {
         }
     }
 
-    private static double crateChance(ArchiveRoomCategory category) {
+    private static int minimumCrates(ArchiveRoomCategory category) {
         return switch (category) {
-            case STARTING, SANCTUARY -> 0.45D;
-            case TREASURE, ANCIENT_LIBRARY, SECRET, MERCHANT -> 0.90D;
-            case MINI_BOSS, FINAL_BOSS -> 0.55D;
-            default -> 0.70D;
+            case TREASURE, ANCIENT_LIBRARY, SECRET, MERCHANT -> 6;
+            case MINI_BOSS, FINAL_BOSS -> 4;
+            case STARTING, SANCTUARY, VERTICAL_SHAFT -> 3;
+            default -> 5;
         };
     }
 
     private static int maxCrates(ArchiveRoomCategory category) {
         return switch (category) {
-            case TREASURE, ANCIENT_LIBRARY, SECRET -> 4;
-            case FINAL_BOSS, MINI_BOSS -> 3;
-            case STARTING, SANCTUARY, VERTICAL_SHAFT -> 2;
-            default -> 3;
+            case TREASURE, ANCIENT_LIBRARY, SECRET, MERCHANT -> 9;
+            case FINAL_BOSS, MINI_BOSS -> 7;
+            case STARTING, SANCTUARY, VERTICAL_SHAFT -> 5;
+            default -> 8;
         };
     }
 
     private static BlockState crateState(RandomSource random, ArchiveRoomNode room, int placed) {
+        if (placed % 3 == 0 || random.nextFloat() < 0.28F) {
+            return random.nextBoolean()
+                    ? ModBlocks.ARCHIVE_BARREL.get().defaultBlockState()
+                    : ModBlocks.ARCHIVE_BARREL_STACK.get().defaultBlockState();
+        }
         int index = Math.floorMod(random.nextInt(ModBlocks.ARCHIVE_CRATES.size())
                 + room.index() + room.graphDepth() + placed, ModBlocks.ARCHIVE_CRATES.size());
         return ModBlocks.ARCHIVE_CRATES.get(index).get().defaultBlockState();
+    }
+
+    private static void placeRoomSetDressing(
+            Map<BlockPos, BlockState> placements,
+            ArchiveRun run,
+            ArchiveRoomNode room,
+            ArchiveRoomTemplate template,
+            RoomPalette palette) {
+        BoundingBox bounds = roomBounds(run, room.index());
+        RandomSource random = RandomSource.create(ArchiveRunGenerator.encounterSeedFor(
+                run.seed(), room.index(), 0x4445434F));
+        Set<BlockPos> reserved = reservedPositions(run, room, template);
+        List<BlockPos> doors = doorPositions(run, room.index());
+
+        weatherRoomShell(placements, bounds, reserved, doors, random, room);
+        placeBrokenFloor(placements, run, room, bounds, reserved, doors);
+        placeWallRibs(placements, bounds, palette, reserved, doors, room);
+        placeBarredAlcoves(placements, bounds, reserved, doors, random, room);
+        placeHangingLights(placements, bounds, reserved, doors, random, room);
+        placeAncientRuinClusters(placements, bounds, reserved, doors, random, room);
+        placeCandleShrines(placements, bounds, reserved, doors, random, room);
+        placeFloorDetails(placements, bounds, reserved, doors, random, room);
+        placeCobwebGrowth(placements, bounds, reserved, doors, random, room);
+    }
+
+    private static void weatherRoomShell(
+            Map<BlockPos, BlockState> placements,
+            BoundingBox bounds,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            RandomSource random,
+            ArchiveRoomNode room) {
+        int floorPatches = room.placement().size().width() >= 30 ? 28 : 18;
+        for (int index = 0; index < floorPatches; index++) {
+            int x = bounds.minX() + 1 + random.nextInt(bounds.getXSpan() - 2);
+            int z = bounds.minZ() + 1 + random.nextInt(bounds.getZSpan() - 2);
+            BlockPos floor = new BlockPos(x, bounds.minY(), z);
+            if (!isNearAny(floor, reserved, 1) && !isNearAny(floor, doors, 3)) {
+                put(placements, floor, weatheredRuinState(random, index));
+            }
+        }
+
+        int wallPatches = room.placement().size().width() >= 30 ? 32 : 22;
+        for (int index = 0; index < wallPatches; index++) {
+            int y = bounds.minY() + 1 + random.nextInt(Math.max(1, bounds.getYSpan() - 2));
+            int side = random.nextInt(4);
+            BlockPos wall = switch (side) {
+                case 0 -> new BlockPos(
+                        bounds.minX() + 2 + random.nextInt(bounds.getXSpan() - 4), y, bounds.minZ());
+                case 1 -> new BlockPos(
+                        bounds.minX() + 2 + random.nextInt(bounds.getXSpan() - 4), y, bounds.maxZ());
+                case 2 -> new BlockPos(
+                        bounds.minX(), y, bounds.minZ() + 2 + random.nextInt(bounds.getZSpan() - 4));
+                default -> new BlockPos(
+                        bounds.maxX(), y, bounds.minZ() + 2 + random.nextInt(bounds.getZSpan() - 4));
+            };
+            if (!isNearAny(wall, reserved, 1) && !isNearAny(wall, doors, 3)) {
+                put(placements, wall, weatheredRuinState(random, index + 17));
+            }
+        }
+
+        int roofPatches = room.placement().size().width() >= 30 ? 18 : 12;
+        for (int index = 0; index < roofPatches; index++) {
+            int x = bounds.minX() + 1 + random.nextInt(bounds.getXSpan() - 2);
+            int z = bounds.minZ() + 1 + random.nextInt(bounds.getZSpan() - 2);
+            put(placements, new BlockPos(x, bounds.maxY(), z), weatheredRuinState(random, index + 31));
+        }
+    }
+
+    private static BlockState weatheredRuinState(RandomSource random, int ordinal) {
+        List<BlockState> states = List.of(
+                ModBlocks.CRACKED_ARCHIVE_STONE.get().defaultBlockState(),
+                ModBlocks.MOSSY_ARCHIVE_STONE.get().defaultBlockState(),
+                ModBlocks.WEATHERED_ARCHIVE_BRICKS.get().defaultBlockState(),
+                Blocks.CRACKED_STONE_BRICKS.defaultBlockState(),
+                Blocks.MOSSY_STONE_BRICKS.defaultBlockState(),
+                Blocks.TUFF_BRICKS.defaultBlockState(),
+                Blocks.CHISELED_TUFF.defaultBlockState());
+        return states.get(Math.floorMod(random.nextInt(states.size()) + ordinal, states.size()));
+    }
+
+    private static void placeBrokenFloor(
+            Map<BlockPos, BlockState> placements,
+            ArchiveRun run,
+            ArchiveRoomNode room,
+            BoundingBox bounds,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors) {
+        RandomSource random = RandomSource.create(ArchiveRunGenerator.encounterSeedFor(
+                run.seed(), room.index(), 0x464C4F52));
+        ArrayList<BlockPos> candidates = new ArrayList<>();
+        for (int x = bounds.minX() + 1; x < bounds.maxX(); x++) {
+            for (int z = bounds.minZ() + 1; z < bounds.maxZ(); z++) {
+                BlockPos floor = new BlockPos(x, bounds.minY(), z);
+                if (!isNearAny(floor, reserved, 2) && !isNearAny(floor, doors, 4)) {
+                    candidates.add(floor);
+                }
+            }
+        }
+        for (int index = candidates.size() - 1; index > 0; index--) {
+            int swapIndex = random.nextInt(index + 1);
+            BlockPos value = candidates.get(index);
+            candidates.set(index, candidates.get(swapIndex));
+            candidates.set(swapIndex, value);
+        }
+
+        int target = Math.min(
+                candidates.size(),
+                Math.max(1, Math.round(bounds.getXSpan() * bounds.getZSpan() * 0.10F)));
+        Direction[] directions = {
+            Direction.NORTH,
+            Direction.EAST,
+            Direction.SOUTH,
+            Direction.WEST
+        };
+        for (int index = 0; index < target; index++) {
+            BlockState stair = (index + room.index()) % 4 == 0
+                    ? Blocks.TUFF_BRICK_STAIRS.defaultBlockState()
+                    : ModBlocks.ARCHIVE_STAIRS.get().defaultBlockState();
+            put(placements, candidates.get(index), stair.setValue(
+                    BlockStateProperties.HORIZONTAL_FACING,
+                    directions[random.nextInt(directions.length)]));
+        }
+    }
+
+    private static void placeWallRibs(
+            Map<BlockPos, BlockState> placements,
+            BoundingBox bounds,
+            RoomPalette palette,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            ArchiveRoomNode room) {
+        int floorY = bounds.minY();
+        int ribHeight = Math.min(bounds.maxY() - 1, floorY + 5);
+        int phase = Math.floorMod(room.index() + room.graphDepth(), 3);
+        for (int x = bounds.minX() + 4 + phase; x <= bounds.maxX() - 4; x += 6) {
+            placeWallRib(placements, new BlockPos(x, floorY + 1, bounds.minZ()), ribHeight,
+                    palette, reserved, doors, room);
+            placeWallRib(placements, new BlockPos(x, floorY + 1, bounds.maxZ()), ribHeight,
+                    palette, reserved, doors, room);
+        }
+        for (int z = bounds.minZ() + 4 + phase; z <= bounds.maxZ() - 4; z += 6) {
+            placeWallRib(placements, new BlockPos(bounds.minX(), floorY + 1, z), ribHeight,
+                    palette, reserved, doors, room);
+            placeWallRib(placements, new BlockPos(bounds.maxX(), floorY + 1, z), ribHeight,
+                    palette, reserved, doors, room);
+        }
+    }
+
+    private static void placeWallRib(
+            Map<BlockPos, BlockState> placements,
+            BlockPos base,
+            int topY,
+            RoomPalette palette,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            ArchiveRoomNode room) {
+        if (isNearAny(base, reserved, 1) || isNearAny(base, doors, 3)) {
+            return;
+        }
+        for (int y = base.getY(); y <= topY; y++) {
+            BlockState state = y == base.getY() + 2 && (room.index() + base.getX() + base.getZ()) % 3 == 0
+                    ? ModBlocks.LENSWORK_CRYSTAL.get().defaultBlockState()
+                    : palette.trim();
+            put(placements, new BlockPos(base.getX(), y, base.getZ()), state);
+        }
+    }
+
+    private static void placeBarredAlcoves(
+            Map<BlockPos, BlockState> placements,
+            BoundingBox bounds,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            RandomSource random,
+            ArchiveRoomNode room) {
+        int y = bounds.minY() + 1;
+        int centerX = (bounds.minX() + bounds.maxX()) / 2;
+        int centerZ = (bounds.minZ() + bounds.maxZ()) / 2;
+        List<BarredAlcove> candidates = List.of(
+                new BarredAlcove(new BlockPos(centerX - 1, y, bounds.minZ() + 2), 1, 0, 0, -1),
+                new BarredAlcove(new BlockPos(centerX - 1, y, bounds.maxZ() - 2), 1, 0, 0, 1),
+                new BarredAlcove(new BlockPos(bounds.minX() + 2, y, centerZ - 1), 0, 1, -1, 0),
+                new BarredAlcove(new BlockPos(bounds.maxX() - 2, y, centerZ - 1), 0, 1, 1, 0),
+                new BarredAlcove(new BlockPos(bounds.minX() + 6, y, bounds.minZ() + 2), 1, 0, 0, -1),
+                new BarredAlcove(new BlockPos(bounds.maxX() - 8, y, bounds.maxZ() - 2), 1, 0, 0, 1));
+        int target = room.placement().size().width() >= 30 ? 3 : 2;
+        int start = random.nextInt(candidates.size());
+        int placed = 0;
+        for (int offset = 0; offset < candidates.size() && placed < target; offset++) {
+            BarredAlcove alcove = candidates.get((start + offset) % candidates.size());
+            boolean blocked = false;
+            for (int width = 0; width < 3 && !blocked; width++) {
+                for (int height = 0; height < 3; height++) {
+                    BlockPos bar = alcove.base()
+                            .offset(alcove.stepX() * width, height, alcove.stepZ() * width);
+                    if (isNearAny(bar, reserved, 2)
+                            || isNearAny(bar, doors, 3)
+                            || placements.containsKey(bar)) {
+                        blocked = true;
+                        break;
+                    }
+                }
+            }
+            if (blocked) {
+                continue;
+            }
+            for (int width = 0; width < 3; width++) {
+                for (int height = 0; height < 3; height++) {
+                    put(placements, alcove.base().offset(
+                            alcove.stepX() * width,
+                            height,
+                            alcove.stepZ() * width), Blocks.IRON_BARS.defaultBlockState());
+                }
+            }
+            BlockPos relic = alcove.base()
+                    .offset(alcove.stepX(), 0, alcove.stepZ())
+                    .offset(alcove.recessX(), 0, alcove.recessZ());
+            if (!placements.containsKey(relic)) {
+                put(placements, relic, candleState(random));
+            }
+            BlockPos backing = relic.offset(alcove.recessX(), 1, alcove.recessZ());
+            put(placements, backing, random.nextBoolean()
+                    ? ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState()
+                    : ModBlocks.CHISELED_ARCHIVE_STONE.get().defaultBlockState());
+            placed++;
+        }
+    }
+
+    private static void placeHangingLights(
+            Map<BlockPos, BlockState> placements,
+            BoundingBox bounds,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            RandomSource random,
+            ArchiveRoomNode room) {
+        int y = bounds.maxY() - 1;
+        List<BlockPos> candidates = List.of(
+                new BlockPos(bounds.minX() + 5, y, bounds.minZ() + 5),
+                new BlockPos(bounds.maxX() - 5, y, bounds.minZ() + 5),
+                new BlockPos(bounds.minX() + 5, y, bounds.maxZ() - 5),
+                new BlockPos(bounds.maxX() - 5, y, bounds.maxZ() - 5),
+                new BlockPos((bounds.minX() + bounds.maxX()) / 2 - 5, y, bounds.minZ() + 6),
+                new BlockPos((bounds.minX() + bounds.maxX()) / 2 + 5, y, bounds.maxZ() - 6),
+                new BlockPos(bounds.minX() + 6, y, (bounds.minZ() + bounds.maxZ()) / 2 + 5),
+                new BlockPos(bounds.maxX() - 6, y, (bounds.minZ() + bounds.maxZ()) / 2 - 5));
+        int target = room.placement().size().width() >= 30 ? 8 : 6;
+        int start = random.nextInt(candidates.size());
+        int placed = 0;
+        for (int offset = 0; offset < candidates.size() && placed < target; offset++) {
+            BlockPos anchor = candidates.get((start + offset) % candidates.size());
+            if (isNearAny(anchor, reserved, 2) || isNearAny(anchor, doors, 3)) {
+                continue;
+            }
+            int chainLength = 2 + random.nextInt(3);
+            int lanternY = anchor.getY() - chainLength;
+            for (int chainY = anchor.getY(); chainY > lanternY; chainY--) {
+                put(placements, new BlockPos(anchor.getX(), chainY, anchor.getZ()),
+                        Blocks.IRON_CHAIN.defaultBlockState());
+            }
+            boolean snappedChain = room.category() != ArchiveRoomCategory.SANCTUARY
+                    && random.nextFloat() < 0.28F;
+            if (snappedChain) {
+                placed++;
+                continue;
+            }
+            BlockState lantern = (room.category() == ArchiveRoomCategory.CURSED
+                            || room.category() == ArchiveRoomCategory.SECRET
+                            || room.category() == ArchiveRoomCategory.FINAL_BOSS)
+                    ? Blocks.SOUL_LANTERN.defaultBlockState()
+                    : Blocks.LANTERN.defaultBlockState();
+            put(placements, new BlockPos(anchor.getX(), lanternY, anchor.getZ()),
+                    lantern.setValue(BlockStateProperties.HANGING, true));
+            placed++;
+        }
+    }
+
+    private static void placeAncientRuinClusters(
+            Map<BlockPos, BlockState> placements,
+            BoundingBox bounds,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            RandomSource random,
+            ArchiveRoomNode room) {
+        int y = bounds.minY() + 1;
+        List<BlockPos> candidates = List.of(
+                new BlockPos(bounds.minX() + 4, y, bounds.minZ() + 7),
+                new BlockPos(bounds.minX() + 7, y, bounds.minZ() + 4),
+                new BlockPos(bounds.maxX() - 4, y, bounds.minZ() + 7),
+                new BlockPos(bounds.maxX() - 7, y, bounds.minZ() + 4),
+                new BlockPos(bounds.minX() + 4, y, bounds.maxZ() - 7),
+                new BlockPos(bounds.minX() + 7, y, bounds.maxZ() - 4),
+                new BlockPos(bounds.maxX() - 4, y, bounds.maxZ() - 7),
+                new BlockPos(bounds.maxX() - 7, y, bounds.maxZ() - 4),
+                new BlockPos(bounds.minX() + 3, y, (bounds.minZ() + bounds.maxZ()) / 2 - 6),
+                new BlockPos(bounds.maxX() - 3, y, (bounds.minZ() + bounds.maxZ()) / 2 + 6));
+        int target = room.placement().size().width() >= 30 ? 6 : 4;
+        int start = random.nextInt(candidates.size());
+        int placed = 0;
+        for (int offset = 0; offset < candidates.size() && placed < target; offset++) {
+            BlockPos base = candidates.get((start + offset) % candidates.size());
+            if (!safeFloorDecoration(base, placements, reserved, doors, 2)) {
+                continue;
+            }
+            int height = 1 + random.nextInt(3);
+            put(placements, base, random.nextBoolean()
+                    ? Blocks.TUFF_BRICKS.defaultBlockState()
+                    : ModBlocks.CHISELED_ARCHIVE_STONE.get().defaultBlockState());
+            for (int pillarY = 1; pillarY < height; pillarY++) {
+                put(placements, base.above(pillarY), pillarY == height - 1
+                        ? Blocks.CHISELED_TUFF.defaultBlockState()
+                        : Blocks.CRACKED_STONE_BRICKS.defaultBlockState());
+            }
+            if (base.getY() + height < bounds.maxY()) {
+                put(placements, base.above(height), Blocks.TUFF_BRICK_SLAB.defaultBlockState());
+            }
+
+            int rubbleX = random.nextBoolean() ? 1 : -1;
+            int rubbleZ = random.nextBoolean() ? 1 : -1;
+            BlockPos rubble = base.offset(rubbleX, 0, rubbleZ);
+            if (safeFloorDecoration(rubble, placements, reserved, doors, 1)) {
+                put(placements, rubble, random.nextBoolean()
+                        ? Blocks.TUFF_BRICK_WALL.defaultBlockState()
+                        : Blocks.TUFF_SLAB.defaultBlockState());
+            }
+            placed++;
+        }
+    }
+
+    private static void placeCandleShrines(
+            Map<BlockPos, BlockState> placements,
+            BoundingBox bounds,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            RandomSource random,
+            ArchiveRoomNode room) {
+        int y = bounds.minY() + 1;
+        int centerX = (bounds.minX() + bounds.maxX()) / 2;
+        int centerZ = (bounds.minZ() + bounds.maxZ()) / 2;
+        List<BlockPos> candidates = List.of(
+                new BlockPos(centerX - 6, y, bounds.minZ() + 3),
+                new BlockPos(centerX + 6, y, bounds.maxZ() - 3),
+                new BlockPos(bounds.minX() + 3, y, centerZ + 6),
+                new BlockPos(bounds.maxX() - 3, y, centerZ - 6),
+                new BlockPos(bounds.minX() + 6, y, bounds.minZ() + 6),
+                new BlockPos(bounds.maxX() - 6, y, bounds.maxZ() - 6));
+        int target = room.placement().size().width() >= 30 ? 5 : 3;
+        int start = random.nextInt(candidates.size());
+        int placed = 0;
+        for (int offset = 0; offset < candidates.size() && placed < target; offset++) {
+            BlockPos pedestal = candidates.get((start + offset) % candidates.size());
+            if (!safeFloorDecoration(pedestal, placements, reserved, doors, 2)
+                    || placements.containsKey(pedestal.above())) {
+                continue;
+            }
+            put(placements, pedestal, placed % 3 == 0
+                    ? ModBlocks.CHRONICLE_BRONZE.get().defaultBlockState()
+                    : Blocks.CHISELED_TUFF.defaultBlockState());
+            put(placements, pedestal.above(), candleState(random));
+            placed++;
+        }
+    }
+
+    private static void placeFloorDetails(
+            Map<BlockPos, BlockState> placements,
+            BoundingBox bounds,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            RandomSource random,
+            ArchiveRoomNode room) {
+        int y = bounds.minY() + 1;
+        int centerX = (bounds.minX() + bounds.maxX()) / 2;
+        int centerZ = (bounds.minZ() + bounds.maxZ()) / 2;
+        List<BlockPos> candidates = List.of(
+                new BlockPos(bounds.minX() + 2, y, bounds.minZ() + 5),
+                new BlockPos(bounds.minX() + 2, y, centerZ - 4),
+                new BlockPos(bounds.minX() + 2, y, centerZ + 4),
+                new BlockPos(bounds.minX() + 2, y, bounds.maxZ() - 5),
+                new BlockPos(bounds.maxX() - 2, y, bounds.minZ() + 5),
+                new BlockPos(bounds.maxX() - 2, y, centerZ - 4),
+                new BlockPos(bounds.maxX() - 2, y, centerZ + 4),
+                new BlockPos(bounds.maxX() - 2, y, bounds.maxZ() - 5),
+                new BlockPos(bounds.minX() + 5, y, bounds.minZ() + 2),
+                new BlockPos(centerX - 4, y, bounds.minZ() + 2),
+                new BlockPos(centerX + 4, y, bounds.minZ() + 2),
+                new BlockPos(bounds.maxX() - 5, y, bounds.minZ() + 2),
+                new BlockPos(bounds.minX() + 5, y, bounds.maxZ() - 2),
+                new BlockPos(centerX - 4, y, bounds.maxZ() - 2),
+                new BlockPos(centerX + 4, y, bounds.maxZ() - 2),
+                new BlockPos(bounds.maxX() - 5, y, bounds.maxZ() - 2));
+        int target = room.placement().size().width() >= 30 ? 14 : 10;
+        int start = random.nextInt(candidates.size());
+        int placed = 0;
+        for (int offset = 0; offset < candidates.size() && placed < target; offset++) {
+            BlockPos position = candidates.get((start + offset) % candidates.size());
+            if (isNearAny(position, reserved, 2)
+                    || isNearAny(position, doors, 3)
+                    || placements.containsKey(position)
+                    || placements.containsKey(position.above())) {
+                continue;
+            }
+            BlockState detail = floorDetail(room.category(), random, placed);
+            put(placements, position, detail);
+            if ((detail.is(Blocks.BOOKSHELF) || detail.is(Blocks.CHISELED_BOOKSHELF))
+                    && position.getY() + 1 < bounds.maxY()
+                    && !placements.containsKey(position.above())) {
+                put(placements, position.above(), random.nextBoolean()
+                        ? Blocks.BOOKSHELF.defaultBlockState()
+                        : Blocks.CHISELED_BOOKSHELF.defaultBlockState());
+            }
+            placed++;
+        }
+    }
+
+    private static void placeCobwebGrowth(
+            Map<BlockPos, BlockState> placements,
+            BoundingBox bounds,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            RandomSource random,
+            ArchiveRoomNode room) {
+        int high = bounds.maxY() - 2;
+        int low = bounds.minY() + 2;
+        List<BlockPos> candidates = List.of(
+                new BlockPos(bounds.minX() + 1, high, bounds.minZ() + 1),
+                new BlockPos(bounds.maxX() - 1, high, bounds.minZ() + 1),
+                new BlockPos(bounds.minX() + 1, high, bounds.maxZ() - 1),
+                new BlockPos(bounds.maxX() - 1, high, bounds.maxZ() - 1),
+                new BlockPos(bounds.minX() + 2, low, bounds.minZ() + 2),
+                new BlockPos(bounds.maxX() - 2, low, bounds.minZ() + 2),
+                new BlockPos(bounds.minX() + 2, low, bounds.maxZ() - 2),
+                new BlockPos(bounds.maxX() - 2, low, bounds.maxZ() - 2),
+                new BlockPos(bounds.minX() + 1, high - 2, bounds.minZ() + 7),
+                new BlockPos(bounds.maxX() - 1, high - 2, bounds.minZ() + 7),
+                new BlockPos(bounds.minX() + 1, high - 2, bounds.maxZ() - 7),
+                new BlockPos(bounds.maxX() - 1, high - 2, bounds.maxZ() - 7),
+                new BlockPos(bounds.minX() + 7, high, bounds.minZ() + 1),
+                new BlockPos(bounds.maxX() - 7, high, bounds.minZ() + 1),
+                new BlockPos(bounds.minX() + 7, high, bounds.maxZ() - 1),
+                new BlockPos(bounds.maxX() - 7, high, bounds.maxZ() - 1));
+        int target = room.placement().size().width() >= 30 ? 12 : 8;
+        int start = random.nextInt(candidates.size());
+        int placed = 0;
+        for (int offset = 0; offset < candidates.size() && placed < target; offset++) {
+            BlockPos web = candidates.get((start + offset) % candidates.size());
+            if (isNearAny(web, reserved, 1)
+                    || isNearAny(web, doors, 3)
+                    || placements.containsKey(web)) {
+                continue;
+            }
+            put(placements, web, Blocks.COBWEB.defaultBlockState());
+            placed++;
+        }
+    }
+
+    private static BlockState floorDetail(
+            ArchiveRoomCategory category,
+            RandomSource random,
+            int ordinal) {
+        List<BlockState> states = switch (category) {
+            case ANCIENT_LIBRARY, LORE, PUZZLE -> List.of(
+                    Blocks.BOOKSHELF.defaultBlockState(),
+                    Blocks.CHISELED_BOOKSHELF.defaultBlockState(),
+                    Blocks.LECTERN.defaultBlockState(),
+                    Blocks.DECORATED_POT.defaultBlockState(),
+                    Blocks.CANDLE.defaultBlockState());
+            case CURSED, SECRET, TRAP -> List.of(
+                    Blocks.COBWEB.defaultBlockState(),
+                    Blocks.BONE_BLOCK.defaultBlockState(),
+                    Blocks.SOUL_LANTERN.defaultBlockState(),
+                    Blocks.IRON_BARS.defaultBlockState(),
+                    Blocks.DECORATED_POT.defaultBlockState());
+            case MINI_BOSS, FINAL_BOSS, ELITE_COMBAT -> List.of(
+                    Blocks.IRON_BARS.defaultBlockState(),
+                    Blocks.CAULDRON.defaultBlockState(),
+                    Blocks.ANVIL.defaultBlockState(),
+                    Blocks.BONE_BLOCK.defaultBlockState(),
+                    Blocks.SOUL_LANTERN.defaultBlockState());
+            case TREASURE, MERCHANT, EXIT_REWARD -> List.of(
+                    Blocks.DECORATED_POT.defaultBlockState(),
+                    Blocks.CAULDRON.defaultBlockState(),
+                    Blocks.ANVIL.defaultBlockState(),
+                    Blocks.CHISELED_BOOKSHELF.defaultBlockState(),
+                    Blocks.CRAFTING_TABLE.defaultBlockState());
+            case SANCTUARY -> List.of(
+                    Blocks.CANDLE.defaultBlockState(),
+                    Blocks.LANTERN.defaultBlockState(),
+                    Blocks.BOOKSHELF.defaultBlockState(),
+                    Blocks.DECORATED_POT.defaultBlockState(),
+                    Blocks.MOSS_CARPET.defaultBlockState());
+            default -> List.of(
+                    Blocks.DECORATED_POT.defaultBlockState(),
+                    Blocks.CAULDRON.defaultBlockState(),
+                    Blocks.COBWEB.defaultBlockState(),
+                    Blocks.IRON_BARS.defaultBlockState(),
+                    Blocks.CANDLE.defaultBlockState(),
+                    Blocks.BOOKSHELF.defaultBlockState(),
+                    Blocks.MOSS_CARPET.defaultBlockState());
+        };
+        return states.get(Math.floorMod(random.nextInt(states.size()) + ordinal, states.size()));
+    }
+
+    private static BlockState candleState(RandomSource random) {
+        return Blocks.CANDLE.defaultBlockState()
+                .setValue(BlockStateProperties.CANDLES, 1 + random.nextInt(4))
+                .setValue(BlockStateProperties.LIT, random.nextFloat() < 0.42F);
+    }
+
+    private static boolean safeFloorDecoration(
+            BlockPos position,
+            Map<BlockPos, BlockState> placements,
+            Set<BlockPos> reserved,
+            List<BlockPos> doors,
+            int radius) {
+        return !isNearAny(position, reserved, radius)
+                && !isNearAny(position, doors, 3)
+                && !placements.containsKey(position)
+                && !placements.containsKey(position.above());
+    }
+
+    private static Set<BlockPos> reservedPositions(
+            ArchiveRun run,
+            ArchiveRoomNode room,
+            ArchiveRoomTemplate template) {
+        return java.util.stream.Stream.of(
+                        template.monsterMarkers(),
+                        template.chestMarkers(),
+                        template.lootMarkers(),
+                        template.trapMarkers(),
+                        template.decorationMarkers(),
+                        template.puzzleMarkers(),
+                        template.secretWallMarkers(),
+                        template.bossMarkers(),
+                        template.playerEntryMarkers())
+                .flatMap(List::stream)
+                .map(marker -> localToWorld(run, room, room.placement().transform().apply(marker, template.size())))
+                .collect(java.util.stream.Collectors.toSet());
+    }
+
+    private static boolean isNearAny(BlockPos position, Iterable<BlockPos> protectedPositions, int radius) {
+        for (BlockPos protectedPosition : protectedPositions) {
+            if (Math.abs(position.getX() - protectedPosition.getX()) <= radius
+                    && Math.abs(position.getZ() - protectedPosition.getZ()) <= radius) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void placeConnection(
@@ -900,6 +1452,17 @@ public final class ArchiveRoomPlacer {
 
     private static void put(Map<BlockPos, BlockState> placements, BlockPos position, BlockState state) {
         placements.put(position.immutable(), state);
+    }
+
+    private record BarredAlcove(
+            BlockPos base,
+            int stepX,
+            int stepZ,
+            int recessX,
+            int recessZ) {
+        private BarredAlcove {
+            base = base.immutable();
+        }
     }
 
     private record RoomPalette(BlockState floor, BlockState wall, BlockState roof, BlockState trim) {

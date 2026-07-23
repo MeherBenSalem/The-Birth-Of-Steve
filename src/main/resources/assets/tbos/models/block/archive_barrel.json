@@ -1,7 +1,8 @@
 {
 	"texture_size": [64, 64],
 	"textures": {
-		"2": "tbos:block/crates/barrel"
+		"2": "tbos:block/crates/barrel",
+		"particle": "tbos:block/crates/barrel"
 	},
 	"elements": [
 		{

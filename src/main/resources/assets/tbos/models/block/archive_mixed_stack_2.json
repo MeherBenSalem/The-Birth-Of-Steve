@@ -2,7 +2,7 @@
 	"textures": {
 		"0": "tbos:block/crates/large_crate",
 		"1": "tbos:block/crates/crate",
-		"2": "barrel",
+		"2": "tbos:block/crates/barrel",
 		"particle": "tbos:block/crates/large_crate"
 	},
 	"elements": [

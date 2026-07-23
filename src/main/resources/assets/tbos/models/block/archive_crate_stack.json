@@ -1,7 +1,8 @@
 {
 	"texture_size": [64, 64],
 	"textures": {
-		"1": "tbos:block/crates/crate"
+		"1": "tbos:block/crates/crate",
+		"particle": "tbos:block/crates/crate"
 	},
 	"elements": [
 		{

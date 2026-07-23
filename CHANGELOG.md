@@ -1,6 +1,22 @@
 # Changelog
 
-## 0.1.0-alpha.2 - Unreleased
+## 0.1.0-alpha.3 - 2026-07-23
+
+- Rebuilt Archive room dressing around an abandoned-civilization theme with
+  deterministic weathered floor, wall, and ceiling patches; broken pillars;
+  rubble; iron-barred relic alcoves; candle shrines; dense cobweb growth;
+  ancient masonry; chains; lanterns; shelves; pots; and category-specific props.
+- Increased each non-reward room to several breakable crate and barrel clusters
+  while preserving clearance around entrances, stairs, encounters, puzzles,
+  loot markers, bosses, and traversal routes.
+- Replaced approximately 10% of every generated room floor with randomly
+  oriented Archive or tuff-brick stairs to create walkable broken-floor relief,
+  excluding protected gameplay tiles and doorway approaches.
+- Fixed the supplied mixed crate/barrel model's unresolved barrel texture and
+  added missing particle texture mappings so the new props no longer render
+  magenta or emit missing-model warnings.
+
+## 0.1.0-alpha.2 - 2026-07-23
 
 - Added nine breakable Archive crate/barrel props from the supplied crate asset
   pack. They now appear deterministically across dungeon rooms as protected-run
