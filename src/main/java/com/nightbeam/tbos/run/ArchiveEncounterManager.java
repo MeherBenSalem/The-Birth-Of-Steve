@@ -7,6 +7,7 @@ import com.nightbeam.tbos.network.payload.ArchivePuzzlePayload;
 import com.nightbeam.tbos.registry.ModBlocks;
 import com.nightbeam.tbos.registry.ModEntities;
 import com.nightbeam.tbos.registry.ModItems;
+import com.nightbeam.tbos.registry.ModSounds;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -449,6 +450,48 @@ public final class ArchiveEncounterManager {
         if (debugEnabled()) {
             Yesterglass.LOGGER.info("Archive container {} room {} marker {} type {} mode {} removed {}",
                     run.runId(), roomIndex, marker, containerKind, rules.lootMode(), removeCache);
+        }
+        return true;
+    }
+
+    public static boolean breakArchiveCrate(ServerPlayer player, BlockPos position) {
+        ArchiveRunSavedData storage = ArchiveRunSavedData.get(player.level().getServer());
+        ArchiveRun run = storage.findByMember(player.getUUID()).orElse(null);
+        if (run == null
+                || run.status() != ArchiveRunStatus.ACTIVE
+                || !(player.level() instanceof ServerLevel level)
+                || ModBlocks.ARCHIVE_CRATES.stream()
+                        .noneMatch(crate -> level.getBlockState(position).is(crate.get()))) {
+            return false;
+        }
+        int roomIndex = ArchiveRoomPlacer.roomContaining(run, position).orElse(-1);
+        if (roomIndex < 0) {
+            return false;
+        }
+
+        ArchiveRoomNode room = run.dungeonGraph().room(roomIndex);
+        long lootSeed = mix64(run.rooms().get(roomIndex).encounterSeed()
+                ^ position.asLong()
+                ^ 0x43524154455F4C4FL);
+        RandomSource random = RandomSource.create(lootSeed);
+        level.removeBlock(position, false);
+        crateBreakEffect(level, position);
+        if (random.nextDouble() <= crateLootChance(room.category())) {
+            List<ItemStack> loot = ArchiveLootRoller.roll(
+                    level,
+                    player,
+                    position,
+                    room,
+                    dungeonRules(),
+                    lootSeed,
+                    false);
+            for (ItemStack stack : loot) {
+                dropAtCache(level, position, player, stack);
+            }
+        }
+        if (debugEnabled()) {
+            Yesterglass.LOGGER.info("Archive crate broken {} room {} at {} seed {}",
+                    run.runId(), roomIndex, position, lootSeed);
         }
         return true;
     }
@@ -1441,6 +1484,39 @@ public final class ArchiveEncounterManager {
             case ORDINARY -> {
             }
         }
+    }
+
+    private static double crateLootChance(ArchiveRoomCategory category) {
+        return switch (category) {
+            case TREASURE, SECRET -> 0.68D;
+            case MINI_BOSS, FINAL_BOSS, ANCIENT_LIBRARY -> 0.55D;
+            case SANCTUARY, STARTING -> 0.35D;
+            default -> 0.45D;
+        };
+    }
+
+    private static void crateBreakEffect(ServerLevel level, BlockPos position) {
+        level.sendParticles(
+                ParticleTypes.SMOKE,
+                position.getX() + 0.5D,
+                position.getY() + 0.55D,
+                position.getZ() + 0.5D,
+                14,
+                0.35D,
+                0.28D,
+                0.35D,
+                0.035D);
+        level.sendParticles(
+                ParticleTypes.CRIT,
+                position.getX() + 0.5D,
+                position.getY() + 0.65D,
+                position.getZ() + 0.5D,
+                8,
+                0.25D,
+                0.20D,
+                0.25D,
+                0.04D);
+        level.playSound(null, position, ModSounds.CRATE_BREAK.get(), SoundSource.BLOCKS, 0.9F, 0.94F);
     }
 
     private static void announce(MinecraftServer server, ArchiveRun run, Component message) {

@@ -1,6 +1,13 @@
 # Changelog
 
-## 0.1.0-alpha.1 - Unreleased
+## 0.1.0-alpha.2 - Unreleased
+
+- Added nine breakable Archive crate/barrel props from the supplied crate asset
+  pack. They now appear deterministically across dungeon rooms as protected-run
+  exceptions, use the supplied break SFX, and have optional loot rolls using the
+  room's existing weighted dungeon loot tables.
+
+## 0.1.0-alpha.1
 
 - Integrated the Fractured Archive into normal progression: Fracture Shrines now
   use persistent world-seeded positions instead of the first player's location,

@@ -2,6 +2,7 @@ package com.nightbeam.tbos.registry;
 
 import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.block.AlignmentDialBlock;
+import com.nightbeam.tbos.block.ArchiveCrateBlock;
 import com.nightbeam.tbos.block.ArchiveCoreBlock;
 import com.nightbeam.tbos.block.ArchiveCacheBlock;
 import com.nightbeam.tbos.block.MemoryAnchorBlock;
@@ -10,6 +11,7 @@ import com.nightbeam.tbos.block.MemoryLanternBlock;
 import com.nightbeam.tbos.block.MeridianRelayBlock;
 import com.nightbeam.tbos.block.ResonantBellBlock;
 import com.nightbeam.tbos.block.RiftThresholdBlock;
+import java.util.List;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
@@ -143,11 +145,41 @@ public final class ModBlocks {
                     .strength(-1.0F, 3_600_000.0F)
                     .lightLevel(state -> 8)
                     .noOcclusion());
+    public static final DeferredBlock<ArchiveCrateBlock> ARCHIVE_CRATE = crate("archive_crate");
+    public static final DeferredBlock<ArchiveCrateBlock> ARCHIVE_CRATE_STACK = crate("archive_crate_stack");
+    public static final DeferredBlock<ArchiveCrateBlock> ARCHIVE_LARGE_CRATE = crate("archive_large_crate");
+    public static final DeferredBlock<ArchiveCrateBlock> ARCHIVE_LARGE_CRATE_STACK = crate("archive_large_crate_stack");
+    public static final DeferredBlock<ArchiveCrateBlock> ARCHIVE_BARREL = crate("archive_barrel");
+    public static final DeferredBlock<ArchiveCrateBlock> ARCHIVE_BARREL_STACK = crate("archive_barrel_stack");
+    public static final DeferredBlock<ArchiveCrateBlock> ARCHIVE_MIXED_STACK_1 = crate("archive_mixed_stack_1");
+    public static final DeferredBlock<ArchiveCrateBlock> ARCHIVE_MIXED_STACK_2 = crate("archive_mixed_stack_2");
+    public static final DeferredBlock<ArchiveCrateBlock> ARCHIVE_MIXED_STACK_3 = crate("archive_mixed_stack_3");
+
+    public static final List<DeferredBlock<ArchiveCrateBlock>> ARCHIVE_CRATES = List.of(
+            ARCHIVE_CRATE,
+            ARCHIVE_CRATE_STACK,
+            ARCHIVE_LARGE_CRATE,
+            ARCHIVE_LARGE_CRATE_STACK,
+            ARCHIVE_BARREL,
+            ARCHIVE_BARREL_STACK,
+            ARCHIVE_MIXED_STACK_1,
+            ARCHIVE_MIXED_STACK_2,
+            ARCHIVE_MIXED_STACK_3);
 
     private ModBlocks() {
     }
 
     public static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
+    }
+
+    private static DeferredBlock<ArchiveCrateBlock> crate(String name) {
+        return BLOCKS.registerBlock(
+                name,
+                ArchiveCrateBlock::new,
+                properties -> properties
+                        .mapColor(MapColor.WOOD)
+                        .strength(0.8F, 1.5F)
+                        .noOcclusion());
     }
 }

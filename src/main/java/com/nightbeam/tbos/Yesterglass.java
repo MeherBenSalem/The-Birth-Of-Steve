@@ -10,6 +10,7 @@ import com.nightbeam.tbos.registry.ModBlocks;
 import com.nightbeam.tbos.registry.ModDataComponents;
 import com.nightbeam.tbos.registry.ModEntities;
 import com.nightbeam.tbos.registry.ModItems;
+import com.nightbeam.tbos.registry.ModSounds;
 import com.nightbeam.tbos.run.ArchiveRunEvents;
 import com.nightbeam.tbos.site.TemporalSiteEvents;
 import com.mojang.logging.LogUtils;
@@ -31,6 +32,7 @@ public final class Yesterglass {
         ModBlocks.register(modBus);
         ModBlockEntities.register(modBus);
         ModEntities.register(modBus);
+        ModSounds.register(modBus);
         ModItems.register(modBus);
         ModGameTests.register(modBus);
         modBus.addListener(YesterglassNetwork::register);
@@ -82,6 +84,15 @@ public final class Yesterglass {
             event.accept(ModItems.ARCHIVE_CORE.get().getDefaultInstance());
             event.accept(ModItems.MEMORY_LANTERN.get().getDefaultInstance());
             event.accept(ModItems.RIFT_THRESHOLD.get().getDefaultInstance());
+            event.accept(ModItems.ARCHIVE_CRATE.get().getDefaultInstance());
+            event.accept(ModItems.ARCHIVE_CRATE_STACK.get().getDefaultInstance());
+            event.accept(ModItems.ARCHIVE_LARGE_CRATE.get().getDefaultInstance());
+            event.accept(ModItems.ARCHIVE_LARGE_CRATE_STACK.get().getDefaultInstance());
+            event.accept(ModItems.ARCHIVE_BARREL.get().getDefaultInstance());
+            event.accept(ModItems.ARCHIVE_BARREL_STACK.get().getDefaultInstance());
+            event.accept(ModItems.ARCHIVE_MIXED_STACK_1.get().getDefaultInstance());
+            event.accept(ModItems.ARCHIVE_MIXED_STACK_2.get().getDefaultInstance());
+            event.accept(ModItems.ARCHIVE_MIXED_STACK_3.get().getDefaultInstance());
         }
     }
 }

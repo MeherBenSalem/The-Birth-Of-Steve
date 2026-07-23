@@ -27,6 +27,11 @@ public final class ArchiveRunProtection {
                 return Decision.ROOM_CACHE;
             }
         }
+        if (ModBlocks.ARCHIVE_CRATES.stream().anyMatch(crate -> state.is(crate.get()))
+                && run.status() == ArchiveRunStatus.ACTIVE
+                && ArchiveRoomPlacer.roomContaining(run, position).isPresent()) {
+            return Decision.CRATE_PROP;
+        }
         return Decision.DENY;
     }
 
@@ -34,6 +39,7 @@ public final class ArchiveRunProtection {
         OUTSIDE,
         DENY,
         ROOM_CACHE,
-        CANTOR_CACHE
+        CANTOR_CACHE,
+        CRATE_PROP
     }
 }

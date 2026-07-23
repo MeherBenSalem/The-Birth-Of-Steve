@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -509,6 +510,7 @@ public final class ArchiveRoomPlacer {
                 put(placements, world.above(), ModBlocks.RESONANCE_LAMP.get().defaultBlockState());
             }
         }
+        placeCrateProps(placements, run, room, template);
 
         int sigil = room.templateId().hashCode();
         for (int bit = 0; bit < 9; bit++) {
@@ -632,6 +634,83 @@ public final class ArchiveRoomPlacer {
                         ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState());
             }
         }
+    }
+
+    private static void placeCrateProps(
+            Map<BlockPos, BlockState> placements,
+            ArchiveRun run,
+            ArchiveRoomNode room,
+            ArchiveRoomTemplate template) {
+        if (room.category() == ArchiveRoomCategory.EXIT_REWARD) {
+            return;
+        }
+        RandomSource random = RandomSource.create(ArchiveRunGenerator.encounterSeedFor(
+                run.seed(), room.index(), 0x43524154));
+        double chance = crateChance(room.category());
+        if (random.nextDouble() > chance) {
+            return;
+        }
+        BoundingBox bounds = roomBounds(run, room.index());
+        int width = template.size().width();
+        int depth = template.size().depth();
+        List<BlockPos> candidates = List.of(
+                new BlockPos(3, 1, 3),
+                new BlockPos(width - 4, 1, 3),
+                new BlockPos(3, 1, depth - 4),
+                new BlockPos(width - 4, 1, depth - 4),
+                new BlockPos(width / 2 - 5, 1, 4),
+                new BlockPos(width / 2 + 5, 1, depth - 5),
+                new BlockPos(4, 1, depth / 2 - 5),
+                new BlockPos(width - 5, 1, depth / 2 + 5));
+        Set<BlockPos> reserved = java.util.stream.Stream.of(
+                        template.monsterMarkers(),
+                        template.chestMarkers(),
+                        template.lootMarkers(),
+                        template.trapMarkers(),
+                        template.puzzleMarkers(),
+                        template.secretWallMarkers(),
+                        template.bossMarkers(),
+                        template.playerEntryMarkers())
+                .flatMap(List::stream)
+                .map(marker -> localToWorld(run, room, room.placement().transform().apply(marker, template.size())))
+                .collect(java.util.stream.Collectors.toSet());
+        int target = 1 + random.nextInt(maxCrates(room.category()));
+        int start = random.nextInt(candidates.size());
+        int placed = 0;
+        for (int index = 0; index < candidates.size() && placed < target; index++) {
+            BlockPos local = candidates.get((start + index) % candidates.size());
+            BlockPos world = localToWorld(run, room, room.placement().transform().apply(local, template.size()));
+            if (!bounds.isInside(world) || reserved.contains(world) || doorPositions(run, room.index()).contains(world)) {
+                continue;
+            }
+            placements.remove(world.above());
+            put(placements, world, crateState(random, room, placed));
+            placed++;
+        }
+    }
+
+    private static double crateChance(ArchiveRoomCategory category) {
+        return switch (category) {
+            case STARTING, SANCTUARY -> 0.45D;
+            case TREASURE, ANCIENT_LIBRARY, SECRET, MERCHANT -> 0.90D;
+            case MINI_BOSS, FINAL_BOSS -> 0.55D;
+            default -> 0.70D;
+        };
+    }
+
+    private static int maxCrates(ArchiveRoomCategory category) {
+        return switch (category) {
+            case TREASURE, ANCIENT_LIBRARY, SECRET -> 4;
+            case FINAL_BOSS, MINI_BOSS -> 3;
+            case STARTING, SANCTUARY, VERTICAL_SHAFT -> 2;
+            default -> 3;
+        };
+    }
+
+    private static BlockState crateState(RandomSource random, ArchiveRoomNode room, int placed) {
+        int index = Math.floorMod(random.nextInt(ModBlocks.ARCHIVE_CRATES.size())
+                + room.index() + room.graphDepth() + placed, ModBlocks.ARCHIVE_CRATES.size());
+        return ModBlocks.ARCHIVE_CRATES.get(index).get().defaultBlockState();
     }
 
     private static void placeConnection(

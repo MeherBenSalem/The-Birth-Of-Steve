@@ -1,0 +1,8 @@
+{
+  "block.archive_crate.break": {
+    "sounds": [
+      { "name": "tbos:block/crate_break", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.archive_crate.break"
+  }
+}

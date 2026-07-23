@@ -24,6 +24,15 @@
     "tbos:chronicle_bronze",
     "tbos:lenswork_crystal",
     "tbos:fracture_coffer",
-    "tbos:alignment_dial"
+    "tbos:alignment_dial",
+    "tbos:archive_crate",
+    "tbos:archive_crate_stack",
+    "tbos:archive_large_crate",
+    "tbos:archive_large_crate_stack",
+    "tbos:archive_barrel",
+    "tbos:archive_barrel_stack",
+    "tbos:archive_mixed_stack_1",
+    "tbos:archive_mixed_stack_2",
+    "tbos:archive_mixed_stack_3"
   ]
 }

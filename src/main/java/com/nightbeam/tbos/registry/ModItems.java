@@ -129,6 +129,24 @@ public final class ModItems {
             ITEMS.registerSimpleBlockItem("memory_lantern", ModBlocks.MEMORY_LANTERN);
     public static final DeferredItem<BlockItem> RIFT_THRESHOLD =
             ITEMS.registerSimpleBlockItem("rift_threshold", ModBlocks.RIFT_THRESHOLD);
+    public static final DeferredItem<BlockItem> ARCHIVE_CRATE =
+            ITEMS.registerSimpleBlockItem("archive_crate", ModBlocks.ARCHIVE_CRATE);
+    public static final DeferredItem<BlockItem> ARCHIVE_CRATE_STACK =
+            ITEMS.registerSimpleBlockItem("archive_crate_stack", ModBlocks.ARCHIVE_CRATE_STACK);
+    public static final DeferredItem<BlockItem> ARCHIVE_LARGE_CRATE =
+            ITEMS.registerSimpleBlockItem("archive_large_crate", ModBlocks.ARCHIVE_LARGE_CRATE);
+    public static final DeferredItem<BlockItem> ARCHIVE_LARGE_CRATE_STACK =
+            ITEMS.registerSimpleBlockItem("archive_large_crate_stack", ModBlocks.ARCHIVE_LARGE_CRATE_STACK);
+    public static final DeferredItem<BlockItem> ARCHIVE_BARREL =
+            ITEMS.registerSimpleBlockItem("archive_barrel", ModBlocks.ARCHIVE_BARREL);
+    public static final DeferredItem<BlockItem> ARCHIVE_BARREL_STACK =
+            ITEMS.registerSimpleBlockItem("archive_barrel_stack", ModBlocks.ARCHIVE_BARREL_STACK);
+    public static final DeferredItem<BlockItem> ARCHIVE_MIXED_STACK_1 =
+            ITEMS.registerSimpleBlockItem("archive_mixed_stack_1", ModBlocks.ARCHIVE_MIXED_STACK_1);
+    public static final DeferredItem<BlockItem> ARCHIVE_MIXED_STACK_2 =
+            ITEMS.registerSimpleBlockItem("archive_mixed_stack_2", ModBlocks.ARCHIVE_MIXED_STACK_2);
+    public static final DeferredItem<BlockItem> ARCHIVE_MIXED_STACK_3 =
+            ITEMS.registerSimpleBlockItem("archive_mixed_stack_3", ModBlocks.ARCHIVE_MIXED_STACK_3);
 
     private ModItems() {
     }

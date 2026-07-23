@@ -205,6 +205,11 @@ public final class ArchiveRunEvents {
         }
         event.setCanceled(true);
         event.setNotifyClient(true);
+        if (decision == ArchiveRunProtection.Decision.CRATE_PROP
+                && event.getPlayer() instanceof ServerPlayer player) {
+            ArchiveEncounterManager.breakArchiveCrate(player, event.getPos());
+            return;
+        }
         if ((decision == ArchiveRunProtection.Decision.ROOM_CACHE
                         || decision == ArchiveRunProtection.Decision.CANTOR_CACHE)
                 && event.getPlayer() instanceof ServerPlayer player) {
