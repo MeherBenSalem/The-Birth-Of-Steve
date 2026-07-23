@@ -1,0 +1,17 @@
+{
+  "parent": "tbos:story/obtain_cracked_lens",
+  "criteria": {
+    "repaired": {
+      "conditions": {
+        "items": [ { "items": "tbos:yesterglass_lens" } ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.repair_lens.description" },
+    "icon": { "id": "tbos:yesterglass_lens" },
+    "title": { "translate": "advancements.tbos.repair_lens.title" }
+  },
+  "requirements": [ [ "repaired" ] ]
+}

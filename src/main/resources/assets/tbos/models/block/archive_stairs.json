@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "tbos:block/archive_bricks",
+    "side": "tbos:block/archive_bricks",
+    "top": "tbos:block/archive_bricks"
+  }
+}

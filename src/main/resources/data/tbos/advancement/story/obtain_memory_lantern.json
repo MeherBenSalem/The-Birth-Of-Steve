@@ -1,0 +1,12 @@
+{
+  "parent": "tbos:story/defeat_last_curator",
+  "criteria": {
+    "obtained": { "trigger": "minecraft:impossible" }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.obtain_lantern.description" },
+    "icon": { "id": "tbos:memory_lantern" },
+    "title": { "translate": "advancements.tbos.obtain_lantern.title" }
+  },
+  "requirements": [ [ "obtained" ] ]
+}

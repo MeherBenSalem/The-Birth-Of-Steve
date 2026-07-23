@@ -1,0 +1,1 @@
+{"type":"minecraft:block","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"tbos:chiseled_archive_stone"}],"conditions":[{"condition":"minecraft:survives_explosion"}]}],"random_sequence":"tbos:blocks/chiseled_archive_stone"}

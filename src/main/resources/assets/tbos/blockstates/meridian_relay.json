@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "powered=false": { "model": "tbos:block/meridian_relay" },
+    "powered=true": { "model": "tbos:block/meridian_relay_powered" }
+  }
+}

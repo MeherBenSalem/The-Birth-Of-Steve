@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": "tbos:lenswork_crystal",
+    "C": "tbos:chronicle_shard",
+    "G": "tbos:yesterglass",
+    "L": "tbos:cracked_yesterglass_lens"
+  },
+  "pattern": [
+    " A ",
+    "GLG",
+    " C "
+  ],
+  "result": {
+    "id": "tbos:yesterglass_lens"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "type": "tbos:fractured_archive",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "minecraft:the_void",
+      "layers": []
+    }
+  }
+}

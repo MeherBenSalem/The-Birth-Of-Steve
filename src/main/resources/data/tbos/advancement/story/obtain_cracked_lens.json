@@ -1,0 +1,17 @@
+{
+  "parent": "tbos:story/root",
+  "criteria": {
+    "obtained": {
+      "conditions": {
+        "items": [ { "items": "tbos:cracked_yesterglass_lens" } ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.obtain_cracked_lens.description" },
+    "icon": { "id": "tbos:cracked_yesterglass_lens" },
+    "title": { "translate": "advancements.tbos.obtain_cracked_lens.title" }
+  },
+  "requirements": [ [ "obtained" ] ]
+}

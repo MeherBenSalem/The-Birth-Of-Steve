@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    "tbos:archive_stone",
+    "tbos:cracked_archive_stone",
+    "tbos:archive_bricks",
+    "tbos:archive_stairs",
+    "tbos:weathered_archive_bricks",
+    "tbos:mossy_archive_stone",
+    "tbos:chiseled_archive_stone",
+    "tbos:chronicle_tile",
+    "tbos:cantor_floor",
+    "tbos:cantor_wall",
+    "tbos:cantor_rune",
+    "tbos:meridian_tile",
+    "tbos:engraved_meridian_tile",
+    "tbos:yesterglass",
+    "tbos:resonance_lamp",
+    "tbos:memory_anchor",
+    "tbos:phase_platform",
+    "tbos:archive_seal",
+    "tbos:archive_cache",
+    "tbos:resonant_bell",
+    "tbos:chronicle_bronze",
+    "tbos:lenswork_crystal",
+    "tbos:fracture_coffer",
+    "tbos:alignment_dial"
+  ]
+}

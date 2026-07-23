@@ -1,0 +1,13 @@
+{
+  "parent": "tbos:story/obtain_memory_lantern",
+  "criteria": {
+    "collected": { "trigger": "minecraft:impossible" }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.collect_plates.description" },
+    "icon": { "id": "tbos:memory_plate" },
+    "title": { "translate": "advancements.tbos.collect_plates.title" },
+    "frame": "challenge"
+  },
+  "requirements": [ [ "collected" ] ]
+}

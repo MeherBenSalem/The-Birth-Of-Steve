@@ -1,0 +1,17 @@
+{
+  "criteria": {
+    "discovered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "background": "minecraft:gui/advancements/backgrounds/stone",
+    "description": { "translate": "advancements.tbos.root.description" },
+    "icon": { "id": "tbos:cracked_yesterglass_lens" },
+    "show_toast": false,
+    "title": { "translate": "advancements.tbos.root.title" }
+  },
+  "requirements": [ [ "discovered" ] ],
+  "sends_telemetry_event": false
+}

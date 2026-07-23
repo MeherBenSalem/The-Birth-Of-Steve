@@ -1,0 +1,14 @@
+{
+  "parent": "tbos:story/reconstruct_first_room",
+  "criteria": {
+    "aligned": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.solve_hall.description" },
+    "icon": { "id": "tbos:alignment_dial" },
+    "title": { "translate": "advancements.tbos.solve_hall.title" }
+  },
+  "requirements": [ [ "aligned" ] ]
+}

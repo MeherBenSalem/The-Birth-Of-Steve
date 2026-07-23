@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "lit=false,symbol=0": { "model": "tbos:block/resonant_bell_sun" },
+    "lit=false,symbol=1": { "model": "tbos:block/resonant_bell_moon" },
+    "lit=false,symbol=2": { "model": "tbos:block/resonant_bell_crown" },
+    "lit=false,symbol=3": { "model": "tbos:block/resonant_bell_gate" },
+    "lit=true,symbol=0": { "model": "tbos:block/resonant_bell_sun" },
+    "lit=true,symbol=1": { "model": "tbos:block/resonant_bell_moon" },
+    "lit=true,symbol=2": { "model": "tbos:block/resonant_bell_crown" },
+    "lit=true,symbol=3": { "model": "tbos:block/resonant_bell_gate" }
+  }
+}

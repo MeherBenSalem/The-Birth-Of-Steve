@@ -1,0 +1,14 @@
+{
+  "parent": "tbos:story/solve_hall_of_alignment",
+  "criteria": {
+    "remembered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.complete_choir.description" },
+    "icon": { "id": "tbos:resonant_bell" },
+    "title": { "translate": "advancements.tbos.complete_choir.title" }
+  },
+  "requirements": [ [ "remembered" ] ]
+}

@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "theme": "echoes_of_the_past",
+  "cell_spacing": { "horizontal": 48, "vertical": 16 },
+  "marker_types": [
+    "monster", "chest", "loot", "trap", "decoration", "puzzle",
+    "secret_wall", "boss", "player_entry"
+  ],
+  "templates": [
+    { "id": "tbos:parallax_wake", "category": "starting", "variant": "ruined_atrium" },
+    { "id": "tbos:starless_gallery", "category": "standard_combat", "variant": "fallen_banners" },
+    { "id": "tbos:lenswright_crossing", "category": "standard_combat", "variant": "oxidized_workshop" },
+    { "id": "tbos:echo_foundry", "category": "trap", "variant": "unstable_floors" },
+    { "id": "tbos:meridian_sentinel", "category": "elite_combat", "variant": "bronze_guard" },
+    { "id": "tbos:glassbound_huntsman", "category": "elite_combat", "variant": "crystal_hunt" },
+    { "id": "tbos:hall_alignment_reforged", "category": "puzzle", "variant": "alignment" },
+    { "id": "tbos:choir_of_hours_reforged", "category": "puzzle", "variant": "four_bells" },
+    { "id": "tbos:chronicle_stack", "category": "ancient_library", "variant": "collapsed_archive" },
+    { "id": "tbos:sealed_reliquary", "category": "treasure", "variant": "burial_cache" },
+    { "id": "tbos:quiet_ossuary", "category": "sanctuary", "variant": "resting_guardians" },
+    { "id": "tbos:annalist_vigil", "category": "lore", "variant": "memory_tablets" },
+    { "id": "tbos:veiled_broker", "category": "merchant", "variant": "mysterious_trader" },
+    { "id": "tbos:meridian_drop", "category": "vertical_shaft", "variant": "phase_stair" },
+    { "id": "tbos:buried_index", "category": "secret", "variant": "cracked_wall" },
+    { "id": "tbos:crownless_chapel", "category": "cursed", "variant": "ancient_curse" },
+    { "id": "tbos:bronze_reviser", "category": "mini_boss", "variant": "reviser" },
+    { "id": "tbos:archivist_tribunal", "category": "mini_boss", "variant": "tribunal" },
+    { "id": "tbos:hour_cantor", "category": "final_boss", "variant": "final_refrain" },
+    { "id": "tbos:last_recollection", "category": "exit_reward", "variant": "reward_vault" }
+  ]
+}

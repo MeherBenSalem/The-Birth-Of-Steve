@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "theme": "echoes_of_the_past",
+  "graph": {
+    "minimum_rooms": 14,
+    "maximum_rooms": 20,
+    "horizontal_expansion": 6,
+    "vertical_expansion": 2,
+    "maximum_depth": 16,
+    "branching_probability": 0.48,
+    "dead_end_probability": 0.16,
+    "loop_probability": 0.10,
+    "special_room_frequency": 0.30,
+    "secret_room_probability": 0.12,
+    "maximum_rooms_above": 4,
+    "maximum_rooms_below": 4
+  },
+  "placement": {
+    "chest_probability": 0.50,
+    "direct_loot_probability": 0.42,
+    "block_budget_per_tick": 4096,
+    "generation_attempts": 64
+  },
+  "runtime": {
+    "lock_combat_doors": true,
+    "loot_mode": "individual",
+    "regenerate_incomplete_after_restart": true,
+    "retain_completed_runs": false
+  },
+  "note": "Server overrides are generated under echoesOfThePastDungeon in tbos-common.toml."
+}

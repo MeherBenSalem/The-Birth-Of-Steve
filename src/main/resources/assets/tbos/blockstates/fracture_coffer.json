@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "opened=false,variant=0": { "model": "tbos:block/fracture_coffer" },
+    "opened=false,variant=1": { "model": "tbos:block/fracture_coffer" },
+    "opened=false,variant=2": { "model": "tbos:block/fracture_coffer" },
+    "opened=true,variant=0": { "model": "tbos:block/fracture_coffer_open" },
+    "opened=true,variant=1": { "model": "tbos:block/fracture_coffer_open" },
+    "opened=true,variant=2": { "model": "tbos:block/fracture_coffer_open" }
+  }
+}

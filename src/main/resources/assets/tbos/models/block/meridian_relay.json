@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "tbos:block/chronicle_bronze",
+    "east": "tbos:block/chronicle_bronze",
+    "north": "tbos:block/archive_core",
+    "particle": "tbos:block/archive_core",
+    "south": "tbos:block/archive_core",
+    "up": "tbos:block/resonant_bell",
+    "west": "tbos:block/chronicle_bronze"
+  }
+}

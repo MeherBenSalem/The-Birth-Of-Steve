@@ -1,0 +1,14 @@
+{
+  "parent": "tbos:story/repair_lens",
+  "criteria": {
+    "entered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.enter_archive.description" },
+    "icon": { "id": "tbos:archive_stone" },
+    "title": { "translate": "advancements.tbos.enter_archive.title" }
+  },
+  "requirements": [ [ "entered" ] ]
+}

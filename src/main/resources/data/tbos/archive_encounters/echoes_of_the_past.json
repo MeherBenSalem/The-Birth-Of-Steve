@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "theme": "echoes_of_the_past",
+  "scaling": {
+    "health_per_difficulty": 0.025,
+    "damage_per_difficulty": 0.015,
+    "health_per_additional_active_player": 0.25,
+    "enemies_per_additional_active_player": 1.0
+  },
+  "pools": {
+    "tbos:encounters/forgotten_legion": [
+      { "enemy": "tbos:parallax_wraith", "weight": 4 },
+      { "enemy": "tbos:meridian_sentinel", "weight": 1 },
+      { "enemy": "minecraft:husk", "weight": 4 },
+      { "enemy": "minecraft:skeleton", "weight": 3 },
+      { "enemy": "minecraft:stray", "weight": 2 },
+      { "enemy": "minecraft:cave_spider", "weight": 2 },
+      { "enemy": "minecraft:silverfish", "weight": 2 }
+    ],
+    "tbos:encounters/elite_echoes": [
+      { "enemy": "tbos:parallax_wraith", "weight": 2 },
+      { "enemy": "tbos:meridian_sentinel", "weight": 4 },
+      { "enemy": "minecraft:stray", "weight": 2 },
+      { "enemy": "minecraft:vindicator", "weight": 3 },
+      { "enemy": "minecraft:evoker", "weight": 1 }
+    ],
+    "tbos:encounters/ruined_guardian": [
+      { "enemy": "tbos:meridian_sentinel", "weight": 4 },
+      { "enemy": "tbos:parallax_wraith", "weight": 1 },
+      { "enemy": "minecraft:vindicator", "weight": 3 },
+      { "enemy": "minecraft:evoker", "weight": 2 },
+      { "enemy": "minecraft:ravager", "weight": 1 }
+    ],
+    "tbos:encounters/hour_cantor": [
+      { "enemy": "tbos:hour_cantor", "weight": 1 }
+    ]
+  }
+}

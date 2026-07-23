@@ -1,0 +1,14 @@
+{
+  "parent": "tbos:story/complete_choir_of_hours",
+  "criteria": {
+    "crossed": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.cross_meridian.description" },
+    "icon": { "id": "tbos:meridian_relay" },
+    "title": { "translate": "advancements.tbos.cross_meridian.title" }
+  },
+  "requirements": [ [ "crossed" ] ]
+}

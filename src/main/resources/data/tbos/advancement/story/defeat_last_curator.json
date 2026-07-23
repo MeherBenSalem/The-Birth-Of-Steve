@@ -1,0 +1,17 @@
+{
+  "parent": "tbos:story/cross_broken_meridian",
+  "criteria": {
+    "defeated": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.defeat_curator.description" },
+    "icon": { "id": "tbos:curator_core" },
+    "title": { "translate": "advancements.tbos.defeat_curator.title" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "requirements": [ [ "defeated" ] ]
+}

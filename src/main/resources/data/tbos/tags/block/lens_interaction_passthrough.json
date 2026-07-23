@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    "tbos:rift_threshold",
+    "tbos:resonant_bell",
+    "tbos:alignment_dial",
+    "tbos:meridian_relay",
+    "tbos:memory_anchor",
+    "tbos:archive_core",
+    "tbos:memory_lantern",
+    "tbos:archive_cache",
+    "tbos:fracture_coffer"
+  ]
+}

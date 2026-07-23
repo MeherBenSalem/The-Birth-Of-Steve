@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "tbos:cantor_sigil" }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:item", "name": "tbos:recalled_hour" }
+      ]
+    },
+    {
+      "rolls": 4,
+      "entries": [
+        { "type": "minecraft:item", "name": "minecraft:diamond", "weight": 5 },
+        { "type": "minecraft:item", "name": "minecraft:emerald", "weight": 5 },
+        { "type": "minecraft:item", "name": "minecraft:golden_apple", "weight": 3 },
+        { "type": "minecraft:item", "name": "minecraft:netherite_scrap", "weight": 1 },
+        { "type": "minecraft:item", "name": "minecraft:experience_bottle", "weight": 4 },
+        { "type": "minecraft:item", "name": "minecraft:golden_carrot", "weight": 3 }
+      ]
+    }
+  ],
+  "random_sequence": "tbos:loot/boss_reward"
+}

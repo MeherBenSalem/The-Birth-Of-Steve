@@ -1,0 +1,13 @@
+{
+  "parent": "tbos:story/collect_all_memory_plates",
+  "criteria": {
+    "displayed": { "trigger": "minecraft:impossible" }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.display_scene.description" },
+    "icon": { "id": "tbos:memory_lantern" },
+    "title": { "translate": "advancements.tbos.display_scene.title" },
+    "frame": "challenge"
+  },
+  "requirements": [ [ "displayed" ] ]
+}

@@ -1,0 +1,14 @@
+{
+  "parent": "tbos:story/enter_archive",
+  "criteria": {
+    "reconstructed": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.reconstruct_first_room.description" },
+    "icon": { "id": "tbos:memory_anchor" },
+    "title": { "translate": "advancements.tbos.reconstruct_first_room.title" }
+  },
+  "requirements": [ [ "reconstructed" ] ]
+}
