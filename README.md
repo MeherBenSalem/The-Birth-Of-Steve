@@ -13,11 +13,9 @@ adventure now leads into Echoes of the Past: a deterministic, replayable,
 multi-floor procedural Archive with reusable room templates, independent
 multiplayer encounters, weighted loot and enemies, secrets, persistence, and
 tick-budgeted generation. Three Fracture Shrine variants, the Last Curator,
-Memory Lantern, and six Memory Plates are also implemented. Included art, sounds,
-and effects must still be treated as developer placeholders
-unless their ownership and final status are recorded in `CREDITS.md` and
-`docs/art-bible.md`.
-
+Memory Lantern, and six Memory Plates are also implemented. Shrine locations are
+derived from the world seed, and the Last Curator's defeated Archive Core becomes
+the gateway into the procedural dimension. 
 The dungeon design and operator guide is in
 [`docs/echoes-of-the-past.md`](docs/echoes-of-the-past.md). The checked-in
 1,000-seed evidence is in

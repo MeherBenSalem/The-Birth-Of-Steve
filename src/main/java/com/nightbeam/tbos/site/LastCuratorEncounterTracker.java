@@ -494,6 +494,24 @@ public final class LastCuratorEncounterTracker {
         TemporalSiteManager.applyPhaseGeometry(level, defeated);
         TemporalSiteManager.broadcastSnapshot(level, defeated);
         TemporalSiteManager.notifyNearby(level, defeated, Component.translatable("message.tbos.curator.defeated"));
+        BlockPos gatewayPos = TemporalSiteManager.orreryCorePositions(defeated).getFirst();
+        level.sendParticles(
+                ParticleTypes.REVERSE_PORTAL,
+                gatewayPos.getX() + 0.5D,
+                gatewayPos.getY() + 0.8D,
+                gatewayPos.getZ() + 0.5D,
+                80,
+                0.65D,
+                0.8D,
+                0.65D,
+                0.12D);
+        level.playSound(
+                null,
+                gatewayPos,
+                SoundEvents.END_PORTAL_FRAME_FILL,
+                SoundSource.BLOCKS,
+                1.6F,
+                0.65F);
         for (ServerPlayer player : playersInArena(level, defeated)) {
             ModAdvancements.awardLastCurator(player);
         }

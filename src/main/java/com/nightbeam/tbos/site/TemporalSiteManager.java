@@ -1132,6 +1132,13 @@ public final class TemporalSiteManager {
         }
 
         for (OrreryDefinition orrery : definition.orreries()) {
+            BlockPos corePos = definition.worldPosition(site.origin(), orrery.archiveCore(), site.rotation());
+            level.setBlock(
+                    corePos,
+                    LastCuratorProgress.isDefeated(site.progressFlags())
+                            ? ModBlocks.RIFT_THRESHOLD.get().defaultBlockState()
+                            : ModBlocks.ARCHIVE_CORE.get().defaultBlockState(),
+                    BLOCK_UPDATE_FLAGS);
             for (BlockPos relativeRing : orrery.rememberedRingSegments()) {
                 level.setBlock(
                         definition.worldPosition(site.origin(), relativeRing, site.rotation()),

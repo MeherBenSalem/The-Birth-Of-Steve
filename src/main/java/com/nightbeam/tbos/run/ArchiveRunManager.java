@@ -37,6 +37,10 @@ public final class ArchiveRunManager {
             feedback(activator, "message.tbos.archive.lens_required");
             return EntryResult.NO_LENS;
         }
+        if (!hasCuratorCore(activator)) {
+            feedback(activator, "message.tbos.archive.curator_core_required");
+            return EntryResult.NO_CURATOR_CORE;
+        }
 
         MinecraftServer server = activator.level().getServer();
         ArchiveRunSavedData storage = ArchiveRunSavedData.get(server);
@@ -421,6 +425,10 @@ public final class ArchiveRunManager {
         return mainHand.is(ModItems.YESTERGLASS_LENS.get()) || offHand.is(ModItems.YESTERGLASS_LENS.get());
     }
 
+    private static boolean hasCuratorCore(ServerPlayer player) {
+        return player.getInventory().contains(stack -> stack.is(ModItems.CURATOR_CORE.get()));
+    }
+
     private static ArchiveDungeonSettings dungeonSettings() {
         try {
             return YesterglassConfig.dungeonSettings();
@@ -458,6 +466,7 @@ public final class ArchiveRunManager {
     public enum EntryResult {
         STARTED,
         NO_LENS,
+        NO_CURATOR_CORE,
         ALREADY_IN_RUN,
         PARTY_MEMBER_BUSY,
         ARCHIVE_UNAVAILABLE,

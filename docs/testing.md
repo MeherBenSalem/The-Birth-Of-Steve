@@ -14,6 +14,17 @@ gradlew.bat runDungeonSimulation
 
 ## Echoes of the Past manual matrix
 
+- In a fresh world, confirm all three Fracture Shrine locations are persistent,
+  scattered 192–640 blocks from world spawn, and unchanged when a different
+  player joins first. Their center markers must not start an Archive run.
+- Complete the full authored route and defeat the Last Curator. Confirm the Grand
+  Orrery's Archive Core visibly transforms into the Curator Gateway with portal
+  particles and sound. Empty-hand use, a cracked Lens, a repaired Lens without
+  the Curator Core, and using another block must not enter the dimension.
+- Carry the Curator Core, hold the repaired Lens, and right-click the gateway.
+  Confirm the run is constructed, the nearby party is teleported into
+  `tbos:fractured_archive`, and every member returns to their captured Overworld
+  position after victory, failure, or abandonment.
 - Generate a fresh run after this overhaul. Existing generated instances retain
   their old placed geometry and cannot prove the new roofs, corridors, stair
   tunnels, or final-room palette.
@@ -44,8 +55,9 @@ gradlew.bat runDungeonSimulation
   explore loaded chunks; watch server tick time and memory during repeated runs.
 - Exercise reduced effects, minimal particles, high-contrast/readability settings,
   GUI scales, and low/high render distances.
-- Use `/tbos archive debug`, graph export, forced seeds, generation,
-  regenerate, complete-room, abort, and cleanup commands as an operator.
+- Use `/tbos dungeon generate [seed]`, `export_graph`, `regenerate`,
+  `force_clear`, `remove`, and the other documented dungeon commands as an
+  operator.
 
 Recorded automated assertions cover the deterministic equivalents of these cases;
 visual readability, two real clients, and production-server profiling remain
@@ -95,8 +107,10 @@ test procedure.
 
 ## Automated results — 2026-07-23
 
-- `gradlew.bat runGameTestServer --no-daemon`: PASS, all 42 required tests in
-  9.186 seconds. The suite covers the authored phase sites plus dungeon generation
+- `gradlew.bat runGameTestServer --stacktrace --console=plain`: PASS, all 42
+  required tests. The suite covers world-seeded Shrine placement, dormant Shrine
+  centers, Curator Gateway transformation, Lens/Core entry validation, the
+  authored phase sites, and dungeon generation
   bounds, reachability, overlap rejection, complete room roofs, direct enclosed
   horizontal passages, enclosed two-wide vertical stair tunnels with clear
   headroom, transformed doors/markers, quest-locked final-boss progression,
@@ -110,8 +124,9 @@ test procedure.
   volumes, zero lesser-boss count mismatches, and zero pre-completed/unlocked
   final quests. Its machine-readable report is written to
   `build/reports/tbos/archive-dungeon-simulation.json`.
-- `gradlew.bat clean build --no-daemon`: PASS in 7 seconds. The build includes the
-  1,000-seed simulation through `check`.
+- `gradlew.bat clean build --stacktrace --console=plain`: PASS. The build includes
+  the 1,000-seed simulation through `check`; the regenerated artifact is
+  `build/libs/tbos-0.1.0-alpha.1.jar`.
 - `gradlew.bat runData --no-daemon`: PASS.
 - Standards `JSON.parse`: PASS, all 157 checked-in JSON resources.
 - Texture/model validation: PASS. All 32 item/block textures are 16×16 or 32×32

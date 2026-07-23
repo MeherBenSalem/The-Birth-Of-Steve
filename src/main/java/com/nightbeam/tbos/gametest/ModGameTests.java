@@ -145,6 +145,8 @@ public final class ModGameTests {
             FUNCTIONS.register("memory_lantern_persistence", () -> ModGameTests::memoryLanternPersistsPlaybackState);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FRACTURE_SHRINE_VARIANTS =
             FUNCTIONS.register("fracture_shrine_variants", () -> ModGameTests::fractureShrinesDistributeAdventureItems);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FRACTURE_SHRINE_PLACEMENT =
+            FUNCTIONS.register("fracture_shrine_placement", () -> ModGameTests::fractureShrinesUseWorldSeededLocations);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ADVENTURE_WORLD_METADATA =
             FUNCTIONS.register("adventure_world_metadata", () -> ModGameTests::adventureWorldMetadataPersistsCoordinates);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FRACTURED_ARCHIVE_DIMENSION =
@@ -993,6 +995,11 @@ public final class ModGameTests {
                 new net.minecraft.world.item.ItemStack(ModItems.YESTERGLASS_LENS.get()));
         helper.assertTrue(
                 ArchiveRunManager.enterFromThreshold(player, threshold)
+                        == ArchiveRunManager.EntryResult.NO_CURATOR_CORE,
+                "Archive entry accepted a player who had not recovered the Curator Core");
+        player.getInventory().add(new net.minecraft.world.item.ItemStack(ModItems.CURATOR_CORE.get()));
+        helper.assertTrue(
+                ArchiveRunManager.enterFromThreshold(player, threshold)
                         == ArchiveRunManager.EntryResult.ARCHIVE_UNAVAILABLE,
                 "GameTest entry did not fail safely when its archive dimension was absent");
 
@@ -1170,8 +1177,8 @@ public final class ModGameTests {
         AdventureWorldManager.placeShrine(level, unsafeOrigin, FractureShrineVariant.OBSERVATORY);
         BlockPos safeOrigin = unsafeOrigin.above();
         helper.assertTrue(
-                level.getBlockState(safeOrigin).is(ModBlocks.RIFT_THRESHOLD.get()),
-                "Minimum-height shrine did not move its threshold into the buildable range");
+                level.getBlockState(safeOrigin).is(ModBlocks.ENGRAVED_MERIDIAN_TILE.get()),
+                "Minimum-height shrine did not move its dormant center marker into the buildable range");
         helper.assertTrue(
                 level.getBlockState(safeOrigin.below()).is(ArchiveRoomPlacer.ARCHIVE_RUN_PALETTE),
                 "Minimum-height shrine floor was placed below the world");
@@ -1795,6 +1802,10 @@ public final class ModGameTests {
         helper.assertTrue(
                 LastCuratorEncounterTracker.archiveFallPlateEntityCount(helper.getLevel(), defeated) == 1,
                 "Curator did not release the Archive Fall Memory Plate");
+        helper.assertTrue(
+                helper.getLevel().getBlockState(TemporalSiteManager.orreryCorePositions(defeated).getFirst())
+                        .is(ModBlocks.RIFT_THRESHOLD.get()),
+                "Defeating the Last Curator did not transform the Archive Core into the dimension gateway");
         LastCuratorEncounterTracker.startIfAbsent(helper.getLevel(), defeated);
         LastCuratorEncounterTracker.tick(helper.getLevel().getServer());
         helper.assertTrue(
@@ -1855,6 +1866,9 @@ public final class ModGameTests {
                             && coffer.getValue(FractureCofferBlock.VARIANT) == variant.ordinal()
                             && !coffer.getValue(FractureCofferBlock.OPENED),
                     variant + " did not place its sealed custom Fracture Coffer");
+            helper.assertTrue(
+                    helper.getLevel().getBlockState(origin).is(ModBlocks.ENGRAVED_MERIDIAN_TILE.get()),
+                    variant + " placed an active dimension gateway before the Last Curator");
             List<net.minecraft.world.item.ItemStack> loot = FractureCofferBlock.lootForVariant(variant);
             helper.assertTrue(loot.get(0).is(ModItems.CRACKED_YESTERGLASS_LENS.get()),
                     variant + " did not contain a Cracked Lens");
@@ -1872,6 +1886,27 @@ public final class ModGameTests {
         }
         helper.assertTrue(scenes.size() == MemoryScene.values().length,
                 "The three shrine variants did not distribute all six Memory Plate scenes exactly once");
+        helper.succeed();
+    }
+
+    private static void fractureShrinesUseWorldSeededLocations(GameTestHelper helper) {
+        BlockPos worldSpawn = new BlockPos(24, 80, -32);
+        List<BlockPos> first = AdventureWorldManager.shrineTargets(1001L, worldSpawn);
+        List<BlockPos> repeated = AdventureWorldManager.shrineTargets(1001L, worldSpawn);
+        List<BlockPos> differentSeed = AdventureWorldManager.shrineTargets(2002L, worldSpawn);
+        helper.assertTrue(first.equals(repeated), "The same world seed changed its Shrine locations");
+        helper.assertTrue(!first.equals(differentSeed), "Different world seeds produced identical Shrine locations");
+        helper.assertTrue(
+                first.size() == FractureShrineVariant.values().length
+                        && new HashSet<>(first).size() == first.size(),
+                "World placement did not produce one distinct target per Shrine variant");
+        for (BlockPos target : first) {
+            double distance = Math.sqrt(worldSpawn.distSqr(target));
+            helper.assertTrue(
+                    distance >= AdventureWorldManager.MIN_SHRINE_DISTANCE - 1
+                            && distance <= AdventureWorldManager.MAX_SHRINE_DISTANCE + 1,
+                    "A Shrine target fell outside the authored world-spawn search ring");
+        }
         helper.succeed();
     }
 

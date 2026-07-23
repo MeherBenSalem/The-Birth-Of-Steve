@@ -13,6 +13,7 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
@@ -20,31 +21,55 @@ import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class AdventureWorldManager {
     public static final int SHRINE_DISCOVERY_RANGE = 14;
+    public static final int MIN_SHRINE_DISTANCE = 192;
+    public static final int MAX_SHRINE_DISTANCE = 640;
+    private static final long SHRINE_PLACEMENT_SALT = 0x54424F5353485249L;
     private static final int UPDATE_FLAGS = Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS;
-    private static final int[] SHRINE_RADII = {96, 128, 160};
 
     private AdventureWorldManager() {
     }
 
-    public static List<FractureShrinePlacement> ensureShrines(ServerLevel level, BlockPos near) {
+    public static List<FractureShrinePlacement> ensureShrines(ServerLevel level, BlockPos requester) {
         TemporalSiteSavedData data = TemporalSiteManager.data(level);
         if (!data.fractureShrines().isEmpty()) {
+            deactivateLegacyShrineThresholds(level, data.fractureShrines());
             return data.fractureShrines();
         }
 
         List<FractureShrinePlacement> placements = new ArrayList<>();
         FractureShrineVariant[] variants = FractureShrineVariant.values();
-        int quarterTurn = Math.floorMod((int) (level.getSeed() ^ level.getSeed() >>> 32), 4);
+        List<BlockPos> targets = shrineTargets(level.getSeed(), level.getRespawnData().pos());
         for (int index = 0; index < variants.length; index++) {
-            double angle = (quarterTurn * Math.PI / 2.0D) + index * Math.PI * 2.0D / variants.length;
-            int targetX = near.getX() + (int) Math.round(Math.cos(angle) * SHRINE_RADII[index]);
-            int targetZ = near.getZ() + (int) Math.round(Math.sin(angle) * SHRINE_RADII[index]);
-            BlockPos origin = findDrySurface(level, targetX, targetZ, index * 37);
+            BlockPos target = targets.get(index);
+            BlockPos origin = findDrySurface(level, target.getX(), target.getZ(), index * 37);
             placeShrine(level, origin, variants[index]);
             placements.add(new FractureShrinePlacement(variants[index], origin));
         }
         data.setFractureShrines(placements);
         return data.fractureShrines();
+    }
+
+    /**
+     * Produces stable, world-seeded shrine targets in three separated angular
+     * sectors around world spawn. The first player no longer determines their
+     * locations.
+     */
+    public static List<BlockPos> shrineTargets(long worldSeed, BlockPos worldSpawn) {
+        FractureShrineVariant[] variants = FractureShrineVariant.values();
+        RandomSource random = RandomSource.create(worldSeed ^ SHRINE_PLACEMENT_SALT);
+        double rotation = random.nextDouble() * Math.PI * 2.0D;
+        ArrayList<BlockPos> targets = new ArrayList<>(variants.length);
+        for (int index = 0; index < variants.length; index++) {
+            double sectorCenter = rotation + index * Math.PI * 2.0D / variants.length;
+            double jitter = (random.nextDouble() - 0.5D) * Math.PI / 4.0D;
+            int radius = MIN_SHRINE_DISTANCE
+                    + random.nextInt(MAX_SHRINE_DISTANCE - MIN_SHRINE_DISTANCE + 1);
+            targets.add(new BlockPos(
+                    worldSpawn.getX() + (int) Math.round(Math.cos(sectorCenter + jitter) * radius),
+                    worldSpawn.getY(),
+                    worldSpawn.getZ() + (int) Math.round(Math.sin(sectorCenter + jitter) * radius)));
+        }
+        return List.copyOf(targets);
     }
 
     public static BlockPos ensureArchive(ServerLevel level, BlockPos requester) {
@@ -166,7 +191,19 @@ public final class AdventureWorldManager {
             }
         }
         set(level, origin.offset(0, 0, -3), ModBlocks.ENGRAVED_MERIDIAN_TILE.get());
-        set(level, origin.offset(0, 0, 0), ModBlocks.RIFT_THRESHOLD.get());
+        set(level, origin, ModBlocks.ENGRAVED_MERIDIAN_TILE.get());
+    }
+
+    private static void deactivateLegacyShrineThresholds(
+            ServerLevel level, List<FractureShrinePlacement> placements) {
+        for (FractureShrinePlacement placement : placements) {
+            if (level.getBlockState(placement.origin()).is(ModBlocks.RIFT_THRESHOLD.get())) {
+                level.setBlock(
+                        placement.origin(),
+                        ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState(),
+                        UPDATE_FLAGS);
+            }
+        }
     }
 
     private static void placeObservatory(ServerLevel level, BlockPos origin) {

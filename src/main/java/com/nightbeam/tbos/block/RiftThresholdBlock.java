@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-/** The physical shrine threshold that starts a Fractured Archive run. */
+/** The post-Curator gateway that starts a Fractured Archive run. */
 public final class RiftThresholdBlock extends Block {
     public static final MapCodec<RiftThresholdBlock> CODEC = simpleCodec(RiftThresholdBlock::new);
 

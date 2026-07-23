@@ -1,5 +1,15 @@
 # Echoes of the Past procedural dungeon
 
+## Overworld entry
+
+Three persistent Fracture Shrine variants are scattered at deterministic
+world-seeded positions 192–640 blocks from world spawn. Their center markers are
+dormant and cannot bypass the campaign. After the Last Curator is defeated, the
+Grand Orrery's Archive Core transforms into the Curator Gateway. A player must
+right-click it with a repaired Yesterglass Lens while carrying the Curator Core;
+only then does the server allocate, construct, and enter a Fractured Archive
+instance.
+
 ## Runtime shape
 
 An Archive run owns one deterministic `ArchiveDungeonGraph`. The graph contains

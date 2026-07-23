@@ -17,11 +17,12 @@ No other mod is required. Server owners can tune dungeon settings in
 
 ## Your first expedition
 
-When an Overworld player joins, three Fracture Shrines are placed near that
-player. Find a shrine, recover the **Cracked Yesterglass Lens**, and gather its
-repair materials. Repair the lens, then use the **Archive Survey Map** by
-right-clicking it: it reports the direction, distance, and coordinates of the
-Meridian Archive.
+Each world places three Fracture Shrine variants at persistent, world-seeded
+locations scattered 192–640 blocks from world spawn. Their positions do not
+depend on which player joins first. Explore for a shrine, break its Fracture
+Coffer, recover the **Cracked Yesterglass Lens**, and gather its repair
+materials. Repair the lens, then use the **Archive Survey Map** by right-clicking
+it: it reports the direction, distance, and coordinates of the Meridian Archive.
 
 Follow the map and play through the authored route:
 
@@ -29,9 +30,14 @@ Follow the map and play through the authored route:
 2. Align the Hall of Alignment.
 3. Complete the Choir of Hours.
 4. Cross the Broken Meridian.
-5. Defeat the Last Curator.
+5. Defeat the Last Curator and collect the **Curator Core**.
 
-That route unlocks **Echoes of the Past**, the replayable procedural Archive.
+After the fight, the Archive Core in the center of the Grand Orrery transforms
+into the **Curator Gateway**. Keep the Curator Core in your inventory, hold the
+repaired Yesterglass Lens, and right-click the gateway. The server constructs
+your run and teleports your party into **Echoes of the Past**, the replayable
+procedural Fractured Archive dimension.
+
 Inside it, watch the top-left objective tracker: it records room, puzzle, and
 boss-gate progress. Normal dungeon blocks cannot be broken or placed. Archive
 caches are the exception: clear their room first, then **break the cache** to
@@ -90,6 +96,8 @@ alter a run can spoil or remove live player progress.
 - **A cache will not open:** that is expected—clear the room and break the
   cache instead of right-clicking it.
 - **The boss door is sealed:** finish the objective shown at the top left.
+- **The Curator Gateway refuses entry:** hold the repaired Lens and keep the
+  Curator Core in your inventory.
 - **A development run needs a clean restart:** use `/tbos dungeon remove`, then
   `/tbos dungeon generate [seed]`.
 

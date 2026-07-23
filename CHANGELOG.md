@@ -2,6 +2,11 @@
 
 ## 0.1.0-alpha.1 - Unreleased
 
+- Integrated the Fractured Archive into normal progression: Fracture Shrines now
+  use persistent world-seeded positions instead of the first player's location,
+  their centers remain dormant, and defeating the Last Curator transforms the
+  Grand Orrery's Archive Core into the real Curator Gateway. Entering now
+  requires a repaired Yesterglass Lens in hand and the recovered Curator Core.
 - Made every generated Archive loot cache break-to-claim. Right-click now only
   reads the seal; shared caches disappear on the first valid break, individual
   caches persist until every member claims them, and loot visibly drops at the
