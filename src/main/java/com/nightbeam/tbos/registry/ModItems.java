@@ -1,18 +1,22 @@
 package com.nightbeam.tbos.registry;
 
 import com.nightbeam.tbos.Yesterglass;
+import com.nightbeam.tbos.block.GraveyardPropBlock;
 import com.nightbeam.tbos.item.ArchiveSurveyMapItem;
 import com.nightbeam.tbos.item.MemoryPlateItem;
 import com.nightbeam.tbos.item.MemoryScene;
 import com.nightbeam.tbos.item.YesterglassLensItem;
 import com.nightbeam.tbos.item.RecalledHourItem;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.component.ItemLore;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -148,10 +152,32 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> ARCHIVE_MIXED_STACK_3 =
             ITEMS.registerSimpleBlockItem("archive_mixed_stack_3", ModBlocks.ARCHIVE_MIXED_STACK_3);
 
+    public static final List<DeferredItem<BlockItem>> GRAVEYARD_PROP_ITEMS = registerGraveyardPropItems();
+
     private ModItems() {
     }
 
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
+    }
+
+    public static void addCreativeTabItems(CreativeModeTab.Output output) {
+        for (var entry : ITEMS.getEntries()) {
+            if (entry == MEMORY_PLATE) {
+                for (MemoryScene scene : MemoryScene.values()) {
+                    output.accept(MemoryPlateItem.forScene(scene));
+                }
+            } else {
+                output.accept(entry.get());
+            }
+        }
+    }
+
+    private static List<DeferredItem<BlockItem>> registerGraveyardPropItems() {
+        List<DeferredItem<BlockItem>> items = new ArrayList<>(ModBlocks.GRAVEYARD_PROPS.size());
+        for (DeferredBlock<GraveyardPropBlock> prop : ModBlocks.GRAVEYARD_PROPS) {
+            items.add(ITEMS.registerSimpleBlockItem(prop.getId().getPath(), prop));
+        }
+        return List.copyOf(items);
     }
 }

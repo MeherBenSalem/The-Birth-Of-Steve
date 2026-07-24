@@ -1,0 +1,7 @@
+{
+  "parent": "tbos:block/skeleton_leg",
+  "textures": {
+    "particle": "tbos:item/graveyard/skeleton_bones",
+    "2": "tbos:item/graveyard/skeleton_bones"
+  }
+}

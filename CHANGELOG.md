@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.0-alpha.4 - 2026-07-24
+
+- Added a dedicated **The Birth of Steve** creative tab that automatically
+  includes every registered item and all authored Memory Plate variants.
+- Added 38 graveyard props with block items, loot sidecars, directional
+  placement, and crisp held-item models.
+- Removed the half-stair floor replacements that exposed void-colored gaps;
+  weathered room-floor variation now always uses full blocks.
+- Made interior room dressing and props breakable during active Archive runs
+  while keeping generated walls and floors protected.
+- Removed roughly 440 milliseconds of leading silence from the crate-break cue
+  so its impact starts when the crate disappears.
+- Reworked the eight standalone item sprites into crisp hard-alpha textures and
+  explicitly disabled texture blur.
+- Removed generated presentation artwork and its packaged mod-logo metadata;
+  project media is now limited to manually captured gameplay or separately
+  commissioned original artwork.
+
 ## 0.1.0-alpha.3 - 2026-07-23
 
 - Rebuilt Archive room dressing around an abandoned-civilization theme with
@@ -36,9 +54,8 @@
   cache without bypassing protected-instance rules.
 - Added distinct event audio for wave starts, room clears, released doors,
   ordinary/locked/trapped/cursed/hidden caches, and the final Cantor Cache.
-- Added a 400×400 project/mod icon, a 3:1 CurseForge concept banner, packaged
-  NeoForge logo metadata, paste-ready CurseForge page copy, release-media
-  disclosure, and a ModJam submission checklist.
+- Added paste-ready CurseForge page copy, media guidelines, and a ModJam
+  submission checklist.
 - Renamed the mod to **The Birth of Steve**, moved all Java sources under
   `com.nightbeam.tbos`, and migrated the runtime namespace, assets, data,
   configuration, command root, reports, and artifact ID to `tbos`.

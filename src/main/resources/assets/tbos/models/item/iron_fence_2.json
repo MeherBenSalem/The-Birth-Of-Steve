@@ -1,0 +1,7 @@
+{
+  "parent": "tbos:block/iron_fence_2",
+  "textures": {
+    "particle": "tbos:item/graveyard/cemetery_fence",
+    "0": "tbos:item/graveyard/cemetery_fence"
+  }
+}

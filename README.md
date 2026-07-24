@@ -15,15 +15,14 @@ multiplayer encounters, weighted loot and enemies, secrets, persistence, and
 tick-budgeted generation. Three Fracture Shrine variants, the Last Curator,
 Memory Lantern, and six Memory Plates are also implemented. Shrine locations are
 derived from the world seed, and the Last Curator's defeated Archive Core becomes
-the gateway into the procedural dimension. 
+the gateway into the procedural dimension. Included art, sounds, and effects must
+still be treated as developer placeholders unless their ownership and final
+status are recorded in the project documentation.
+
 The dungeon design and operator guide is in
 [`docs/echoes-of-the-past.md`](docs/echoes-of-the-past.md). The checked-in
 1,000-seed evidence is in
 [`docs/archive-dungeon-simulation.md`](docs/archive-dungeon-simulation.md).
-The complete CurseForge metadata, paste-ready project description, media map,
-and ModJam submission checklist are in
-[`docs/curseforge-project-page.md`](docs/curseforge-project-page.md).
-
 ## Start playing
 
 For installation, the first expedition, cache rules, multiplayer behavior, and

@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "tbos:block/skeleton_arm", "y": 270 },
+    "facing=north": { "model": "tbos:block/skeleton_arm", "y": 180 },
+    "facing=south": { "model": "tbos:block/skeleton_arm" },
+    "facing=west": { "model": "tbos:block/skeleton_arm", "y": 90 }
+  }
+}

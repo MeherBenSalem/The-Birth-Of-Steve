@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "tbos:block/lying_skeleton", "y": 270 },
+    "facing=north": { "model": "tbos:block/lying_skeleton", "y": 180 },
+    "facing=south": { "model": "tbos:block/lying_skeleton" },
+    "facing=west": { "model": "tbos:block/lying_skeleton", "y": 90 }
+  }
+}

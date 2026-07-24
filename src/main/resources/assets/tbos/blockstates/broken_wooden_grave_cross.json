@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "tbos:block/broken_wooden_grave_cross", "y": 270 },
+    "facing=north": { "model": "tbos:block/broken_wooden_grave_cross", "y": 180 },
+    "facing=south": { "model": "tbos:block/broken_wooden_grave_cross" },
+    "facing=west": { "model": "tbos:block/broken_wooden_grave_cross", "y": 90 }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "tbos:block/gravestone_type_8",
+  "textures": {
+    "particle": "tbos:item/graveyard/gravestone",
+    "4": "tbos:item/graveyard/gravestone"
+  }
+}

@@ -5,13 +5,16 @@ import com.nightbeam.tbos.block.AlignmentDialBlock;
 import com.nightbeam.tbos.block.ArchiveCrateBlock;
 import com.nightbeam.tbos.block.ArchiveCoreBlock;
 import com.nightbeam.tbos.block.ArchiveCacheBlock;
+import com.nightbeam.tbos.block.GraveyardPropBlock;
 import com.nightbeam.tbos.block.MemoryAnchorBlock;
 import com.nightbeam.tbos.block.FractureCofferBlock;
 import com.nightbeam.tbos.block.MemoryLanternBlock;
 import com.nightbeam.tbos.block.MeridianRelayBlock;
 import com.nightbeam.tbos.block.ResonantBellBlock;
 import com.nightbeam.tbos.block.RiftThresholdBlock;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
@@ -166,6 +169,56 @@ public final class ModBlocks {
             ARCHIVE_MIXED_STACK_2,
             ARCHIVE_MIXED_STACK_3);
 
+    private static final Set<String> GRAVEYARD_FLOOR_FLUFF = Set.of(
+            "grave_flowers",
+            "dead_grave_flowers",
+            "wilted_grave_flowers",
+            "skeleton_arm",
+            "skeleton_leg");
+
+    private static final String[] GRAVEYARD_PROP_IDS = {
+        "broken_wooden_grave_cross",
+        "damaged_wooden_grave_cross",
+        "dead_grave_flower_vase",
+        "dead_grave_flowers",
+        "grave_flower_vase",
+        "grave_flowers",
+        "gravestone_type_1",
+        "gravestone_type_2",
+        "gravestone_type_3",
+        "gravestone_type_4",
+        "gravestone_type_5",
+        "gravestone_type_6",
+        "gravestone_type_7",
+        "gravestone_type_8",
+        "gravestone_type_9",
+        "gravestone_type_10",
+        "gravestone_type_11",
+        "gravestone_type_12",
+        "gravestone_type_13",
+        "gravestone_type_14",
+        "gravestone_type_15",
+        "gravestone_type_16",
+        "iron_cemetery_gate_arch",
+        "iron_fence_1",
+        "iron_fence_2",
+        "lying_skeleton",
+        "sitting_skeleton",
+        "skeleton_arm",
+        "skeleton_leg",
+        "skeleton_skull",
+        "skeleton_torso",
+        "wilted_grave_flower_vase",
+        "wilted_grave_flowers",
+        "wooden_coffin",
+        "wooden_coffin_lid",
+        "wooden_coffin_skeleton",
+        "wooden_grave_cross",
+        "wooden_open_coffin"
+    };
+
+    public static final List<DeferredBlock<GraveyardPropBlock>> GRAVEYARD_PROPS = registerGraveyardProps();
+
     private ModBlocks() {
     }
 
@@ -181,5 +234,47 @@ public final class ModBlocks {
                         .mapColor(MapColor.WOOD)
                         .strength(0.8F, 1.5F)
                         .noOcclusion());
+    }
+
+    private static List<DeferredBlock<GraveyardPropBlock>> registerGraveyardProps() {
+        List<DeferredBlock<GraveyardPropBlock>> props = new ArrayList<>(GRAVEYARD_PROP_IDS.length);
+        for (String id : GRAVEYARD_PROP_IDS) {
+            props.add(graveyardProp(id));
+        }
+        return List.copyOf(props);
+    }
+
+    private static DeferredBlock<GraveyardPropBlock> graveyardProp(String name) {
+        boolean floorFluff = GRAVEYARD_FLOOR_FLUFF.contains(name);
+        MapColor mapColor = graveyardMapColor(name);
+        return BLOCKS.registerBlock(
+                name,
+                GraveyardPropBlock::new,
+                properties -> {
+                    BlockBehaviour.Properties configured = properties
+                            .mapColor(mapColor)
+                            .strength(0.8F, 1.5F)
+                            .noOcclusion();
+                    if (floorFluff) {
+                        configured = configured.noCollision();
+                    }
+                    return configured;
+                });
+    }
+
+    private static MapColor graveyardMapColor(String name) {
+        if (name.contains("flower")) {
+            return MapColor.PLANT;
+        }
+        if (name.contains("skeleton") || name.contains("lying") || name.contains("sitting")) {
+            return MapColor.SAND;
+        }
+        if (name.contains("iron") || name.contains("fence") || name.contains("gate")) {
+            return MapColor.METAL;
+        }
+        if (name.contains("gravestone")) {
+            return MapColor.STONE;
+        }
+        return MapColor.WOOD;
     }
 }

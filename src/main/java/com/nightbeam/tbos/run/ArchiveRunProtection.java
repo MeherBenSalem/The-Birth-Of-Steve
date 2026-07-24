@@ -32,6 +32,18 @@ public final class ArchiveRunProtection {
                 && ArchiveRoomPlacer.roomContaining(run, position).isPresent()) {
             return Decision.CRATE_PROP;
         }
+        if (run.status() == ArchiveRunStatus.ACTIVE) {
+            var roomIndex = ArchiveRoomPlacer.roomContaining(run, position);
+            if (roomIndex.isPresent()) {
+                var bounds = ArchiveRoomPlacer.roomBounds(run, roomIndex.getAsInt());
+                boolean floor = position.getY() == bounds.minY();
+                boolean wall = position.getX() == bounds.minX()
+                        || position.getX() == bounds.maxX()
+                        || position.getZ() == bounds.minZ()
+                        || position.getZ() == bounds.maxZ();
+                return floor || wall ? Decision.DENY : Decision.BREAKABLE;
+            }
+        }
         return Decision.DENY;
     }
 
@@ -40,6 +52,7 @@ public final class ArchiveRunProtection {
         DENY,
         ROOM_CACHE,
         CANTOR_CACHE,
-        CRATE_PROP
+        CRATE_PROP,
+        BREAKABLE
     }
 }

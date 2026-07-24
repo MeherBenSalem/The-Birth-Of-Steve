@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "tbos:block/grave_flowers", "y": 270 },
+    "facing=north": { "model": "tbos:block/grave_flowers", "y": 180 },
+    "facing=south": { "model": "tbos:block/grave_flowers" },
+    "facing=west": { "model": "tbos:block/grave_flowers", "y": 90 }
+  }
+}

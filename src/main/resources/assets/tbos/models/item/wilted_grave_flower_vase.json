@@ -1,0 +1,7 @@
+{
+  "parent": "tbos:block/wilted_grave_flower_vase",
+  "textures": {
+    "particle": "tbos:item/graveyard/grave_flowers",
+    "1": "tbos:item/graveyard/grave_flowers"
+  }
+}

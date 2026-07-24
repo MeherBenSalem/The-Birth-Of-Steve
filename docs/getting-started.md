@@ -7,7 +7,7 @@ or cheats to begin the adventure.
 
 1. Install **Minecraft Java Edition 26.1.2** and **NeoForge 26.1.2.83 or newer**
    for that Minecraft version.
-2. Put `tbos-0.1.0-alpha.1.jar` in the instance's `mods` folder.
+2. Put `tbos-0.1.0-alpha.4.jar` in the instance's `mods` folder.
 3. Launch NeoForge and create or open an Overworld save. For multiplayer, put
    the same JAR on both the server and every client.
 4. Because this is an alpha, make a backup before updating an existing world.

@@ -1,6 +1,7 @@
 package com.nightbeam.tbos.run;
 
 import com.nightbeam.tbos.Yesterglass;
+import com.nightbeam.tbos.block.GraveyardPropBlock;
 import com.nightbeam.tbos.block.ResonantBellBlock;
 import com.nightbeam.tbos.config.YesterglassConfig;
 import com.nightbeam.tbos.registry.ModBlocks;
@@ -28,6 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.registries.DeferredBlock;
 
 /** Builds reusable transformed room templates and their horizontal/vertical connections. */
 public final class ArchiveRoomPlacer {
@@ -514,6 +516,7 @@ public final class ArchiveRoomPlacer {
         }
         placeCrateProps(placements, run, room, template);
         placeRoomSetDressing(placements, run, room, template, palette);
+        placeGraveyardProps(placements, run, room, template);
 
         int sigil = room.templateId().hashCode();
         for (int bit = 0; bit < 9; bit++) {
@@ -690,6 +693,106 @@ public final class ArchiveRoomPlacer {
         }
     }
 
+    private static void placeGraveyardProps(
+            Map<BlockPos, BlockState> placements,
+            ArchiveRun run,
+            ArchiveRoomNode room,
+            ArchiveRoomTemplate template) {
+        if (room.category() != ArchiveRoomCategory.CURSED
+                && room.category() != ArchiveRoomCategory.TRAP
+                && room.category() != ArchiveRoomCategory.SECRET) {
+            return;
+        }
+        RandomSource random = RandomSource.create(ArchiveRunGenerator.encounterSeedFor(
+                run.seed(), room.index(), 0x47524156));
+        BoundingBox bounds = roomBounds(run, room.index());
+        int width = template.size().width();
+        int depth = template.size().depth();
+        List<BlockPos> candidates = List.of(
+                new BlockPos(5, 1, 5),
+                new BlockPos(width - 6, 1, 5),
+                new BlockPos(5, 1, depth - 6),
+                new BlockPos(width - 6, 1, depth - 6),
+                new BlockPos(width / 2 - 4, 1, 5),
+                new BlockPos(width / 2 + 4, 1, depth - 6),
+                new BlockPos(5, 1, depth / 2 - 4),
+                new BlockPos(width - 6, 1, depth / 2 + 4),
+                new BlockPos(8, 1, 4),
+                new BlockPos(width - 9, 1, 4),
+                new BlockPos(8, 1, depth - 5),
+                new BlockPos(width - 9, 1, depth - 5),
+                new BlockPos(4, 1, 8),
+                new BlockPos(4, 1, depth - 9),
+                new BlockPos(width - 5, 1, 8),
+                new BlockPos(width - 5, 1, depth - 9));
+        Set<BlockPos> reserved = reservedPositions(run, room, template);
+        List<BlockPos> doors = doorPositions(run, room.index());
+        BlockPos roomCenter = new BlockPos(
+                (bounds.minX() + bounds.maxX()) / 2,
+                bounds.minY() + 1,
+                (bounds.minZ() + bounds.maxZ()) / 2);
+        int target = 4 + random.nextInt(4);
+        int start = random.nextInt(candidates.size());
+        int placed = 0;
+        for (int index = 0; index < candidates.size() && placed < target; index++) {
+            BlockPos local = candidates.get((start + index) % candidates.size());
+            BlockPos world = localToWorld(run, room, room.placement().transform().apply(local, template.size()));
+            if (!bounds.isInside(world)
+                    || isNearAny(world, reserved, 2)
+                    || isNearAny(world, doors, 3)
+                    || placements.containsKey(world)) {
+                continue;
+            }
+            placements.remove(world.above());
+            Direction facing = random.nextFloat() < 0.7F
+                    ? facingToward(world, roomCenter)
+                    : Direction.Plane.HORIZONTAL.getRandomDirection(random);
+            put(placements, world, graveyardPropState(random, facing));
+            placed++;
+        }
+    }
+
+    private static Direction facingToward(BlockPos from, BlockPos to) {
+        int dx = to.getX() - from.getX();
+        int dz = to.getZ() - from.getZ();
+        if (Math.abs(dx) > Math.abs(dz)) {
+            return dx > 0 ? Direction.EAST : Direction.WEST;
+        }
+        if (dz != 0) {
+            return dz > 0 ? Direction.SOUTH : Direction.NORTH;
+        }
+        return dx >= 0 ? Direction.EAST : Direction.WEST;
+    }
+
+    private static BlockState graveyardPropState(RandomSource random, Direction facing) {
+        DeferredBlock<GraveyardPropBlock> chosen = pickGraveyardProp(random);
+        return chosen.get().defaultBlockState().setValue(GraveyardPropBlock.FACING, facing);
+    }
+
+    private static DeferredBlock<GraveyardPropBlock> pickGraveyardProp(RandomSource random) {
+        float roll = random.nextFloat();
+        List<DeferredBlock<GraveyardPropBlock>> pool;
+        if (roll < 0.42F) {
+            pool = ModBlocks.GRAVEYARD_PROPS.stream()
+                    .filter(prop -> prop.getId().getPath().startsWith("gravestone_type_"))
+                    .toList();
+        } else if (roll < 0.58F) {
+            pool = ModBlocks.GRAVEYARD_PROPS.stream()
+                    .filter(prop -> prop.getId().getPath().contains("grave_cross"))
+                    .toList();
+        } else if (roll < 0.78F) {
+            pool = ModBlocks.GRAVEYARD_PROPS.stream()
+                    .filter(prop -> prop.getId().getPath().contains("flower"))
+                    .toList();
+        } else {
+            pool = ModBlocks.GRAVEYARD_PROPS;
+        }
+        if (pool.isEmpty()) {
+            pool = ModBlocks.GRAVEYARD_PROPS;
+        }
+        return pool.get(random.nextInt(pool.size()));
+    }
+
     private static int minimumCrates(ArchiveRoomCategory category) {
         return switch (category) {
             case TREASURE, ANCIENT_LIBRARY, SECRET, MERCHANT -> 6;
@@ -732,7 +835,7 @@ public final class ArchiveRoomPlacer {
         List<BlockPos> doors = doorPositions(run, room.index());
 
         weatherRoomShell(placements, bounds, reserved, doors, random, room);
-        placeBrokenFloor(placements, run, room, bounds, reserved, doors);
+        placeWeatheredFloorPatches(placements, run, room, bounds, reserved, doors);
         placeWallRibs(placements, bounds, palette, reserved, doors, room);
         placeBarredAlcoves(placements, bounds, reserved, doors, random, room);
         placeHangingLights(placements, bounds, reserved, doors, random, room);
@@ -798,7 +901,7 @@ public final class ArchiveRoomPlacer {
         return states.get(Math.floorMod(random.nextInt(states.size()) + ordinal, states.size()));
     }
 
-    private static void placeBrokenFloor(
+    private static void placeWeatheredFloorPatches(
             Map<BlockPos, BlockState> placements,
             ArchiveRun run,
             ArchiveRoomNode room,
@@ -826,19 +929,14 @@ public final class ArchiveRoomPlacer {
         int target = Math.min(
                 candidates.size(),
                 Math.max(1, Math.round(bounds.getXSpan() * bounds.getZSpan() * 0.10F)));
-        Direction[] directions = {
-            Direction.NORTH,
-            Direction.EAST,
-            Direction.SOUTH,
-            Direction.WEST
-        };
         for (int index = 0; index < target; index++) {
-            BlockState stair = (index + room.index()) % 4 == 0
-                    ? Blocks.TUFF_BRICK_STAIRS.defaultBlockState()
-                    : ModBlocks.ARCHIVE_STAIRS.get().defaultBlockState();
-            put(placements, candidates.get(index), stair.setValue(
-                    BlockStateProperties.HORIZONTAL_FACING,
-                    directions[random.nextInt(directions.length)]));
+            BlockState patch = switch (Math.floorMod(random.nextInt(4) + index + room.index(), 4)) {
+                case 0 -> ModBlocks.CRACKED_ARCHIVE_STONE.get().defaultBlockState();
+                case 1 -> ModBlocks.WEATHERED_ARCHIVE_BRICKS.get().defaultBlockState();
+                case 2 -> Blocks.TUFF_BRICKS.defaultBlockState();
+                default -> Blocks.CHISELED_TUFF.defaultBlockState();
+            };
+            put(placements, candidates.get(index), patch);
         }
     }
 

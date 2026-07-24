@@ -1,0 +1,8 @@
+{
+  "parent": "tbos:block/wooden_coffin_skeleton",
+  "textures": {
+    "particle": "tbos:item/graveyard/skeleton_bones",
+    "2": "tbos:item/graveyard/skeleton_bones",
+    "3": "tbos:item/graveyard/coffin"
+  }
+}

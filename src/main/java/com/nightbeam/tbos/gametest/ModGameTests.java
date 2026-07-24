@@ -67,6 +67,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.entity.EntityType;
@@ -788,6 +789,34 @@ public final class ModGameTests {
                                 ModBlocks.ARCHIVE_CACHE.get().defaultBlockState())
                         == ArchiveRunProtection.Decision.ROOM_CACHE,
                 "A generated room cache could not be broken to claim its loot");
+        int startingRoom = activeRun.dungeonGraph().startingRoom();
+        BlockPos roomInterior = ArchiveRoomPlacer.roomSpawn(activeRun, startingRoom);
+        helper.assertTrue(
+                ArchiveRunProtection.classify(
+                                activeRun,
+                                roomInterior,
+                                Blocks.BOOKSHELF.defaultBlockState())
+                        == ArchiveRunProtection.Decision.BREAKABLE,
+                "Interior room dressing was not breakable during an active run");
+        helper.assertTrue(
+                ArchiveRunProtection.classify(
+                                activeRun,
+                                roomInterior.below(),
+                                ModBlocks.ARCHIVE_STONE.get().defaultBlockState())
+                        == ArchiveRunProtection.Decision.DENY,
+                "The generated room floor was not protected during an active run");
+        var startingBounds = ArchiveRoomPlacer.roomBounds(activeRun, startingRoom);
+        BlockPos wallPosition = new BlockPos(
+                startingBounds.minX(),
+                startingBounds.minY() + 1,
+                roomInterior.getZ());
+        helper.assertTrue(
+                ArchiveRunProtection.classify(
+                                activeRun,
+                                wallPosition,
+                                ModBlocks.ARCHIVE_BRICKS.get().defaultBlockState())
+                        == ArchiveRunProtection.Decision.DENY,
+                "The generated room wall was not protected during an active run");
         ArchiveRun victoryRun = activeRun.beginReturn(200L);
         helper.assertTrue(
                 ArchiveRunProtection.classify(

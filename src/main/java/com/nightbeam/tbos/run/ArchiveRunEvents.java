@@ -203,6 +203,9 @@ public final class ArchiveRunEvents {
         if (decision == ArchiveRunProtection.Decision.OUTSIDE) {
             return;
         }
+        if (decision == ArchiveRunProtection.Decision.BREAKABLE) {
+            return;
+        }
         event.setCanceled(true);
         event.setNotifyClient(true);
         if (decision == ArchiveRunProtection.Decision.CRATE_PROP

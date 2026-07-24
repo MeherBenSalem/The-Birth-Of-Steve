@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "tbos:block/wooden_coffin", "y": 270 },
+    "facing=north": { "model": "tbos:block/wooden_coffin", "y": 180 },
+    "facing=south": { "model": "tbos:block/wooden_coffin" },
+    "facing=west": { "model": "tbos:block/wooden_coffin", "y": 90 }
+  }
+}

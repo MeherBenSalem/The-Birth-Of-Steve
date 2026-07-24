@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "tbos:block/dead_grave_flower_vase", "y": 270 },
+    "facing=north": { "model": "tbos:block/dead_grave_flower_vase", "y": 180 },
+    "facing=south": { "model": "tbos:block/dead_grave_flower_vase" },
+    "facing=west": { "model": "tbos:block/dead_grave_flower_vase", "y": 90 }
+  }
+}

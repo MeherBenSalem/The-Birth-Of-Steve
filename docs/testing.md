@@ -91,8 +91,8 @@ manual sign-off items.
 - Unsafe occupancy of every target phase block.
 - Resource reload, GUI scale changes, and low/high render distance.
 
-Results remain unverified until recorded in `STATUS.md` with the exact command or
-test procedure.
+Results remain unverified until recorded with the exact command or test
+procedure.
 
 ## Manual results — 2026-07-22
 
@@ -126,7 +126,7 @@ test procedure.
   `build/reports/tbos/archive-dungeon-simulation.json`.
 - `gradlew.bat clean build --stacktrace --console=plain`: PASS. The build includes
   the 1,000-seed simulation through `check`; the regenerated artifact is
-  `build/libs/tbos-0.1.0-alpha.1.jar`.
+  `build/libs/tbos-0.1.0-alpha.4.jar`.
 - `gradlew.bat runData --no-daemon`: PASS.
 - Standards `JSON.parse`: PASS, all 157 checked-in JSON resources.
 - Texture/model validation: PASS. All 32 item/block textures are 16×16 or 32×32

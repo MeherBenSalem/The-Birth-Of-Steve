@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "tbos:block/iron_cemetery_gate_arch", "y": 270 },
+    "facing=north": { "model": "tbos:block/iron_cemetery_gate_arch", "y": 180 },
+    "facing=south": { "model": "tbos:block/iron_cemetery_gate_arch" },
+    "facing=west": { "model": "tbos:block/iron_cemetery_gate_arch", "y": 90 }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "tbos:block/wooden_grave_cross",
+  "textures": {
+    "particle": "tbos:item/graveyard/coffin",
+    "3": "tbos:item/graveyard/coffin"
+  }
+}
