@@ -8,6 +8,8 @@
   placement, and crisp held-item models.
 - Removed the half-stair floor replacements that exposed void-colored gaps;
   weathered room-floor variation now always uses full blocks.
+- Extended vertical stair runs by one lower step and lowered their four-block
+  side walls to seal the remaining staircase gaps.
 - Made interior room dressing and props breakable during active Archive runs
   while keeping generated walls and floors protected.
 - Removed roughly 440 milliseconds of leading silence from the crate-break cue

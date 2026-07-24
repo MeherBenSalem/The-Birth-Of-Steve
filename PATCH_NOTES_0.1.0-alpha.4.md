@@ -9,6 +9,8 @@ asset provenance.
   including each Memory Plate scene.
 - Archive rooms now use full-block weathered floor patches. The partial stair
   shapes that exposed dark gaps and invisible-looking floor sections are gone.
+- Vertical room connections now start with one additional lower stair and use
+  four-block-deep side walls, closing the remaining gaps around stair runs.
 - Players can break interior props and set dressing during active dungeon runs.
   The generated room walls and floor remain protected.
 - Crate-break audio starts immediately instead of carrying a noticeable silent

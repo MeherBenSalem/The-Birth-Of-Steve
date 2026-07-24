@@ -1433,22 +1433,18 @@ public final class ArchiveRoomPlacer {
         BlockState stairState = ModBlocks.ARCHIVE_STAIRS.get().defaultBlockState()
                 .setValue(StairBlock.FACING, net.minecraft.core.Direction.EAST);
 
-        // A full floor block before and after the run makes the transition
-        // walkable in both directions without jumping or breaking the shell.
+        // The lower route begins with a stair at floor level; a full upper
+        // landing completes the transition without jumping or breaking the shell.
         for (int width = 0; width < 2; width++) {
-            BlockPos lowerLanding = new BlockPos(centerX - 9, lowY, centerZ - 1 + width);
             BlockPos upperLanding = new BlockPos(centerX + 8, highY, centerZ - 1 + width);
-            put(placements, lowerLanding, ModBlocks.PHASE_PLATFORM.get().defaultBlockState());
             put(placements, upperLanding, ModBlocks.PHASE_PLATFORM.get().defaultBlockState());
             for (int head = 1; head <= 3; head++) {
-                placements.remove(lowerLanding.above(head));
                 placements.remove(upperLanding.above(head));
             }
-            put(placements, lowerLanding.above(4), roof);
             put(placements, upperLanding.above(4), roof);
         }
-        for (int step = 1; step <= rise; step++) {
-            int x = centerX - 8 + Math.min(15, step - 1);
+        for (int step = 0; step <= rise; step++) {
+            int x = centerX - 9 + Math.min(16, step);
             int y = lowY + step;
             for (int width = 0; width < 2; width++) {
                 BlockPos stair = new BlockPos(x, y, centerZ - 1 + width);
@@ -1461,7 +1457,7 @@ public final class ArchiveRoomPlacer {
                 put(placements, stair, stairState);
                 put(placements, stair.above(4), roof);
             }
-            for (int head = 1; head <= 3; head++) {
+            for (int head = 0; head <= 3; head++) {
                 put(placements, new BlockPos(x, y + head, centerZ - 2), wall);
                 put(placements, new BlockPos(x, y + head, centerZ + 1), wall);
             }

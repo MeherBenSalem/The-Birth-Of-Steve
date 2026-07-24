@@ -609,8 +609,8 @@ public final class ModGameTests {
                 int highY = Math.max(first.minY(), second.minY());
                 int lowY = Math.min(first.minY(), second.minY());
                 int rise = highY - lowY;
-                for (int step = 1; step <= rise; step++) {
-                    int stairX = centerX - 8 + Math.min(15, step - 1);
+                for (int step = 0; step <= rise; step++) {
+                    int stairX = centerX - 9 + Math.min(16, step);
                     int stairY = lowY + step;
                     for (int width = 0; width < 2; width++) {
                         BlockPos stair = new BlockPos(stairX, stairY, centerZ - 1 + width);
@@ -630,19 +630,22 @@ public final class ModGameTests {
                                 "Vertical archive stair is exposed instead of roofed at " + stair);
                     }
                     helper.assertTrue(
-                            states.containsKey(new BlockPos(stairX, stairY + 2, centerZ - 2))
-                                    && states.containsKey(new BlockPos(stairX, stairY + 2, centerZ + 1)),
-                            "Vertical archive stair is not enclosed by full walls at step " + step);
+                            states.containsKey(new BlockPos(stairX, stairY, centerZ - 2))
+                                    && states.containsKey(new BlockPos(stairX, stairY, centerZ + 1))
+                                    && states.containsKey(new BlockPos(stairX, stairY + 3, centerZ - 2))
+                                    && states.containsKey(new BlockPos(stairX, stairY + 3, centerZ + 1)),
+                            "Vertical archive stair is not enclosed by four-block walls at step " + step);
                 }
                 for (int width = 0; width < 2; width++) {
                     BlockPos lowerLanding = new BlockPos(centerX - 9, lowY, centerZ - 1 + width);
                     BlockPos upperLanding = new BlockPos(centerX + 8, highY, centerZ - 1 + width);
                     helper.assertTrue(
                             states.containsKey(lowerLanding)
-                                    && states.get(lowerLanding).is(ModBlocks.PHASE_PLATFORM.get())
+                                    && states.get(lowerLanding).is(ModBlocks.ARCHIVE_STAIRS.get())
+                                    && states.get(lowerLanding).getValue(StairBlock.FACING) == Direction.EAST
                                     && states.containsKey(upperLanding)
                                     && states.get(upperLanding).is(ModBlocks.PHASE_PLATFORM.get()),
-                            "Vertical archive stairs do not connect to both floor landings");
+                            "Vertical archive stairs omit the lower stair or upper floor landing");
                     helper.assertTrue(
                             !states.containsKey(lowerLanding.above())
                                     && !states.containsKey(upperLanding.above()),
