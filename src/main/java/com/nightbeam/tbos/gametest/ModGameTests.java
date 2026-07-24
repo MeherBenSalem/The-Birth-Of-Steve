@@ -19,7 +19,9 @@ import com.nightbeam.tbos.blockentity.MemoryLanternBlockEntity;
 import com.nightbeam.tbos.block.ResonantBellBlock;
 import com.nightbeam.tbos.block.FractureCofferBlock;
 import com.nightbeam.tbos.block.MeridianRelayBlock;
+import com.nightbeam.tbos.entity.MemoryLeechEntity;
 import com.nightbeam.tbos.registry.ModBlocks;
+import com.nightbeam.tbos.registry.ModEntities;
 import com.nightbeam.tbos.registry.ModItems;
 import com.nightbeam.tbos.network.payload.SiteSnapshotPayload;
 import com.nightbeam.tbos.run.ArchiveDimensions;
@@ -67,12 +69,16 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -172,6 +178,8 @@ public final class ModGameTests {
             FUNCTIONS.register("archive_encounter_state", () -> ModGameTests::archiveEncounterStatePersistsProgress);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_DUNGEON_CONTRACT =
             FUNCTIONS.register("archive_dungeon_contract", () -> ModGameTests::archiveDungeonContractIsComplete);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MEMORY_LEECH_POUNCE =
+            FUNCTIONS.register("memory_leech_pounce", () -> ModGameTests::memoryLeechPounceSiphonsOnce);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FRACTURE_SHRINE_MIN_HEIGHT =
             FUNCTIONS.register("fracture_shrine_min_height", () -> ModGameTests::fractureShrineClampsToMinHeight);
 
@@ -227,6 +235,7 @@ public final class ModGameTests {
         registerTest(event, "archive_choir_patterns", environment, ARCHIVE_CHOIR_PATTERNS);
         registerTest(event, "archive_encounter_state", environment, ARCHIVE_ENCOUNTER_STATE);
         registerTest(event, "archive_dungeon_contract", environment, ARCHIVE_DUNGEON_CONTRACT, 80);
+        registerTest(event, "memory_leech_pounce", environment, MEMORY_LEECH_POUNCE, 120);
         registerTest(event, "fracture_shrine_min_height", environment, FRACTURE_SHRINE_MIN_HEIGHT);
     }
 
@@ -877,6 +886,46 @@ public final class ModGameTests {
                 .filter(room -> room.category().combat() && room.category() != ArchiveRoomCategory.FINAL_BOSS)
                 .findFirst()
                 .orElseThrow();
+        helper.assertTrue(
+                ArchiveEnemyKind.parse("tbos:memory_leech").orElseThrow() == ArchiveEnemyKind.MEMORY_LEECH
+                        && ArchiveEnemyKind.parse("memory_leech").orElseThrow()
+                                == ArchiveEnemyKind.MEMORY_LEECH,
+                "Memory Leech identifiers were not accepted by encounter config parsing");
+        helper.assertTrue(
+                ArchiveDungeonRules.DEFAULT.enemyPool(ArchiveDungeonRules.FORGOTTEN_LEGION).stream()
+                                .anyMatch(entry -> entry.kind() == ArchiveEnemyKind.MEMORY_LEECH
+                                        && entry.weight() == 2)
+                        && ArchiveDungeonRules.DEFAULT.enemyPool(ArchiveDungeonRules.ELITE_ECHOES).stream()
+                                .anyMatch(entry -> entry.kind() == ArchiveEnemyKind.MEMORY_LEECH
+                                        && entry.weight() == 3),
+                "Memory Leech weights were not present in both built-in encounter pools");
+        helper.assertTrue(
+                java.util.stream.LongStream.range(0L, 256L)
+                                .mapToObj(seed -> ArchiveDungeonRules.DEFAULT.chooseEnemy(
+                                        ArchiveDungeonRules.FORGOTTEN_LEGION,
+                                        net.minecraft.util.RandomSource.create(seed)))
+                                .anyMatch(kind -> kind == ArchiveEnemyKind.MEMORY_LEECH)
+                        && java.util.stream.LongStream.range(0L, 256L)
+                                .mapToObj(seed -> ArchiveDungeonRules.DEFAULT.chooseEnemy(
+                                        ArchiveDungeonRules.ELITE_ECHOES,
+                                        net.minecraft.util.RandomSource.create(seed)))
+                                .anyMatch(kind -> kind == ArchiveEnemyKind.MEMORY_LEECH),
+                "Seeded encounter selection could not choose the Memory Leech");
+        helper.assertTrue(
+                ArchiveEncounterManager.abilitiesFor(ArchiveEnemyKind.MEMORY_LEECH, 10L, false).isEmpty(),
+                "Memory Leech received a tag ability that can interrupt its native pounce");
+        MemoryLeechEntity memoryLeech =
+                ModEntities.MEMORY_LEECH.get().create(helper.getLevel(), EntitySpawnReason.EVENT);
+        helper.assertTrue(memoryLeech != null, "Registered Memory Leech type could not create an entity");
+        helper.assertTrue(
+                memoryLeech.getAttributeValue(Attributes.MAX_HEALTH) == 32.0D
+                        && memoryLeech.getAttributeValue(Attributes.ATTACK_DAMAGE) == 6.0D
+                        && memoryLeech.getAttributeValue(Attributes.MOVEMENT_SPEED) == 0.31D
+                        && memoryLeech.getAttributeValue(Attributes.ARMOR) == 3.0D
+                        && memoryLeech.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) == 0.15D
+                        && memoryLeech.getAttributeValue(Attributes.FOLLOW_RANGE) == 32.0D
+                        && memoryLeech.getPouncePhase() == MemoryLeechEntity.PouncePhase.IDLE,
+                "Memory Leech attributes or initial pounce state did not match its elite profile");
         List<ArchiveEnemyKind> solo = ArchiveEncounterManager.planWave(
                 combat, 12345L, 1, 1, ArchiveDungeonRules.DEFAULT);
         List<ArchiveEnemyKind> party = ArchiveEncounterManager.planWave(
@@ -912,7 +961,8 @@ public final class ModGameTests {
                                         ArchiveEnemyKind.EVOKER,
                                         ArchiveEnemyKind.RAVAGER)
                                 .contains(lesserBossWave.getFirst())
-                        && !lesserBossWave.contains(ArchiveEnemyKind.HOUR_CANTOR),
+                        && !lesserBossWave.contains(ArchiveEnemyKind.HOUR_CANTOR)
+                        && !lesserBossWave.contains(ArchiveEnemyKind.MEMORY_LEECH),
                 "Lesser-boss room did not choose a varied boss below the Hour Cantor tier");
         helper.assertTrue(
                 ArchiveEncounterManager.abilitiesFor(ArchiveEnemyKind.SKELETON, 11L, false)
@@ -940,6 +990,20 @@ public final class ModGameTests {
                                 ArchiveEnemyKind.VINDICATOR, 55L, true)
                         != ArchiveEnemyDropKind.NONE,
                 "A lesser boss was allowed to roll an empty pickup");
+        helper.assertTrue(
+                ArchiveEncounterManager.rollEnemyDrop(
+                                ArchiveEnemyKind.PARALLAX_WRAITH, 0L, false)
+                        == ArchiveEnemyDropKind.KEY
+                        && ArchiveEncounterManager.rollEnemyDrop(
+                                        ArchiveEnemyKind.MERIDIAN_SENTINEL, 12345L, false)
+                                == ArchiveEnemyDropKind.ECHO_HEART
+                        && ArchiveEncounterManager.rollEnemyDrop(
+                                        ArchiveEnemyKind.HOUR_CANTOR, 1L, true)
+                                == ArchiveEnemyDropKind.ECHO_HEART
+                        && ArchiveEncounterManager.rollEnemyDrop(
+                                        ArchiveEnemyKind.RAVAGER, 55L, false)
+                                == ArchiveEnemyDropKind.ECHO_HEART,
+                "Appending the Memory Leech changed deterministic drops for existing enemies");
 
         Identifier selectedLoot = ArchiveLootRoller.selectTable(
                 combat, ArchiveDungeonRules.DEFAULT, net.minecraft.util.RandomSource.create(99L));
@@ -1003,6 +1067,59 @@ public final class ModGameTests {
                         && splitParty.member(secondMemberId).orElseThrow().checkpointRoom() == 2,
                 "Split-party members did not retain independent death/re-entry checkpoints");
         helper.succeed();
+    }
+
+    @SuppressWarnings("removal")
+    private static void memoryLeechPounceSiphonsOnce(GameTestHelper helper) {
+        for (int x = 0; x <= 9; x++) {
+            for (int z = 2; z <= 6; z++) {
+                helper.getLevel().setBlock(
+                        helper.absolutePos(new BlockPos(x, 0, z)),
+                        Blocks.STONE.defaultBlockState(),
+                        3);
+            }
+        }
+
+        var victim = helper.spawn(
+                EntityType.SHEEP,
+                new Vec3(5.5D, 1.0D, 4.5D),
+                EntitySpawnReason.EVENT);
+        victim.setNoAi(true);
+
+        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        Vec3 observerPosition = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
+        observer.snapTo(observerPosition.x, observerPosition.y, observerPosition.z, 90.0F, 0.0F);
+
+        MemoryLeechEntity leech = helper.spawn(
+                ModEntities.MEMORY_LEECH.get(),
+                new Vec3(1.5D, 1.0D, 4.5D),
+                EntitySpawnReason.EVENT);
+        leech.setHealth(20.0F);
+        leech.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0D);
+        leech.setTarget(victim);
+
+        helper.runAfterDelay(75L, () -> {
+            helper.assertTrue(
+                    victim.hasEffect(MobEffects.WEAKNESS),
+                    "Memory Leech pounce did not apply its three-second Weakness effect"
+                            + " [phase=" + leech.getPouncePhase()
+                            + ", cooldown=" + leech.getPounceCooldown()
+                            + ", leech=" + leech.position()
+                            + ", victim=" + victim.position()
+                            + ", distanceSqr=" + leech.distanceToSqr(victim)
+                            + ", onGround=" + leech.onGround()
+                            + ", hasTarget=" + (leech.getTarget() == victim)
+                            + ", lineOfSight=" + leech.getSensing().hasLineOfSight(victim)
+                            + "]");
+            helper.assertTrue(
+                    Math.abs(leech.getHealth() - 24.0F) < 0.01F,
+                    "Memory Leech pounce did not heal exactly four health once");
+            helper.assertTrue(
+                    leech.getPouncePhase() == MemoryLeechEntity.PouncePhase.IDLE
+                            && leech.getPounceCooldown() > 0,
+                    "Memory Leech did not enter its post-pounce cooldown");
+            helper.succeed();
+        });
     }
 
     @SuppressWarnings("removal")

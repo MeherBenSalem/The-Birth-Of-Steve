@@ -2,6 +2,7 @@ package com.nightbeam.tbos.registry;
 
 import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.entity.HourCantorEntity;
+import com.nightbeam.tbos.entity.MemoryLeechEntity;
 import com.nightbeam.tbos.entity.MeridianSentinelEntity;
 import com.nightbeam.tbos.entity.ParallaxWraithEntity;
 import net.minecraft.world.entity.EntityType;
@@ -36,6 +37,18 @@ public final class ModEntities {
                     HourCantorEntity::new,
                     MobCategory.MONSTER,
                     builder -> builder.sized(0.8F, 2.3F).clientTrackingRange(12).updateInterval(2).noLootTable());
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MemoryLeechEntity>> MEMORY_LEECH =
+            ENTITIES.registerEntityType(
+                    "memory_leech",
+                    MemoryLeechEntity::new,
+                    MobCategory.MONSTER,
+                    builder -> builder
+                            .sized(0.9F, 0.7F)
+                            .eyeHeight(0.4F)
+                            .clientTrackingRange(10)
+                            .updateInterval(2)
+                            .noLootTable());
 
     private ModEntities() {
     }
@@ -72,6 +85,16 @@ public final class ModEntities {
                         .add(Attributes.ARMOR, 10.0D)
                         .add(Attributes.KNOCKBACK_RESISTANCE, 0.75D)
                         .add(Attributes.FOLLOW_RANGE, 48.0D)
+                        .build());
+        event.put(
+                MEMORY_LEECH.get(),
+                net.minecraft.world.entity.monster.Monster.createMonsterAttributes()
+                        .add(Attributes.MAX_HEALTH, 32.0D)
+                        .add(Attributes.ATTACK_DAMAGE, 6.0D)
+                        .add(Attributes.MOVEMENT_SPEED, 0.31D)
+                        .add(Attributes.ARMOR, 3.0D)
+                        .add(Attributes.KNOCKBACK_RESISTANCE, 0.15D)
+                        .add(Attributes.FOLLOW_RANGE, 32.0D)
                         .build());
     }
 }

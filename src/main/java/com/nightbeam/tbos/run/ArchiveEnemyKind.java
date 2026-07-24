@@ -17,7 +17,8 @@ public enum ArchiveEnemyKind {
     SILVERFISH("minecraft", "silverfish"),
     VINDICATOR("minecraft", "vindicator"),
     EVOKER("minecraft", "evoker"),
-    RAVAGER("minecraft", "ravager");
+    RAVAGER("minecraft", "ravager"),
+    MEMORY_LEECH(Yesterglass.MOD_ID, "memory_leech");
 
     private final Identifier id;
 

@@ -81,9 +81,9 @@ maps are keyed by run, member, or allocation slot.
 ## Encounters, loot, and modifiers
 
 Encounter composition is drawn from configurable weighted groups containing the
-original Parallax Wraith, Meridian Sentinel, and Hour Cantor plus selected vanilla
-monsters: husks, skeletons, strays, cave spiders, silverfish, vindicators, evokers,
-and ravagers. Selection uses the room's historical group, seed, wave, size,
+original Parallax Wraith, Meridian Sentinel, Memory Leech, and Hour Cantor plus
+selected vanilla monsters: husks, skeletons, strays, cave spiders, silverfish,
+vindicators, evokers, and ravagers. Selection uses the room's historical group, seed, wave, size,
 difficulty, and number of active players in that room. Health, damage, and enemy
 count have separate depth/player scaling. Spawn markers must be in-room,
 air-filled, floor-supported, and at least five blocks from every party member.
@@ -97,7 +97,8 @@ combine weighted enemies with timed marker hazards.
 
 Each spawn also receives a deterministic mutation from its enemy kind and seed.
 Skeleton-family enemies telegraph ranged Echo Bolts; heavy guardians release
-delayed Meridian shockwaves; Parallax enemies blink behind valid targets;
+delayed Meridian shockwaves; Parallax enemies blink behind valid targets; Memory
+Leeches telegraph siphoning pounces that weaken victims and restore their health;
 lesser wardens project resistance auras; and spider/silverfish splitters create
 exactly one bounded generation of children. Clear particles and sound cues precede
 the damaging effects. Enemy deaths can release Echo Heart or Soul Heart potions,

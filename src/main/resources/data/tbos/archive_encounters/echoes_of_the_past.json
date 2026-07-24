@@ -15,11 +15,13 @@
       { "enemy": "minecraft:skeleton", "weight": 3 },
       { "enemy": "minecraft:stray", "weight": 2 },
       { "enemy": "minecraft:cave_spider", "weight": 2 },
-      { "enemy": "minecraft:silverfish", "weight": 2 }
+      { "enemy": "minecraft:silverfish", "weight": 2 },
+      { "enemy": "tbos:memory_leech", "weight": 2 }
     ],
     "tbos:encounters/elite_echoes": [
       { "enemy": "tbos:parallax_wraith", "weight": 2 },
       { "enemy": "tbos:meridian_sentinel", "weight": 4 },
+      { "enemy": "tbos:memory_leech", "weight": 3 },
       { "enemy": "minecraft:stray", "weight": 2 },
       { "enemy": "minecraft:vindicator", "weight": 3 },
       { "enemy": "minecraft:evoker", "weight": 1 }

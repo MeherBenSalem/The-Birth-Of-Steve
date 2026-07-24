@@ -984,12 +984,15 @@ public final class ArchiveEncounterManager {
                     ArchiveEnemyAbility.ECHO_BOLT,
                     ArchiveEnemyAbility.PARALLAX_BLINK,
                     ArchiveEnemyAbility.WARD_AURA);
+            case MEMORY_LEECH -> EnumSet.noneOf(ArchiveEnemyAbility.class);
             case SKELETON, STRAY, EVOKER -> EnumSet.of(ArchiveEnemyAbility.ECHO_BOLT);
             case CAVE_SPIDER, SILVERFISH -> EnumSet.of(ArchiveEnemyAbility.SPLITTER);
         };
         // A deterministic secondary mutation keeps repeated runs varied while
         // preserving exact replayability from the encounter seed.
-        if (kind != ArchiveEnemyKind.HOUR_CANTOR && Math.floorMod(spawnSeed, 5L) == 0L) {
+        if (kind != ArchiveEnemyKind.HOUR_CANTOR
+                && kind != ArchiveEnemyKind.MEMORY_LEECH
+                && Math.floorMod(spawnSeed, 5L) == 0L) {
             abilities.add(ArchiveEnemyAbility.PARALLAX_BLINK);
         }
         if (lesserBoss) {
@@ -1657,6 +1660,7 @@ public final class ArchiveEncounterManager {
             case VINDICATOR -> EntityType.VINDICATOR;
             case EVOKER -> EntityType.EVOKER;
             case RAVAGER -> EntityType.RAVAGER;
+            case MEMORY_LEECH -> ModEntities.MEMORY_LEECH.get();
         };
     }
 
