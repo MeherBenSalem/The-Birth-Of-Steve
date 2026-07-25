@@ -19,6 +19,7 @@ import com.nightbeam.tbos.blockentity.MemoryLanternBlockEntity;
 import com.nightbeam.tbos.block.ResonantBellBlock;
 import com.nightbeam.tbos.block.FractureCofferBlock;
 import com.nightbeam.tbos.block.MeridianRelayBlock;
+import com.nightbeam.tbos.entity.LenswardEntity;
 import com.nightbeam.tbos.entity.MemoryLeechEntity;
 import com.nightbeam.tbos.registry.ModBlocks;
 import com.nightbeam.tbos.registry.ModEntities;
@@ -182,6 +183,14 @@ public final class ModGameTests {
             FUNCTIONS.register("memory_leech_pounce", () -> ModGameTests::memoryLeechPounceSiphonsOnce);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FRACTURE_SHRINE_MIN_HEIGHT =
             FUNCTIONS.register("fracture_shrine_min_height", () -> ModGameTests::fractureShrineClampsToMinHeight);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LENSWARD_CONTRACT =
+            FUNCTIONS.register("lensward_contract", () -> ModGameTests::lenswardContractIsComplete);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LENSWARD_BEAM =
+            FUNCTIONS.register("lensward_beam", () -> ModGameTests::lenswardBeamStrikesOnce);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LENSWARD_LINE_OF_SIGHT =
+            FUNCTIONS.register("lensward_line_of_sight", () -> ModGameTests::lenswardBeamAbortsWithoutLineOfSight);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LENSWARD_TETHER =
+            FUNCTIONS.register("lensward_tether", () -> ModGameTests::lenswardHoldsItsWard);
 
     private ModGameTests() {
     }
@@ -237,6 +246,10 @@ public final class ModGameTests {
         registerTest(event, "archive_dungeon_contract", environment, ARCHIVE_DUNGEON_CONTRACT, 80);
         registerTest(event, "memory_leech_pounce", environment, MEMORY_LEECH_POUNCE, 120);
         registerTest(event, "fracture_shrine_min_height", environment, FRACTURE_SHRINE_MIN_HEIGHT);
+        registerTest(event, "lensward_contract", environment, LENSWARD_CONTRACT);
+        registerTest(event, "lensward_beam", environment, LENSWARD_BEAM, 300);
+        registerTest(event, "lensward_line_of_sight", environment, LENSWARD_LINE_OF_SIGHT, 300);
+        registerTest(event, "lensward_tether", environment, LENSWARD_TETHER, 300);
     }
 
     private static void registerTest(
@@ -1120,6 +1133,217 @@ public final class ModGameTests {
                     "Memory Leech did not enter its post-pounce cooldown");
             helper.succeed();
         });
+    }
+
+    private static void lenswardContractIsComplete(GameTestHelper helper) {
+        helper.assertTrue(
+                ArchiveEnemyKind.parse("tbos:lensward").orElseThrow() == ArchiveEnemyKind.LENSWARD
+                        && ArchiveEnemyKind.parse("lensward").orElseThrow() == ArchiveEnemyKind.LENSWARD,
+                "Lensward identifiers were not accepted by encounter config parsing");
+        helper.assertTrue(
+                ArchiveEnemyKind.values()[ArchiveEnemyKind.values().length - 1] == ArchiveEnemyKind.LENSWARD,
+                "Lensward must stay last in ArchiveEnemyKind; rollEnemyDrop seeds on ordinal()");
+        helper.assertTrue(
+                ArchiveDungeonRules.DEFAULT.enemyPool(ArchiveDungeonRules.FORGOTTEN_LEGION).stream()
+                                .anyMatch(entry -> entry.kind() == ArchiveEnemyKind.LENSWARD
+                                        && entry.weight() == 1)
+                        && ArchiveDungeonRules.DEFAULT.enemyPool(ArchiveDungeonRules.ELITE_ECHOES).stream()
+                                .anyMatch(entry -> entry.kind() == ArchiveEnemyKind.LENSWARD
+                                        && entry.weight() == 3),
+                "Lensward weights were not present in both built-in encounter pools");
+        helper.assertTrue(
+                ArchiveDungeonRules.DEFAULT.enemyPool(ArchiveDungeonRules.RUINED_GUARDIAN).stream()
+                                .noneMatch(entry -> entry.kind() == ArchiveEnemyKind.LENSWARD)
+                        && ArchiveDungeonRules.DEFAULT.enemyPool(ArchiveDungeonRules.HOUR_CANTOR_POOL).stream()
+                                .noneMatch(entry -> entry.kind() == ArchiveEnemyKind.LENSWARD),
+                "Lensward leaked into a lesser-boss or final-boss pool; it is not a boss");
+        helper.assertTrue(
+                java.util.stream.LongStream.range(0L, 256L)
+                        .mapToObj(seed -> ArchiveDungeonRules.DEFAULT.chooseEnemy(
+                                ArchiveDungeonRules.ELITE_ECHOES,
+                                net.minecraft.util.RandomSource.create(seed)))
+                        .anyMatch(kind -> kind == ArchiveEnemyKind.LENSWARD),
+                "Seeded encounter selection could not choose the Lensward");
+        helper.assertTrue(
+                ArchiveEncounterManager.abilitiesFor(ArchiveEnemyKind.LENSWARD, 10L, false).isEmpty()
+                        && java.util.stream.LongStream.range(0L, 64L)
+                                .noneMatch(seed -> ArchiveEncounterManager
+                                        .abilitiesFor(ArchiveEnemyKind.LENSWARD, seed, false)
+                                        .contains(ArchiveEnemyAbility.PARALLAX_BLINK)),
+                "Lensward received a mutation that would blink it off the anchor it guards");
+
+        LenswardEntity lensward =
+                ModEntities.LENSWARD.get().create(helper.getLevel(), EntitySpawnReason.EVENT);
+        helper.assertTrue(lensward != null, "Registered Lensward type could not create an entity");
+        helper.assertTrue(
+                lensward.getAttributeValue(Attributes.MAX_HEALTH) == 28.0D
+                        && lensward.getAttributeValue(Attributes.ATTACK_DAMAGE) == 5.0D
+                        && lensward.getAttributeValue(Attributes.MOVEMENT_SPEED) == 0.24D
+                        && lensward.getAttributeValue(Attributes.ARMOR) == 6.0D
+                        && lensward.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) == 0.6D
+                        && lensward.getAttributeValue(Attributes.FOLLOW_RANGE) == 24.0D
+                        && lensward.getBeamPhase() == LenswardEntity.BeamPhase.IDLE,
+                "Lensward attributes or initial beam state did not match its guardian profile");
+        helper.assertTrue(
+                lensward.isNoGravity(),
+                "Lensward must hover; gravity would drop it off its ward");
+        helper.succeed();
+    }
+
+    private static void lenswardFloor(GameTestHelper helper, int maxX) {
+        // Force-load chunks so spawned entities tick; without this they sit at tickCount==0.
+        BlockPos min = helper.absolutePos(new BlockPos(-2, 0, 0));
+        BlockPos max = helper.absolutePos(new BlockPos(maxX + 2, 0, 8));
+        for (int chunkX = Math.min(min.getX(), max.getX()) >> 4;
+                chunkX <= Math.max(min.getX(), max.getX()) >> 4;
+                chunkX++) {
+            for (int chunkZ = Math.min(min.getZ(), max.getZ()) >> 4;
+                    chunkZ <= Math.max(min.getZ(), max.getZ()) >> 4;
+                    chunkZ++) {
+                helper.getLevel().setChunkForced(chunkX, chunkZ, true);
+            }
+        }
+        for (int x = 0; x <= maxX; x++) {
+            for (int z = 2; z <= 6; z++) {
+                helper.getLevel().setBlock(
+                        helper.absolutePos(new BlockPos(x, 0, z)),
+                        Blocks.STONE.defaultBlockState(),
+                        3);
+            }
+        }
+    }
+
+    @SuppressWarnings("removal")
+    private static void lenswardBeamStrikesOnce(GameTestHelper helper) {
+        lenswardFloor(helper, 11);
+        var victim = helper.spawn(
+                EntityType.SHEEP, new Vec3(9.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        victim.setNoAi(true);
+        float startHealth = victim.getHealth();
+
+        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        Vec3 observerPosition = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
+        observer.snapTo(observerPosition.x, observerPosition.y, observerPosition.z, 90.0F, 0.0F);
+
+        LenswardEntity lensward = helper.spawn(
+                ModEntities.LENSWARD.get(), new Vec3(2.5D, 1.5D, 4.5D), EntitySpawnReason.EVENT);
+        lensward.setTarget(victim);
+
+        float expected = startHealth - 6.0F;
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(
+                        Math.abs(victim.getHealth() - expected) < 0.01F,
+                        "Lensward beam never dealt exactly one strike of damage"
+                                + " [phase=" + lensward.getBeamPhase()
+                                + ", cooldown=" + lensward.getBeamCooldown()
+                                + ", ticks=" + lensward.tickCount
+                                + ", alive=" + lensward.isAlive()
+                                + ", health=" + victim.getHealth() + "/" + startHealth
+                                + ", hasTarget=" + (lensward.getTarget() == victim)
+                                + ", lineOfSight=" + lensward.getSensing().hasLineOfSight(victim)
+                                + "]"))
+                .thenIdle(30)
+                .thenExecute(() -> {
+                    helper.assertTrue(
+                            victim.isAlive() && Math.abs(victim.getHealth() - expected) < 0.01F,
+                            "Lensward struck more than once inside a single cooldown");
+                    helper.assertTrue(
+                            lensward.getBeamPhase() == LenswardEntity.BeamPhase.IDLE
+                                    && lensward.getBeamCooldown() > 0,
+                            "Lensward did not enter its post-beam cooldown");
+                })
+                .thenSucceed();
+    }
+
+    @SuppressWarnings("removal")
+    private static void lenswardBeamAbortsWithoutLineOfSight(GameTestHelper helper) {
+        lenswardFloor(helper, 11);
+        var victim = helper.spawn(
+                EntityType.SHEEP, new Vec3(9.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        victim.setNoAi(true);
+        float startHealth = victim.getHealth();
+
+        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        Vec3 observerPosition = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
+        observer.snapTo(observerPosition.x, observerPosition.y, observerPosition.z, 90.0F, 0.0F);
+
+        LenswardEntity lensward = helper.spawn(
+                ModEntities.LENSWARD.get(), new Vec3(2.5D, 1.5D, 4.5D), EntitySpawnReason.EVENT);
+        lensward.setTarget(victim);
+
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(
+                        lensward.getBeamPhase() == LenswardEntity.BeamPhase.CHARGING,
+                        "Lensward never began charging, so the cancel was never exercised"
+                                + " [phase=" + lensward.getBeamPhase()
+                                + ", cooldown=" + lensward.getBeamCooldown()
+                                + ", ticks=" + lensward.tickCount
+                                + ", alive=" + lensward.isAlive()
+                                + "]"))
+                .thenExecute(() -> {
+                    for (int y = 1; y <= 4; y++) {
+                        for (int z = 2; z <= 6; z++) {
+                            helper.getLevel().setBlock(
+                                    helper.absolutePos(new BlockPos(6, y, z)),
+                                    Blocks.STONE.defaultBlockState(),
+                                    3);
+                        }
+                    }
+                })
+                .thenIdle(40)
+                .thenExecute(() -> {
+                    helper.assertTrue(
+                            victim.getHealth() == startHealth,
+                            "Breaking line of sight during the charge did not cancel the Lensward beam"
+                                    + " [phase=" + lensward.getBeamPhase()
+                                    + ", cooldown=" + lensward.getBeamCooldown()
+                                    + ", health=" + victim.getHealth() + "/" + startHealth
+                                    + ", lineOfSight=" + lensward.getSensing().hasLineOfSight(victim)
+                                    + "]");
+                    helper.assertTrue(
+                            lensward.getBeamPhase() == LenswardEntity.BeamPhase.IDLE,
+                            "Lensward stayed in a beam phase after losing line of sight");
+                })
+                .thenSucceed();
+    }
+
+    @SuppressWarnings("removal")
+    private static void lenswardHoldsItsWard(GameTestHelper helper) {
+        lenswardFloor(helper, 20);
+
+        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        Vec3 observerPosition = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
+        observer.snapTo(observerPosition.x, observerPosition.y, observerPosition.z, 90.0F, 0.0F);
+
+        BlockPos anchor = helper.absolutePos(new BlockPos(5, 1, 4));
+        LenswardEntity lensward = helper.spawn(
+                ModEntities.LENSWARD.get(), new Vec3(5.5D, 1.5D, 4.5D), EntitySpawnReason.EVENT);
+        lensward.setAnchor(anchor);
+
+        var near = helper.spawn(EntityType.SHEEP, new Vec3(8.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        near.setNoAi(true);
+        var far = helper.spawn(EntityType.SHEEP, new Vec3(19.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        far.setNoAi(true);
+
+        helper.assertTrue(
+                lensward.withinWard(near),
+                "Lensward rejected a target standing three blocks from its anchor");
+        helper.assertTrue(
+                !lensward.withinWard(far),
+                "Lensward accepted a target fourteen blocks outside its ward radius");
+
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(
+                        lensward.tickCount > 40,
+                        "Lensward never ticked, so its station-keeping was never exercised"))
+                .thenExecute(() -> {
+                    double drift = Math.sqrt(lensward.distanceToSqr(Vec3.atCenterOf(anchor)));
+                    helper.assertTrue(
+                            drift <= LenswardEntity.LEASH_RADIUS,
+                            "Lensward drifted outside its own ward radius while idle"
+                                    + " [drift=" + drift + ", radius=" + LenswardEntity.LEASH_RADIUS + "]");
+                })
+                .thenSucceed();
     }
 
     @SuppressWarnings("removal")

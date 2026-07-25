@@ -54,14 +54,16 @@ public record ArchiveDungeonRules(
                             new EnemyWeight(ArchiveEnemyKind.CAVE_SPIDER, 2),
                             new EnemyWeight(ArchiveEnemyKind.SILVERFISH, 2),
                             new EnemyWeight(ArchiveEnemyKind.MERIDIAN_SENTINEL, 1),
-                            new EnemyWeight(ArchiveEnemyKind.MEMORY_LEECH, 2)),
+                            new EnemyWeight(ArchiveEnemyKind.MEMORY_LEECH, 2),
+                            new EnemyWeight(ArchiveEnemyKind.LENSWARD, 1)),
                     ELITE_ECHOES, List.of(
                             new EnemyWeight(ArchiveEnemyKind.PARALLAX_WRAITH, 2),
                             new EnemyWeight(ArchiveEnemyKind.MERIDIAN_SENTINEL, 4),
                             new EnemyWeight(ArchiveEnemyKind.MEMORY_LEECH, 3),
                             new EnemyWeight(ArchiveEnemyKind.STRAY, 2),
                             new EnemyWeight(ArchiveEnemyKind.VINDICATOR, 3),
-                            new EnemyWeight(ArchiveEnemyKind.EVOKER, 1)),
+                            new EnemyWeight(ArchiveEnemyKind.EVOKER, 1),
+                            new EnemyWeight(ArchiveEnemyKind.LENSWARD, 3)),
                     RUINED_GUARDIAN, List.of(
                             new EnemyWeight(ArchiveEnemyKind.MERIDIAN_SENTINEL, 4),
                             new EnemyWeight(ArchiveEnemyKind.VINDICATOR, 3),

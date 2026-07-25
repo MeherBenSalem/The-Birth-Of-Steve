@@ -2,6 +2,7 @@ package com.nightbeam.tbos.registry;
 
 import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.entity.HourCantorEntity;
+import com.nightbeam.tbos.entity.LenswardEntity;
 import com.nightbeam.tbos.entity.MemoryLeechEntity;
 import com.nightbeam.tbos.entity.MeridianSentinelEntity;
 import com.nightbeam.tbos.entity.ParallaxWraithEntity;
@@ -46,6 +47,18 @@ public final class ModEntities {
                     builder -> builder
                             .sized(0.9F, 0.7F)
                             .eyeHeight(0.4F)
+                            .clientTrackingRange(10)
+                            .updateInterval(2)
+                            .noLootTable());
+
+    public static final DeferredHolder<EntityType<?>, EntityType<LenswardEntity>> LENSWARD =
+            ENTITIES.registerEntityType(
+                    "lensward",
+                    LenswardEntity::new,
+                    MobCategory.MONSTER,
+                    builder -> builder
+                            .sized(0.9F, 1.0F)
+                            .eyeHeight(0.7F)
                             .clientTrackingRange(10)
                             .updateInterval(2)
                             .noLootTable());
@@ -95,6 +108,16 @@ public final class ModEntities {
                         .add(Attributes.ARMOR, 3.0D)
                         .add(Attributes.KNOCKBACK_RESISTANCE, 0.15D)
                         .add(Attributes.FOLLOW_RANGE, 32.0D)
+                        .build());
+        event.put(
+                LENSWARD.get(),
+                net.minecraft.world.entity.monster.Monster.createMonsterAttributes()
+                        .add(Attributes.MAX_HEALTH, 28.0D)
+                        .add(Attributes.ATTACK_DAMAGE, 5.0D)
+                        .add(Attributes.MOVEMENT_SPEED, 0.24D)
+                        .add(Attributes.ARMOR, 6.0D)
+                        .add(Attributes.KNOCKBACK_RESISTANCE, 0.6D)
+                        .add(Attributes.FOLLOW_RANGE, 24.0D)
                         .build());
     }
 }

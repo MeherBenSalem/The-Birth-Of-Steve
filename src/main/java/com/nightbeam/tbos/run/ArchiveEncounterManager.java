@@ -3,6 +3,7 @@ package com.nightbeam.tbos.run;
 import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.block.AlignmentDialBlock;
 import com.nightbeam.tbos.config.YesterglassConfig;
+import com.nightbeam.tbos.entity.LenswardEntity;
 import com.nightbeam.tbos.network.payload.ArchivePuzzlePayload;
 import com.nightbeam.tbos.registry.ModBlocks;
 import com.nightbeam.tbos.registry.ModEntities;
@@ -908,6 +909,9 @@ public final class ArchiveEncounterManager {
             mob.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 60 * 30, 0, false, true));
         }
         mob.snapTo(position, (float) Math.floorMod(spawnSeed, 360L), 0.0F);
+        if (mob instanceof LenswardEntity lensward) {
+            lensward.setAnchor(position);
+        }
         mob.setPersistenceRequired();
         mob.setCustomName(lesserBoss
                 ? Component.translatable("entity.tbos.lesser_boss." + kind.name().toLowerCase(java.util.Locale.ROOT))
@@ -984,14 +988,13 @@ public final class ArchiveEncounterManager {
                     ArchiveEnemyAbility.ECHO_BOLT,
                     ArchiveEnemyAbility.PARALLAX_BLINK,
                     ArchiveEnemyAbility.WARD_AURA);
-            case MEMORY_LEECH -> EnumSet.noneOf(ArchiveEnemyAbility.class);
+            case MEMORY_LEECH, LENSWARD -> EnumSet.noneOf(ArchiveEnemyAbility.class);
             case SKELETON, STRAY, EVOKER -> EnumSet.of(ArchiveEnemyAbility.ECHO_BOLT);
             case CAVE_SPIDER, SILVERFISH -> EnumSet.of(ArchiveEnemyAbility.SPLITTER);
         };
-        // A deterministic secondary mutation keeps repeated runs varied while
-        // preserving exact replayability from the encounter seed.
         if (kind != ArchiveEnemyKind.HOUR_CANTOR
                 && kind != ArchiveEnemyKind.MEMORY_LEECH
+                && kind != ArchiveEnemyKind.LENSWARD
                 && Math.floorMod(spawnSeed, 5L) == 0L) {
             abilities.add(ArchiveEnemyAbility.PARALLAX_BLINK);
         }
@@ -1661,6 +1664,7 @@ public final class ArchiveEncounterManager {
             case EVOKER -> EntityType.EVOKER;
             case RAVAGER -> EntityType.RAVAGER;
             case MEMORY_LEECH -> ModEntities.MEMORY_LEECH.get();
+            case LENSWARD -> ModEntities.LENSWARD.get();
         };
     }
 

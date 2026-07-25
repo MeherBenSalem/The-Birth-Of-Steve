@@ -5,6 +5,7 @@ import com.nightbeam.tbos.network.payload.ArchiveQuestPayload;
 import com.nightbeam.tbos.run.ArchiveDimensions;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import java.util.UUID;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
@@ -15,20 +16,37 @@ public final class ArchiveQuestHud {
     private static ArchiveQuestPayload progress;
     private static long receivedAtNanos;
     private static long completionStartedNanos = Long.MIN_VALUE;
+    private static boolean celebrating;
+    private static UUID retiredRun;
 
     private ArchiveQuestHud() {
     }
 
     public static void accept(ArchiveQuestPayload payload) {
         long now = System.nanoTime();
-        if (progress != null
-                && progress.runId().equals(payload.runId())
-                && !progress.complete()
-                && payload.complete()) {
-            completionStartedNanos = now;
+        receivedAtNanos = now;
+        if (payload.runId().equals(retiredRun)) {
+            dismiss();
+            return;
+        }
+        boolean sameRun = progress != null && progress.runId().equals(payload.runId());
+        if (payload.complete()) {
+            if (!sameRun) {
+                retiredRun = payload.runId();
+                dismiss();
+                return;
+            }
+            if (!progress.complete()) {
+                completionStartedNanos = now;
+                celebrating = true;
+            }
         }
         progress = payload;
-        receivedAtNanos = now;
+    }
+
+    private static void dismiss() {
+        progress = null;
+        celebrating = false;
     }
 
     public static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
@@ -39,7 +57,14 @@ public final class ArchiveQuestHud {
                 || minecraft.level == null
                 || !minecraft.level.dimension().equals(ArchiveDimensions.FRACTURED_ARCHIVE)
                 || now - receivedAtNanos > STALE_NANOS
-                || minecraft.options.hideGui) {
+                || minecraft.options.hideGui
+                || ModKeyMappings.objectivesHidden()) {
+            return;
+        }
+        if (progress.complete()
+                && (!celebrating || now - completionStartedNanos >= PULSE_NANOS)) {
+            retiredRun = progress.runId();
+            dismiss();
             return;
         }
 

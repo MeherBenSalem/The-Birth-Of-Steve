@@ -81,12 +81,19 @@ maps are keyed by run, member, or allocation slot.
 ## Encounters, loot, and modifiers
 
 Encounter composition is drawn from configurable weighted groups containing the
-original Parallax Wraith, Meridian Sentinel, Memory Leech, and Hour Cantor plus
-selected vanilla monsters: husks, skeletons, strays, cave spiders, silverfish,
-vindicators, evokers, and ravagers. Selection uses the room's historical group, seed, wave, size,
-difficulty, and number of active players in that room. Health, damage, and enemy
-count have separate depth/player scaling. Spawn markers must be in-room,
-air-filled, floor-supported, and at least five blocks from every party member.
+original Parallax Wraith, Meridian Sentinel, Memory Leech, Lensward, and Hour
+Cantor plus selected vanilla monsters: husks, skeletons, strays, cave spiders,
+silverfish, vindicators, evokers, and ravagers. Selection uses the room's
+historical group, seed, wave, size, difficulty, and number of active players in
+that room. Health, damage, and enemy count have separate depth/player scaling.
+Spawn markers must be in-room, air-filled, floor-supported, and at least five
+blocks from every party member.
+
+The Lensward is the one stationary threat. It hovers, wards the marker it spawned
+on, engages only within ten blocks of that anchor, and returns rather than
+pursuing. Its focused beam telegraphs for thirty ticks and is cancelled outright
+if the target breaks line of sight before it fires, so room geometry is a
+defence. It never appears in lesser-boss or final-boss pools.
 
 Skirmishes, hunts, guardians, puzzle waves, ambush-style entry waves, multi-wave
 rooms, lesser wardens, the final boss, and trap hazards share the same durable
@@ -100,7 +107,9 @@ Skeleton-family enemies telegraph ranged Echo Bolts; heavy guardians release
 delayed Meridian shockwaves; Parallax enemies blink behind valid targets; Memory
 Leeches telegraph siphoning pounces that weaken victims and restore their health;
 lesser wardens project resistance auras; and spider/silverfish splitters create
-exactly one bounded generation of children. Clear particles and sound cues precede
+exactly one bounded generation of children. Memory Leeches and Lenswards carry no
+tag mutations at all, because both own native attack logic a blink would
+interrupt. Clear particles and sound cues precede
 the damaging effects. Enemy deaths can release Echo Heart or Soul Heart potions,
 Memory Coins, Archive Keys, Ash Bombs, or Soul Charges; lesser wardens always
 release a pickup.

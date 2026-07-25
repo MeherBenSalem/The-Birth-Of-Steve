@@ -5,6 +5,9 @@ import com.nightbeam.tbos.network.payload.ArchivePuzzlePayload;
 import com.nightbeam.tbos.run.ArchiveDimensions;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
@@ -13,34 +16,52 @@ public final class ArchivePuzzleHud {
     private static final long STALE_NANOS = 2_000_000_000L;
     private static final long FEEDBACK_NANOS = 900_000_000L;
     private static final long COMPLETE_NANOS = 2_400_000_000L;
+    private static final Set<Integer> RETIRED = new HashSet<>();
+    private static UUID trackedRun;
     private static ArchivePuzzlePayload puzzle;
     private static long receivedAtNanos;
     private static long failureStartedNanos = Long.MIN_VALUE;
     private static long completionStartedNanos = Long.MIN_VALUE;
+    private static boolean celebrating;
 
     private ArchivePuzzleHud() {
     }
 
     public static void accept(ArchivePuzzlePayload payload) {
         long now = System.nanoTime();
-        if (payload.kind() == ArchivePuzzlePayload.PuzzleKind.NONE) {
-            puzzle = null;
-            receivedAtNanos = now;
+        receivedAtNanos = now;
+        if (!payload.runId().equals(trackedRun)) {
+            trackedRun = payload.runId();
+            RETIRED.clear();
+        }
+        if (payload.kind() == ArchivePuzzlePayload.PuzzleKind.NONE
+                || RETIRED.contains(payload.roomIndex())) {
+            dismiss();
             return;
         }
-        if (puzzle != null
+        boolean sameCard = puzzle != null
                 && puzzle.runId().equals(payload.runId())
-                && puzzle.roomIndex() == payload.roomIndex()) {
-            if (payload.failures() > puzzle.failures()) {
-                failureStartedNanos = now;
+                && puzzle.roomIndex() == payload.roomIndex();
+        if (payload.state() == ArchivePuzzlePayload.PuzzleState.COMPLETE) {
+            if (!sameCard) {
+                RETIRED.add(payload.roomIndex());
+                dismiss();
+                return;
             }
-            if (puzzle.state() != ArchivePuzzlePayload.PuzzleState.COMPLETE
-                    && payload.state() == ArchivePuzzlePayload.PuzzleState.COMPLETE) {
+            if (puzzle.state() != ArchivePuzzlePayload.PuzzleState.COMPLETE) {
                 completionStartedNanos = now;
+                celebrating = true;
             }
         }
+        if (sameCard && payload.failures() > puzzle.failures()) {
+            failureStartedNanos = now;
+        }
         puzzle = payload;
-        receivedAtNanos = now;
+    }
+
+    private static void dismiss() {
+        puzzle = null;
+        celebrating = false;
     }
 
     public static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
@@ -51,7 +72,14 @@ public final class ArchivePuzzleHud {
                 || minecraft.level == null
                 || !minecraft.level.dimension().equals(ArchiveDimensions.FRACTURED_ARCHIVE)
                 || now - receivedAtNanos > STALE_NANOS
-                || minecraft.options.hideGui) {
+                || minecraft.options.hideGui
+                || ModKeyMappings.objectivesHidden()) {
+            return;
+        }
+        if (puzzle.state() == ArchivePuzzlePayload.PuzzleState.COMPLETE
+                && (!celebrating || now - completionStartedNanos >= COMPLETE_NANOS)) {
+            RETIRED.add(puzzle.roomIndex());
+            dismiss();
             return;
         }
 

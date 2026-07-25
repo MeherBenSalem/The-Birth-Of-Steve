@@ -18,7 +18,8 @@ public enum ArchiveEnemyKind {
     VINDICATOR("minecraft", "vindicator"),
     EVOKER("minecraft", "evoker"),
     RAVAGER("minecraft", "ravager"),
-    MEMORY_LEECH(Yesterglass.MOD_ID, "memory_leech");
+    MEMORY_LEECH(Yesterglass.MOD_ID, "memory_leech"),
+    LENSWARD(Yesterglass.MOD_ID, "lensward");
 
     private final Identifier id;
 

@@ -6,6 +6,7 @@ import com.nightbeam.tbos.registry.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
@@ -47,6 +48,17 @@ public final class ClientEvents {
     }
 
     public static void onClientTick(ClientTickEvent.Post event) {
-        ClientTransitionTracker.tick(Minecraft.getInstance());
+        Minecraft minecraft = Minecraft.getInstance();
+        ClientTransitionTracker.tick(minecraft);
+        while (ModKeyMappings.TOGGLE_OBJECTIVES.consumeClick()) {
+            boolean hidden = ModKeyMappings.toggleObjectives();
+            if (minecraft.gui != null) {
+                minecraft.gui.setOverlayMessage(
+                        Component.translatable(hidden
+                                ? "message.tbos.objectives.hidden"
+                                : "message.tbos.objectives.shown"),
+                        false);
+            }
+        }
     }
 }

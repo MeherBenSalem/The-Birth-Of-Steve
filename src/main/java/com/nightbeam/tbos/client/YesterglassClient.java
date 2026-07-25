@@ -4,6 +4,8 @@ import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.config.YesterglassClientConfig;
 import com.nightbeam.tbos.client.render.MemoryLanternRenderer;
 import com.nightbeam.tbos.client.render.ArchiveZombieRenderer;
+import com.nightbeam.tbos.client.render.LenswardModel;
+import com.nightbeam.tbos.client.render.LenswardRenderer;
 import com.nightbeam.tbos.client.render.MemoryLeechModel;
 import com.nightbeam.tbos.client.render.MemoryLeechRenderer;
 import com.nightbeam.tbos.registry.ModBlockEntities;
@@ -24,6 +26,7 @@ public final class YesterglassClient {
     public YesterglassClient(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, YesterglassClientConfig.SPEC);
         modBus.addListener(ClientNetwork::register);
+        modBus.addListener(ModKeyMappings::register);
         modBus.addListener(YesterglassClient::registerLayerDefinitions);
         modBus.addListener(YesterglassClient::registerRenderers);
         modBus.addListener(YesterglassClient::registerGuiLayers);
@@ -45,6 +48,7 @@ public final class YesterglassClient {
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.MEMORY_LANTERN.get(), MemoryLanternRenderer::new);
         event.registerEntityRenderer(ModEntities.MEMORY_LEECH.get(), MemoryLeechRenderer::new);
+        event.registerEntityRenderer(ModEntities.LENSWARD.get(), LenswardRenderer::new);
         event.registerEntityRenderer(
                 ModEntities.PARALLAX_WRAITH.get(),
                 context -> new ArchiveZombieRenderer<>(context, texture("parallax_wraith"), 0.45F));
@@ -58,6 +62,7 @@ public final class YesterglassClient {
 
     private static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(MemoryLeechModel.MODEL_LAYER, MemoryLeechModel::createBodyLayer);
+        event.registerLayerDefinition(LenswardModel.MODEL_LAYER, LenswardModel::createBodyLayer);
     }
 
     private static Identifier texture(String name) {
