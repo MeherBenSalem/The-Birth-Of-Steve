@@ -41,7 +41,8 @@ public final class ArchiveSurveyMapItem extends Item {
         return InteractionResult.SUCCESS_SERVER;
     }
 
-    private static Component direction(int dx, int dz) {
+    /** Shared cardinal bearing used by the Survey Map and {@code /tbos shrine}. */
+    public static Component direction(int dx, int dz) {
         String key;
         if (Math.abs(dx) > Math.abs(dz)) {
             key = dx >= 0 ? "direction.tbos.east" : "direction.tbos.west";

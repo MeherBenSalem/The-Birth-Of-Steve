@@ -2,6 +2,7 @@ package com.nightbeam.tbos.site;
 
 import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.world.FractureShrinePlacement;
+import com.nightbeam.tbos.world.FractureShrinePlan;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Rotation;
@@ -20,14 +22,18 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 
 public final class TemporalSiteSavedData extends SavedData {
-    public static final int SCHEMA_REVISION = 3;
+    public static final int SCHEMA_REVISION = 4;
 
     private static final Codec<TemporalSiteSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.optionalFieldOf("schema_revision", SCHEMA_REVISION).forGetter(data -> SCHEMA_REVISION),
             TemporalSite.CODEC.listOf().optionalFieldOf("sites", List.of()).forGetter(data -> List.copyOf(data.sites.values())),
             FractureShrinePlacement.CODEC.listOf().optionalFieldOf("fracture_shrines", List.of())
                     .forGetter(TemporalSiteSavedData::fractureShrines),
-            BlockPos.CODEC.optionalFieldOf("archive_origin").forGetter(data -> data.archiveOrigin)
+            BlockPos.CODEC.optionalFieldOf("archive_origin").forGetter(data -> data.archiveOrigin),
+            FractureShrinePlan.CODEC.listOf().optionalFieldOf("planned_shrines", List.of())
+                    .forGetter(TemporalSiteSavedData::plannedShrines),
+            UUIDUtil.CODEC.listOf().optionalFieldOf("greeted_players", List.of())
+                    .forGetter(data -> List.copyOf(data.greetedPlayers))
     ).apply(instance, TemporalSiteSavedData::fromCodec));
 
     public static final SavedDataType<TemporalSiteSavedData> TYPE = new SavedDataType<>(
@@ -37,7 +43,9 @@ public final class TemporalSiteSavedData extends SavedData {
 
     private final Map<UUID, TemporalSite> sites = new LinkedHashMap<>();
     private final Map<Long, Set<UUID>> sitesByChunk = new LinkedHashMap<>();
+    private final Set<UUID> greetedPlayers = new java.util.LinkedHashSet<>();
     private List<FractureShrinePlacement> fractureShrines = List.of();
+    private List<FractureShrinePlan> plannedShrines = List.of();
     private Optional<BlockPos> archiveOrigin = Optional.empty();
 
     public TemporalSite register(BlockPos origin) {
@@ -120,6 +128,28 @@ public final class TemporalSiteSavedData extends SavedData {
         setDirty();
     }
 
+    public List<FractureShrinePlan> plannedShrines() {
+        return plannedShrines;
+    }
+
+    public void setPlannedShrines(List<FractureShrinePlan> plans) {
+        plannedShrines = List.copyOf(plans);
+        setDirty();
+    }
+
+    /** Returns true the first time a player is seen in this world. */
+    public boolean markGreeted(UUID playerId) {
+        if (!greetedPlayers.add(playerId)) {
+            return false;
+        }
+        setDirty();
+        return true;
+    }
+
+    public boolean hasBeenGreeted(UUID playerId) {
+        return greetedPlayers.contains(playerId);
+    }
+
     public Optional<BlockPos> archiveOrigin() {
         return archiveOrigin;
     }
@@ -133,7 +163,9 @@ public final class TemporalSiteSavedData extends SavedData {
             int schemaRevision,
             List<TemporalSite> decodedSites,
             List<FractureShrinePlacement> decodedShrines,
-            Optional<BlockPos> decodedArchiveOrigin) {
+            Optional<BlockPos> decodedArchiveOrigin,
+            List<FractureShrinePlan> decodedPlans,
+            List<UUID> decodedGreetedPlayers) {
         TemporalSiteSavedData data = new TemporalSiteSavedData();
         if (schemaRevision != SCHEMA_REVISION) {
             Yesterglass.LOGGER.warn("Loaded temporal site schema {}; current schema is {}", schemaRevision, SCHEMA_REVISION);
@@ -144,6 +176,10 @@ public final class TemporalSiteSavedData extends SavedData {
         });
         data.fractureShrines = List.copyOf(decodedShrines);
         data.archiveOrigin = decodedArchiveOrigin.map(BlockPos::immutable);
+        // Schema 3 and older stored no plan. It is re-derived deterministically from
+        // the world seed on first access, and shrines already built stay recorded.
+        data.plannedShrines = List.copyOf(decodedPlans);
+        data.greetedPlayers.addAll(decodedGreetedPlayers);
         return data;
     }
 

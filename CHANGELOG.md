@@ -1,5 +1,67 @@
 # Changelog
 
+## 0.2.0-alpha.2 - 2026-07-26
+
+### Onboarding
+
+- Added the **Archivist's Journal**, a nine-page in-game guidebook covering
+  shrine discovery, the Lens repair, the Survey Map, the five authored rooms,
+  the Last Curator, the Curator Gateway, and the rules of Echoes of the Past.
+  Right-click to read it; it uses the standard book interface.
+- Every player now receives the Journal, a short welcome, and a shrine hint the
+  first time they join a world's Overworld. The greeting is recorded per player
+  in world data, so it survives death, dimension changes, and server restarts,
+  and never fires twice.
+
+### Fracture Shrines
+
+- Shrines are now built as the world generates around them instead of all three
+  at once during the first login. Their three seeded locations are unchanged and
+  still fixed per world seed; each one is constructed only when its own chunk
+  loads, and the build is deferred to the following server tick so chunk loading
+  is never re-entered.
+- The shrine plan is persisted, so a world keeps the same three sites even if
+  those chunks are never visited. Temporal site data moved to schema 4; older
+  saves migrate in place and re-derive their plan from the world seed, keeping
+  any shrines they had already built.
+- The Archive Survey Map no longer forces three distant shrine regions into
+  existence. It now anchors the Meridian Archive on the seeded plan instead.
+- Added `/tbos shrine locate`, `/tbos shrine list`, `/tbos shrine place [variant]`
+  to force-build a shrine at your position, and `/tbos shrine place_all`. All
+  four require game-master permission. `/tbos debug place_shrines` still works.
+- Added `/tbos debug give_journal`.
+
+### Utility block overhaul
+
+- Rebuilt the Curator Gateway, Meridian Relay, Archive Core, Memory Lantern, and
+  Astronomical Alignment Dial. All five were texture-swapped vanilla cubes reusing
+  other blocks' textures; each now has bespoke multi-part geometry and its own
+  textures.
+- The Curator Gateway is now a real arch — a base and cap lintel with four bronze
+  jambs and the veil suspended in the opening — rather than a hollow cube.
+- Added animated textures for the gateway's veil, the relay's charged coils, the
+  Archive Core's iris, the lantern's glass, and the dial's drifting glyphs.
+- Authored the Archive block and item art to a final, shippable standard on one
+  shared palette: 16×16, hard pixel edges, consistent top-left lighting, and
+  animated frames quantised onto discrete ramps so they stay legible at block
+  scale. These textures are owned original project art, no longer placeholders,
+  and `tools/textures/archive_blocks.py` is their authoring source.
+- Fixed z-fighting across the reworked blocks. Every model's elements were
+  overlapping in volume; they now meet only at edges.
+- Fixed the Archive Core, Meridian Relay, and Alignment Dial rendering as x-ray
+  holes through the floor. Their models are no longer full cubes, so all three
+  now declare `noOcclusion()` and neighbouring blocks stop culling against them.
+- Gave the Meridian Relay and Alignment Dial full-width footings so neither reads
+  as floating above its block.
+- Added ambient particles: the gateway pulls portal motes inward, a powered relay
+  arcs sparks around its gimbal, the Archive Core draws enchantment glyphs in, the
+  lantern releases slow cyan motes, and the dial traces sparks along its ring.
+- Added block-entity renderers for the Archive Core, whose inner core now spins
+  and precesses inside its slotted housing, and the Alignment Dial, which gained
+  two counter-rotating armillary rings and a hovering glyph. Both animations are
+  cosmetic and read no puzzle state. Both stop when `reducedMotion` is enabled.
+- A dormant Memory Lantern now holds one drifting mote instead of appearing inert.
+
 ## 0.2.0-alpha.1 - 2026-07-25
 
 - Replaced the Archive victory return with endless floor progression. Runs begin

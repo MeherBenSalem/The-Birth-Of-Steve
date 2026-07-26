@@ -1,4 +1,94 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": { "all": "tbos:block/archive_core" }
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "tbos:block/archive_core",
+    "housing": "tbos:block/archive_core",
+    "buttress": "tbos:block/chronicle_bronze",
+    "iris": "tbos:block/archive_core_iris"
+  },
+  "elements": [
+    {
+      "__comment": "base plate",
+      "from": [ 0, 0, 0 ],
+      "to": [ 16, 3, 16 ],
+      "faces": {
+        "north": { "uv": [ 0, 13, 16, 16 ], "texture": "#housing" },
+        "east":  { "uv": [ 0, 13, 16, 16 ], "texture": "#housing" },
+        "south": { "uv": [ 0, 13, 16, 16 ], "texture": "#housing" },
+        "west":  { "uv": [ 0, 13, 16, 16 ], "texture": "#housing" },
+        "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#housing" },
+        "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#housing", "cullface": "down" }
+      }
+    },
+    {
+      "__comment": "crown plate",
+      "from": [ 0, 13, 0 ],
+      "to": [ 16, 16, 16 ],
+      "faces": {
+        "north": { "uv": [ 0, 0, 16, 3 ], "texture": "#housing" },
+        "east":  { "uv": [ 0, 0, 16, 3 ], "texture": "#housing" },
+        "south": { "uv": [ 0, 0, 16, 3 ], "texture": "#housing" },
+        "west":  { "uv": [ 0, 0, 16, 3 ], "texture": "#housing" },
+        "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#housing", "cullface": "up" },
+        "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#housing" }
+      }
+    },
+    {
+      "__comment": "north-west buttress",
+      "from": [ 0, 3, 0 ],
+      "to": [ 3, 13, 3 ],
+      "faces": {
+        "north": { "uv": [ 13, 3, 16, 13 ], "texture": "#buttress" },
+        "east":  { "uv": [  0, 3,  3, 13 ], "texture": "#buttress" },
+        "south": { "uv": [  0, 3,  3, 13 ], "texture": "#buttress" },
+        "west":  { "uv": [ 13, 3, 16, 13 ], "texture": "#buttress" }
+      }
+    },
+    {
+      "__comment": "north-east buttress",
+      "from": [ 13, 3, 0 ],
+      "to": [ 16, 13, 3 ],
+      "faces": {
+        "north": { "uv": [  0, 3,  3, 13 ], "texture": "#buttress" },
+        "east":  { "uv": [  0, 3,  3, 13 ], "texture": "#buttress" },
+        "south": { "uv": [ 13, 3, 16, 13 ], "texture": "#buttress" },
+        "west":  { "uv": [  0, 3,  3, 13 ], "texture": "#buttress" }
+      }
+    },
+    {
+      "__comment": "south-west buttress",
+      "from": [ 0, 3, 13 ],
+      "to": [ 3, 13, 16 ],
+      "faces": {
+        "north": { "uv": [ 13, 3, 16, 13 ], "texture": "#buttress" },
+        "east":  { "uv": [ 13, 3, 16, 13 ], "texture": "#buttress" },
+        "south": { "uv": [  0, 3,  3, 13 ], "texture": "#buttress" },
+        "west":  { "uv": [  0, 3,  3, 13 ], "texture": "#buttress" }
+      }
+    },
+    {
+      "__comment": "south-east buttress",
+      "from": [ 13, 3, 13 ],
+      "to": [ 16, 13, 16 ],
+      "faces": {
+        "north": { "uv": [  0, 3,  3, 13 ], "texture": "#buttress" },
+        "east":  { "uv": [ 13, 3, 16, 13 ], "texture": "#buttress" },
+        "south": { "uv": [ 13, 3, 16, 13 ], "texture": "#buttress" },
+        "west":  { "uv": [ 13, 3, 16, 13 ], "texture": "#buttress" }
+      }
+    },
+    {
+      "__comment": "iris cage, clear of every buttress",
+      "from": [ 4, 4, 4 ],
+      "to": [ 12, 12, 12 ],
+      "faces": {
+        "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#iris" },
+        "east":  { "uv": [ 0, 0, 16, 16 ], "texture": "#iris" },
+        "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#iris" },
+        "west":  { "uv": [ 0, 0, 16, 16 ], "texture": "#iris" },
+        "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#iris" },
+        "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#iris" }
+      }
+    }
+  ]
 }

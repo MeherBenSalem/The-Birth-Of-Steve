@@ -1,6 +1,8 @@
 package com.nightbeam.tbos.registry;
 
 import com.nightbeam.tbos.Yesterglass;
+import com.nightbeam.tbos.blockentity.AlignmentDialBlockEntity;
+import com.nightbeam.tbos.blockentity.ArchiveCoreBlockEntity;
 import com.nightbeam.tbos.blockentity.MemoryLanternBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -18,6 +20,20 @@ public final class ModBlockEntities {
                     () -> new BlockEntityType<>(
                             MemoryLanternBlockEntity::new,
                             ModBlocks.MEMORY_LANTERN.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ArchiveCoreBlockEntity>> ARCHIVE_CORE =
+            BLOCK_ENTITIES.register(
+                    "archive_core",
+                    () -> new BlockEntityType<>(
+                            ArchiveCoreBlockEntity::new,
+                            ModBlocks.ARCHIVE_CORE.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AlignmentDialBlockEntity>> ALIGNMENT_DIAL =
+            BLOCK_ENTITIES.register(
+                    "alignment_dial",
+                    () -> new BlockEntityType<>(
+                            AlignmentDialBlockEntity::new,
+                            ModBlocks.ALIGNMENT_DIAL.get()));
 
     private ModBlockEntities() {
     }

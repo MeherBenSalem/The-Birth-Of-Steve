@@ -7,7 +7,7 @@ or cheats to begin the adventure.
 
 1. Install **Minecraft Java Edition 26.1.2** and **NeoForge 26.1.2.83 or newer**
    for that Minecraft version.
-2. Put `tbos-0.2.0-alpha.1.jar` in the instance's `mods` folder.
+2. Put `tbos-0.2.0-alpha.2.jar` in the instance's `mods` folder.
 3. Launch NeoForge and create or open an Overworld save. For multiplayer, put
    the same JAR on both the server and every client.
 4. Because this is an alpha, make a backup before updating an existing world.
@@ -17,12 +17,18 @@ No other mod is required. Server owners can tune dungeon settings in
 
 ## Your first expedition
 
-Each world places three Fracture Shrine variants at persistent, world-seeded
+The first time you join a world you are given the **Archivist's Journal** and a
+short chat message telling you where to start. Right-click the Journal at any
+time to reread the full route; it is the in-game version of this page.
+
+Each world plans three Fracture Shrine variants at persistent, world-seeded
 locations scattered 192–640 blocks from world spawn. Their positions do not
-depend on which player joins first. Explore for a shrine, break its Fracture
-Coffer, recover the **Cracked Yesterglass Lens**, and gather its repair
-materials. Repair the lens, then use the **Archive Survey Map** by right-clicking
-it: it reports the direction, distance, and coordinates of the Meridian Archive.
+depend on which player joins first, and each shrine is built into the world when
+its own chunk generates, so exploring toward one is what makes it appear.
+Explore for a shrine, break its Fracture Coffer, recover the **Cracked
+Yesterglass Lens**, and gather its repair materials. Repair the lens, then use
+the **Archive Survey Map** by right-clicking it: it reports the direction,
+distance, and coordinates of the Meridian Archive.
 
 Follow the map and play through the authored route:
 
@@ -67,8 +73,18 @@ alter a run can spoil or remove live player progress.
 | `/tbos run abandon` | Forces the current active run into its failure return. |
 | `/tbos debug give_cracked_lens` | Gives a Cracked Yesterglass Lens. |
 | `/tbos debug give_survey_map` | Gives an Archive Survey Map. |
-| `/tbos debug place_shrines` | Places or reports the three Fracture Shrines near you. |
+| `/tbos debug give_journal` | Gives an Archivist's Journal. |
+| `/tbos debug place_shrines` | Alias of `/tbos shrine place_all`. |
 | `/tbos debug give_memory_kit` | Gives the Memory Lantern and every Memory Plate. |
+
+### Fracture Shrine controls
+
+| Command | What it does |
+| --- | --- |
+| `/tbos shrine locate` | Reports the nearest shrine's variant, bearing, distance, coordinates, and whether it has generated yet. |
+| `/tbos shrine list` | Lists all three planned shrines and their generated/pending state. |
+| `/tbos shrine place [variant]` | Force-builds a shrine at your position. Omit `variant` for the nearest one still pending; otherwise pass `observatory`, `curator_workshop`, or `evacuation_gate`. |
+| `/tbos shrine place_all` | Immediately builds every planned shrine instead of waiting for its chunk. |
 
 ### Echoes of the Past controls
 
@@ -90,7 +106,9 @@ alter a run can spoil or remove live player progress.
 
 ## Quick fixes
 
-- **I cannot find a shrine:** an operator can run `/tbos debug place_shrines`.
+- **I cannot find a shrine:** reread the Archivist's Journal, or ask an operator
+  to run `/tbos shrine locate`. A shrine only appears once its chunk generates,
+  so keep travelling toward the reported coordinates.
 - **I cannot find the Archive:** right-click the Archive Survey Map again; it
   reports its coordinates in chat.
 - **A cache will not open:** that is expected—clear the room and break the

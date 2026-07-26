@@ -4,6 +4,8 @@ import com.nightbeam.tbos.network.payload.BeginTransitionPayload;
 import com.nightbeam.tbos.network.payload.SiteSnapshotPayload;
 import com.nightbeam.tbos.network.payload.ArchiveQuestPayload;
 import com.nightbeam.tbos.network.payload.ArchivePuzzlePayload;
+import com.nightbeam.tbos.network.payload.ArchiveFloorIntroPayload;
+import com.nightbeam.tbos.network.payload.JournalQuestSnapshotPayload;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 
 public final class ClientNetwork {
@@ -15,5 +17,7 @@ public final class ClientNetwork {
         event.register(SiteSnapshotPayload.TYPE, (payload, context) -> ClientTransitionTracker.snapshot(payload));
         event.register(ArchiveQuestPayload.TYPE, (payload, context) -> ArchiveQuestHud.accept(payload));
         event.register(ArchivePuzzlePayload.TYPE, (payload, context) -> ArchivePuzzleHud.accept(payload));
+        event.register(ArchiveFloorIntroPayload.TYPE, (payload, context) -> ArchiveFloorIntroHud.begin(payload));
+        event.register(JournalQuestSnapshotPayload.TYPE, (payload, context) -> ArchivistQuestScreen.accept(payload));
     }
 }

@@ -121,7 +121,10 @@ public final class BuiltInTemporalSites {
                         new AlignmentMechanismDefinition(
                                 new BlockPos(12, 1, 8),
                                 Direction.SOUTH,
-                                new BlockPos(12, 2, 16),
+                                // Keep the central target visible above the far
+                                // wall without occupying the solved bridge's
+                                // two-block player headroom.
+                                new BlockPos(12, 3, 16),
                                 lineZ(12, 2, 9, 15)),
                         new AlignmentMechanismDefinition(
                                 new BlockPos(18, 1, 8),

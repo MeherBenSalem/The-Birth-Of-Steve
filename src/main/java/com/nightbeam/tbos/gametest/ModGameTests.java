@@ -17,6 +17,7 @@ import com.nightbeam.tbos.item.MemoryPlateItem;
 import com.nightbeam.tbos.item.MemoryScene;
 import com.nightbeam.tbos.blockentity.MemoryLanternBlockEntity;
 import com.nightbeam.tbos.block.ResonantBellBlock;
+import com.nightbeam.tbos.block.EngravedMeridianTileBlock;
 import com.nightbeam.tbos.block.FractureCofferBlock;
 import com.nightbeam.tbos.block.MeridianRelayBlock;
 import com.nightbeam.tbos.entity.LenswardEntity;
@@ -53,9 +54,15 @@ import com.nightbeam.tbos.run.ArchiveRunMember;
 import com.nightbeam.tbos.run.ArchiveRunProtection;
 import com.nightbeam.tbos.run.ArchiveRunSavedData;
 import com.nightbeam.tbos.run.ArchiveRunStatus;
+import com.nightbeam.tbos.run.ArchiveFloorPresentation;
 import com.nightbeam.tbos.world.AdventureWorldManager;
 import com.nightbeam.tbos.world.FractureShrinePlacement;
+import com.nightbeam.tbos.world.FractureShrinePlan;
 import com.nightbeam.tbos.world.FractureShrineVariant;
+import com.nightbeam.tbos.blockentity.AlignmentDialBlockEntity;
+import com.nightbeam.tbos.blockentity.ArchiveCoreBlockEntity;
+import com.nightbeam.tbos.block.AlignmentDialBlock;
+import com.nightbeam.tbos.item.ArchivistJournalPages;
 import com.mojang.serialization.JsonOps;
 import java.util.List;
 import java.util.HashSet;
@@ -156,6 +163,14 @@ public final class ModGameTests {
             FUNCTIONS.register("fracture_shrine_variants", () -> ModGameTests::fractureShrinesDistributeAdventureItems);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FRACTURE_SHRINE_PLACEMENT =
             FUNCTIONS.register("fracture_shrine_placement", () -> ModGameTests::fractureShrinesUseWorldSeededLocations);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FRACTURE_SHRINE_PLAN =
+            FUNCTIONS.register("fracture_shrine_plan", () -> ModGameTests::fractureShrinePlanIsStableAndBuildsOnce);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FRACTURE_SHRINE_FORCED =
+            FUNCTIONS.register("fracture_shrine_forced", () -> ModGameTests::forcedShrineRegistersForDiscovery);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ONBOARDING_GRANT =
+            FUNCTIONS.register("onboarding_grant", () -> ModGameTests::onboardingGreetsEachPlayerOnce);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> UTILITY_BLOCK_ENTITIES =
+            FUNCTIONS.register("utility_block_entities", () -> ModGameTests::utilityBlocksCarryTheirRenderAnchors);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ADVENTURE_WORLD_METADATA =
             FUNCTIONS.register("adventure_world_metadata", () -> ModGameTests::adventureWorldMetadataPersistsCoordinates);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> FRACTURED_ARCHIVE_DIMENSION =
@@ -233,6 +248,10 @@ public final class ModGameTests {
         registerTest(event, "memory_plate_variants", environment, MEMORY_PLATE_VARIANTS);
         registerTest(event, "memory_lantern_persistence", environment, MEMORY_LANTERN_PERSISTENCE);
         registerTest(event, "fracture_shrine_variants", environment, FRACTURE_SHRINE_VARIANTS);
+        registerTest(event, "fracture_shrine_plan", environment, FRACTURE_SHRINE_PLAN);
+        registerTest(event, "fracture_shrine_forced", environment, FRACTURE_SHRINE_FORCED);
+        registerTest(event, "onboarding_grant", environment, ONBOARDING_GRANT);
+        registerTest(event, "utility_block_entities", environment, UTILITY_BLOCK_ENTITIES);
         registerTest(event, "adventure_world_metadata", environment, ADVENTURE_WORLD_METADATA);
         registerTest(event, "fractured_archive_dimension", environment, FRACTURED_ARCHIVE_DIMENSION);
         registerTest(event, "archive_run_codec", environment, ARCHIVE_RUN_CODEC);
@@ -462,9 +481,52 @@ public final class ModGameTests {
         ArchiveDungeonGraph seedEleven = ArchiveRunGenerator.generateDungeon(11L, ArchiveDungeonSettings.DEFAULT);
         ArchiveDungeonGraph repeatedEleven = ArchiveRunGenerator.generateDungeon(11L, ArchiveDungeonSettings.DEFAULT);
         ArchiveDungeonGraph seedTwelve = ArchiveRunGenerator.generateDungeon(12L, ArchiveDungeonSettings.DEFAULT);
+        ArchiveDungeonGraph deepFloor = ArchiveRunGenerator.generateDungeon(
+                11L, 40L, ArchiveDungeonSettings.DEFAULT);
+        ArchiveDungeonGraph repeatedDeepFloor = ArchiveRunGenerator.generateDungeon(
+                11L, 40L, ArchiveDungeonSettings.DEFAULT);
 
         helper.assertTrue(seedEleven.equals(repeatedEleven), "Equal archive seeds generated different graphs");
         helper.assertTrue(!seedEleven.equals(seedTwelve), "Neighboring archive seeds generated the same graph");
+        helper.assertTrue(deepFloor.equals(repeatedDeepFloor),
+                "Floor-aware archive generation was not deterministic");
+        helper.assertTrue(
+                deepFloor.rooms().size() >= ArchiveDungeonSettings.DEFAULT.minimumRooms()
+                                + ArchiveFloorPresentation.MAX_ADDITIONAL_ROOMS
+                        && deepFloor.rooms().size() <= ArchiveDungeonSettings.DEFAULT.maximumRooms()
+                                + ArchiveFloorPresentation.MAX_ADDITIONAL_ROOMS
+                        && deepFloor.rooms().stream().allMatch(room -> room.difficulty() <= 100),
+                "Late-floor room count or difficulty escaped its configured cap");
+        helper.assertTrue(
+                ArchiveFloorPresentation.displayFloor(0L) == 1L
+                        && ArchiveFloorPresentation.displayFloor(8L) == 9L
+                        && ArchiveFloorPresentation.nameIndex(0L) == 0
+                        && ArchiveFloorPresentation.nameIndex(7L) == 7
+                        && ArchiveFloorPresentation.nameIndex(8L) == 0
+                        && ArchiveFloorPresentation.echoCycle(8L) == 2L,
+                "Archive floor presentation lost one-based numbering or its eight-name cycle");
+        helper.assertTrue(
+                ArchiveFloorPresentation.difficultyBonus(0L) == 0
+                        && ArchiveFloorPresentation.difficultyBonus(10L) == 40
+                        && ArchiveFloorPresentation.difficultyBonus(Long.MAX_VALUE) == 40
+                        && ArchiveFloorPresentation.additionalRooms(12L) == 6
+                        && ArchiveFloorPresentation.additionalRooms(Long.MAX_VALUE) == 6
+                        && ArchiveFloorPresentation.additionalEnemies(12L) == 4
+                        && ArchiveFloorPresentation.additionalEnemies(Long.MAX_VALUE) == 4,
+                "Endless-floor scaling did not stop at every configured cap");
+        ArchiveRoomNode scalableCombat = seedEleven.rooms().stream()
+                .filter(room -> room.category() != ArchiveRoomCategory.FINAL_BOSS
+                        && room.category() != ArchiveRoomCategory.EXIT_REWARD
+                        && !ArchiveEncounterManager.planWave(
+                                room, 9988L, 1, 1, 0L, ArchiveDungeonRules.DEFAULT).isEmpty())
+                .findFirst()
+                .orElseThrow();
+        int baseWave = ArchiveEncounterManager.planWave(
+                scalableCombat, 9988L, 1, 1, 0L, ArchiveDungeonRules.DEFAULT).size();
+        int cappedWave = ArchiveEncounterManager.planWave(
+                scalableCombat, 9988L, 1, 1, Long.MAX_VALUE, ArchiveDungeonRules.DEFAULT).size();
+        helper.assertTrue(cappedWave == Math.min(16, baseWave + 4),
+                "Late-floor enemy waves did not add exactly four non-boss enemies at the cap");
         helper.assertTrue(
                 seedEleven.rooms().size() >= ArchiveDungeonSettings.DEFAULT.minimumRooms()
                         && seedEleven.rooms().size() <= ArchiveDungeonSettings.DEFAULT.maximumRooms(),
@@ -1760,6 +1822,17 @@ public final class ModGameTests {
     private static void hallGeometryFollowsPersistentCompletion(GameTestHelper helper) {
         BlockPos origin = helper.absolutePos(new BlockPos(2, 1, 2));
         TemporalSite hall = TemporalSiteManager.placeHallOfAlignment(helper.getLevel(), origin, Rotation.NONE);
+        TemporalSiteDefinition hallDefinition = BuiltInTemporalSites.hallOfAlignment();
+        for (int x = 0; x < hallDefinition.sizeX(); x++) {
+            for (int z = 0; z < hallDefinition.sizeZ(); z++) {
+                BlockPos roof = hallDefinition.worldPosition(origin, new BlockPos(x, 6, z), Rotation.NONE);
+                helper.assertTrue(!helper.getLevel().getBlockState(roof).isAir(), "Overworld Hall ceiling has a gap");
+            }
+        }
+        helper.assertTrue(
+                TemporalSiteManager.isProtected(helper.getLevel(), origin.offset(1, 0, 1))
+                        && TemporalSiteManager.isProtected(helper.getLevel(), origin.offset(2, 2, 2)),
+                "Overworld Hall protection did not cover ordinary floor and room volume");
         TemporalSite remembered = hall.stable(TemporalState.REMEMBERED);
         TemporalSiteManager.data(helper.getLevel()).replace(remembered);
         TemporalSiteManager.recover(helper.getLevel());
@@ -1781,9 +1854,19 @@ public final class ModGameTests {
         TemporalSiteManager.recover(helper.getLevel());
         for (BlockPos beam : TemporalSiteManager.alignmentBeamPositions(solved)) {
             helper.assertTrue(
-                    helper.getLevel().getBlockState(beam).is(ModBlocks.YESTERGLASS.get()),
-                    "An aligned mechanism did not render its solid beam");
+                    helper.getLevel().getBlockState(beam).isAir(),
+                    "An aligned mechanism still placed a physical glass beam");
         }
+        for (BlockPos reward : TemporalSiteManager.ruinRewardPositions(solved)) {
+            helper.assertTrue(
+                    helper.getLevel().getBlockState(reward).is(ModBlocks.PHASE_PLATFORM.get()),
+                    "Solved Hall did not project its crossing immediately");
+        }
+        BlockPos raisedCenterTarget = TemporalSiteManager.alignmentTargetPositions(solved).get(1);
+        helper.assertTrue(
+                helper.getLevel().getBlockState(raisedCenterTarget).is(ModBlocks.ENGRAVED_MERIDIAN_TILE.get())
+                        && helper.getLevel().getBlockState(raisedCenterTarget.below()).isAir(),
+                "Central Hall target still obstructed bridge headroom");
 
         TemporalSite ruin = solved.stable(TemporalState.RUIN);
         TemporalSiteManager.data(helper.getLevel()).replace(ruin);
@@ -1926,9 +2009,14 @@ public final class ModGameTests {
     private static void meridianRelayUsesAuthoredPositions(GameTestHelper helper) {
         int flags = BrokenMeridianPuzzle.initialise(0);
         helper.assertTrue(BrokenMeridianPuzzle.position(flags) == 0, "Relay did not start at the western socket");
-        BrokenMeridianPuzzle.Move first = BrokenMeridianPuzzle.advance(flags);
+        BrokenMeridianPuzzle.Move unarmed = BrokenMeridianPuzzle.advance(flags);
+        helper.assertTrue(unarmed.position() == 0, "An unarmed route moved the relay");
+        BrokenMeridianPuzzle.Move first =
+                BrokenMeridianPuzzle.advance(BrokenMeridianPuzzle.armRoute(flags));
         helper.assertTrue(first.position() == 1 && !first.complete(), "First relay move skipped the center socket");
-        BrokenMeridianPuzzle.Move second = BrokenMeridianPuzzle.advance(first.progressFlags());
+        helper.assertTrue(!BrokenMeridianPuzzle.isRouteArmed(first.progressFlags()), "Relay move left its route armed");
+        BrokenMeridianPuzzle.Move second =
+                BrokenMeridianPuzzle.advance(BrokenMeridianPuzzle.armRoute(first.progressFlags()));
         helper.assertTrue(second.position() == 2 && second.complete(), "Eastern target did not complete the relay path");
         int reset = BrokenMeridianPuzzle.reset(first.progressFlags());
         helper.assertTrue(BrokenMeridianPuzzle.position(reset) == 0, "Relay reset did not restore the first socket");
@@ -1952,10 +2040,23 @@ public final class ModGameTests {
                     helper.getLevel().getBlockState(bridge).is(ModBlocks.PHASE_PLATFORM.get()),
                     "Remembered first crossing was missing");
         }
+        helper.assertTrue(
+                TemporalSiteManager.meridianPowerChannelPositions(remembered).stream()
+                        .noneMatch(pos -> helper.getLevel().getBlockState(pos).is(ModBlocks.YESTERGLASS.get())),
+                "Broken Meridian still used physical glass for its live channel");
+        helper.assertTrue(
+                helper.getLevel()
+                        .getBlockState(TemporalSiteManager.meridianPowerChannelPositions(remembered).getFirst())
+                        .getValue(EngravedMeridianTileBlock.CHARGED),
+                "Initial Broken Meridian channel was not visibly charged");
 
         net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
-        helper.assertTrue(TemporalSiteManager.moveMeridianRelay(player, relays.get(0)), "First relay move was rejected");
-        helper.assertTrue(TemporalSiteManager.moveMeridianRelay(player, relays.get(1)), "Second relay move was rejected");
+        List<BlockPos> seals = TemporalSiteManager.meridianRoutingSealPositions(remembered);
+        List<BlockPos> sockets = TemporalSiteManager.meridianSocketPositions(remembered);
+        helper.assertTrue(TemporalSiteManager.routeBrokenMeridian(player, seals.get(0)), "First route seal was rejected");
+        helper.assertTrue(TemporalSiteManager.routeBrokenMeridian(player, sockets.get(1)), "Center socket was rejected");
+        helper.assertTrue(TemporalSiteManager.routeBrokenMeridian(player, seals.get(1)), "Second route seal was rejected");
+        helper.assertTrue(TemporalSiteManager.routeBrokenMeridian(player, sockets.get(2)), "Eastern socket was rejected");
         TemporalSite completed = TemporalSiteManager.data(helper.getLevel()).find(site.siteId()).orElseThrow();
         helper.assertTrue(BrokenMeridianPuzzle.isComplete(completed.progressFlags()), "Relay completion was not persisted");
         helper.assertTrue(
@@ -1987,17 +2088,22 @@ public final class ModGameTests {
         TemporalSiteManager.recover(helper.getLevel());
         net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
         List<BlockPos> relays = TemporalSiteManager.meridianRelayPositions(site);
+        List<BlockPos> seals = TemporalSiteManager.meridianRoutingSealPositions(site);
+        List<BlockPos> sockets = TemporalSiteManager.meridianSocketPositions(site);
 
         net.minecraft.world.entity.decoration.ArmorStand obstacle =
                 helper.spawn(EntityType.ARMOR_STAND, relativeOrigin.offset(10, 1, 13));
         helper.assertTrue(
-                TemporalSiteManager.moveMeridianRelay(player, relays.getFirst()),
-                "Occupied relay movement was not handled");
+                TemporalSiteManager.routeBrokenMeridian(player, seals.getFirst()),
+                "Initial route seal was not handled");
+        helper.assertTrue(
+                TemporalSiteManager.routeBrokenMeridian(player, sockets.get(1)),
+                "Occupied destination socket was not handled");
         TemporalSite blocked = TemporalSiteManager.data(helper.getLevel()).find(site.siteId()).orElseThrow();
         helper.assertTrue(BrokenMeridianPuzzle.position(blocked.progressFlags()) == 0, "Occupied destination changed relay state");
 
         obstacle.discard();
-        helper.assertTrue(TemporalSiteManager.moveMeridianRelay(player, relays.getFirst()), "Safe relay movement failed");
+        helper.assertTrue(TemporalSiteManager.routeBrokenMeridian(player, sockets.get(1)), "Safe relay movement failed");
         helper.assertTrue(
                 TemporalSiteManager.resetBrokenMeridianPuzzle(player, TemporalSiteManager.anchorPosition(site)),
                 "Memory Anchor reset was rejected");
@@ -2291,6 +2397,134 @@ public final class ModGameTests {
                     distance >= AdventureWorldManager.MIN_SHRINE_DISTANCE - 1
                             && distance <= AdventureWorldManager.MAX_SHRINE_DISTANCE + 1,
                     "A Shrine target fell outside the authored world-spawn search ring");
+        }
+        helper.succeed();
+    }
+
+    private static void fractureShrinePlanIsStableAndBuildsOnce(GameTestHelper helper) {
+        net.minecraft.server.level.ServerLevel level = helper.getLevel();
+        TemporalSiteSavedData data = TemporalSiteManager.data(level);
+        List<FractureShrinePlacement> saved = List.copyOf(data.fractureShrines());
+        try {
+            List<FractureShrinePlan> plans = AdventureWorldManager.plannedShrines(level);
+            com.google.gson.JsonElement encoded =
+                    FractureShrinePlan.CODEC.encodeStart(JsonOps.INSTANCE, plans.get(0)).getOrThrow();
+            helper.assertTrue(
+                    FractureShrinePlan.CODEC.parse(JsonOps.INSTANCE, encoded).getOrThrow().equals(plans.get(0)),
+                    "Fracture Shrine plan codec lost its variant or target");
+
+            helper.assertTrue(plans.size() == FractureShrineVariant.values().length,
+                    "The shrine plan did not cover every variant");
+            helper.assertTrue(
+                    plans.stream().map(FractureShrinePlan::variant).distinct().count() == plans.size(),
+                    "The shrine plan repeated a variant");
+            helper.assertTrue(AdventureWorldManager.plannedShrines(level).equals(plans),
+                    "Re-reading the shrine plan produced different targets");
+            for (FractureShrinePlan plan : plans) {
+                helper.assertTrue(
+                        plan.chunk().equals(net.minecraft.world.level.ChunkPos.containing(plan.target())),
+                        "A shrine plan reported a chunk that does not contain its target");
+            }
+
+            FractureShrineVariant variant = plans.get(0).variant();
+            data.setFractureShrines(List.of());
+            helper.assertTrue(AdventureWorldManager.unbuiltShrines(level).size() == plans.size(),
+                    "An unbuilt world reported shrines as already generated");
+            AdventureWorldManager.registerShrine(level, helper.absolutePos(new BlockPos(2, 1, 2)), variant);
+            helper.assertTrue(AdventureWorldManager.isShrineBuilt(level, variant),
+                    "A registered shrine was not reported as generated");
+            helper.assertTrue(!AdventureWorldManager.materializeShrine(level, plans.get(0)),
+                    "A shrine variant was built a second time");
+            helper.assertTrue(AdventureWorldManager.unbuiltShrines(level).size() == plans.size() - 1,
+                    "Building one shrine did not remove it from the pending plan");
+        } finally {
+            data.setFractureShrines(saved);
+        }
+        helper.succeed();
+    }
+
+    private static void forcedShrineRegistersForDiscovery(GameTestHelper helper) {
+        net.minecraft.server.level.ServerLevel level = helper.getLevel();
+        TemporalSiteSavedData data = TemporalSiteManager.data(level);
+        List<FractureShrinePlacement> saved = List.copyOf(data.fractureShrines());
+        FractureShrineVariant variant = FractureShrineVariant.CURATOR_WORKSHOP;
+        BlockPos origin = helper.absolutePos(new BlockPos(12, 1, 12));
+        try {
+            data.setFractureShrines(List.of());
+            AdventureWorldManager.placeShrine(level, origin, variant);
+            FractureShrinePlacement placement = AdventureWorldManager.registerShrine(level, origin, variant);
+            helper.assertTrue(placement.origin().equals(origin),
+                    "A forced shrine did not record the requested origin");
+            helper.assertTrue(level.getBlockState(origin.offset(0, 0, 2)).is(ModBlocks.FRACTURE_COFFER.get()),
+                    "A forced shrine did not build its Fracture Coffer");
+            helper.assertTrue(data.fractureShrines().size() == 1,
+                    "A forced shrine did not register itself for discovery");
+
+            // Forcing the same variant again must move it, not duplicate it.
+            AdventureWorldManager.registerShrine(level, origin.above(), variant);
+            helper.assertTrue(data.fractureShrines().size() == 1,
+                    "Re-forcing a shrine variant duplicated its placement");
+            helper.assertTrue(data.fractureShrines().get(0).origin().equals(origin.above()),
+                    "Re-forcing a shrine variant kept the stale origin");
+        } finally {
+            data.setFractureShrines(saved);
+        }
+        helper.succeed();
+    }
+
+    private static void onboardingGreetsEachPlayerOnce(GameTestHelper helper) {
+        TemporalSiteSavedData data = TemporalSiteManager.data(helper.getLevel());
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        helper.assertTrue(data.markGreeted(first), "A first-time player was not greeted");
+        helper.assertTrue(!data.markGreeted(first), "A returning player was greeted twice");
+        helper.assertTrue(data.hasBeenGreeted(first), "The greeted player was not remembered");
+        helper.assertTrue(!data.hasBeenGreeted(second), "An unseen player was recorded as greeted");
+        helper.assertTrue(data.markGreeted(second), "A second player was not greeted independently");
+
+        List<net.minecraft.network.chat.Component> pages = ArchivistJournalPages.pages();
+        helper.assertTrue(pages.size() == ArchivistJournalPages.PAGE_COUNT,
+                "The Archivist's Journal page count does not match its declared length");
+        helper.assertTrue(pages.stream().distinct().count() == pages.size(),
+                "The Archivist's Journal repeated a page");
+        helper.succeed();
+    }
+
+    private static void utilityBlocksCarryTheirRenderAnchors(GameTestHelper helper) {
+        net.minecraft.server.level.ServerLevel level = helper.getLevel();
+        BlockPos dial = helper.absolutePos(new BlockPos(1, 1, 1));
+        BlockPos core = helper.absolutePos(new BlockPos(3, 1, 1));
+        BlockPos relay = helper.absolutePos(new BlockPos(5, 1, 1));
+
+        level.setBlock(
+                dial,
+                ModBlocks.ALIGNMENT_DIAL.get().defaultBlockState()
+                        .setValue(AlignmentDialBlock.FACING, Direction.EAST),
+                net.minecraft.world.level.block.Block.UPDATE_ALL);
+        helper.assertTrue(level.getBlockEntity(dial) instanceof AlignmentDialBlockEntity,
+                "The Alignment Dial did not create its render anchor");
+        helper.assertTrue(
+                level.getBlockState(dial).getValue(AlignmentDialBlock.FACING) == Direction.EAST,
+                "The Alignment Dial lost its facing after gaining a block entity");
+
+        level.setBlock(
+                core,
+                ModBlocks.ARCHIVE_CORE.get().defaultBlockState(),
+                net.minecraft.world.level.block.Block.UPDATE_ALL);
+        helper.assertTrue(level.getBlockEntity(core) instanceof ArchiveCoreBlockEntity,
+                "The Archive Core did not create its render anchor");
+
+        level.setBlock(
+                relay,
+                ModBlocks.MERIDIAN_RELAY.get().defaultBlockState().setValue(MeridianRelayBlock.POWERED, true),
+                net.minecraft.world.level.block.Block.UPDATE_ALL);
+        helper.assertTrue(level.getBlockState(relay).getValue(MeridianRelayBlock.POWERED),
+                "The Meridian Relay lost its powered state");
+        helper.assertTrue(level.getBlockEntity(relay) == null,
+                "The Meridian Relay gained an unnecessary block entity");
+
+        for (BlockPos pos : List.of(dial, core, relay)) {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
         }
         helper.succeed();
     }

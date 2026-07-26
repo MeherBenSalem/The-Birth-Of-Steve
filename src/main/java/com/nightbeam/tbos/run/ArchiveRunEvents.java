@@ -22,6 +22,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import com.nightbeam.tbos.network.payload.ArchiveQuestPayload;
 import com.nightbeam.tbos.network.payload.ArchivePuzzlePayload;
+import com.nightbeam.tbos.network.payload.ArchiveFloorIntroPayload;
+import com.nightbeam.tbos.advancement.ModAdvancements;
 
 /** Runtime hooks for shared revives, reconnect recovery, and void rescue. */
 public final class ArchiveRunEvents {
@@ -178,13 +180,13 @@ public final class ArchiveRunEvents {
 
     private static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            reconcileActiveMember(player);
+            reconcileActiveMember(player, true);
         }
     }
 
     private static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            reconcileActiveMember(player);
+            reconcileActiveMember(player, false);
         }
     }
 
@@ -253,7 +255,7 @@ public final class ArchiveRunEvents {
                 .orElse(null);
     }
 
-    private static void reconcileActiveMember(ServerPlayer player) {
+    private static void reconcileActiveMember(ServerPlayer player, boolean reconnecting) {
         ArchiveRunSavedData storage = ArchiveRunSavedData.get(player.level().getServer());
         if (storage.findPendingReturnByMember(player.getUUID()).isPresent()) {
             ArchiveRunManager.returnMemberHome(storage, player);
@@ -262,10 +264,13 @@ public final class ArchiveRunEvents {
         ArchiveRun run = storage
                 .findByMember(player.getUUID())
                 .orElse(null);
-        if (run != null
-                && run.status() == ArchiveRunStatus.ACTIVE
-                && !player.level().dimension().equals(ArchiveDimensions.FRACTURED_ARCHIVE)) {
-            ArchiveRunManager.teleportToCheckpoint(player);
+        if (run != null && run.status() == ArchiveRunStatus.ACTIVE) {
+            boolean outsideCurrentFloor = !player.level().dimension().equals(ArchiveDimensions.FRACTURED_ARCHIVE)
+                    || !ArchiveInstanceLayout.boundsForSlot(run.instanceSlot()).isInside(player.blockPosition());
+            if ((reconnecting || outsideCurrentFloor) && ArchiveRunManager.teleportToCheckpoint(player)) {
+                ModAdvancements.awardEnterFracturedArchive(player);
+                PacketDistributor.sendToPlayer(player, new ArchiveFloorIntroPayload(run.floor()));
+            }
         }
     }
 

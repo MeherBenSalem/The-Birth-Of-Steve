@@ -401,6 +401,13 @@ public final class ArchiveRoomPlacer {
         return positions.isEmpty() ? roomSpawn(run, run.dungeonGraph().rewardRoom()) : positions.getFirst();
     }
 
+    public static BlockPos rewardGatewayPosition(ArchiveRun run) {
+        List<BlockPos> positions = lootPositions(run, run.dungeonGraph().rewardRoom());
+        return positions.isEmpty()
+                ? roomSpawn(run, run.dungeonGraph().rewardRoom()).offset(0, 0, -3)
+                : positions.getFirst();
+    }
+
     public static void buildHallBridge(ServerLevel level, ArchiveRun run, int roomIndex) {
         BoundingBox bounds = roomBounds(run, roomIndex);
         int centerX = (bounds.minX() + bounds.maxX() + 1) / 2;
@@ -627,6 +634,9 @@ public final class ArchiveRoomPlacer {
                 put(placements, chest, ModBlocks.ARCHIVE_CACHE.get().defaultBlockState());
                 placed++;
             }
+        }
+        if (room.category() == ArchiveRoomCategory.EXIT_REWARD) {
+            put(placements, rewardGatewayPosition(run), ModBlocks.RIFT_THRESHOLD.get().defaultBlockState());
         }
         if (room.category() == ArchiveRoomCategory.FINAL_BOSS) {
             for (BlockPos marker : template.bossMarkers()) {

@@ -1,0 +1,17 @@
+{
+  "parent": "tbos:story/defeat_last_curator",
+  "criteria": {
+    "entered": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": { "translate": "advancements.tbos.enter_fractured_archive.description" },
+    "icon": { "id": "tbos:rift_threshold" },
+    "title": { "translate": "advancements.tbos.enter_fractured_archive.title" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "requirements": [ [ "entered" ] ]
+}

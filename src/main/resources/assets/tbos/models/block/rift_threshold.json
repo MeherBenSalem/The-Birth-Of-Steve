@@ -1,4 +1,94 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": { "all": "tbos:block/rift_threshold" }
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "tbos:block/rift_threshold",
+    "stone": "tbos:block/rift_threshold",
+    "post": "tbos:block/chronicle_bronze",
+    "veil": "tbos:block/rift_threshold_veil"
+  },
+  "elements": [
+    {
+      "__comment": "base lintel",
+      "from": [ 0, 0, 0 ],
+      "to": [ 16, 3, 16 ],
+      "faces": {
+        "north": { "uv": [ 0, 13, 16, 16 ], "texture": "#stone" },
+        "east":  { "uv": [ 0, 13, 16, 16 ], "texture": "#stone" },
+        "south": { "uv": [ 0, 13, 16, 16 ], "texture": "#stone" },
+        "west":  { "uv": [ 0, 13, 16, 16 ], "texture": "#stone" },
+        "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#stone" },
+        "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#stone", "cullface": "down" }
+      }
+    },
+    {
+      "__comment": "cap lintel",
+      "from": [ 0, 13, 0 ],
+      "to": [ 16, 16, 16 ],
+      "faces": {
+        "north": { "uv": [ 0, 0, 16, 3 ], "texture": "#stone" },
+        "east":  { "uv": [ 0, 0, 16, 3 ], "texture": "#stone" },
+        "south": { "uv": [ 0, 0, 16, 3 ], "texture": "#stone" },
+        "west":  { "uv": [ 0, 0, 16, 3 ], "texture": "#stone" },
+        "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#stone", "cullface": "up" },
+        "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#stone" }
+      }
+    },
+    {
+      "__comment": "north-west jamb",
+      "from": [ 0, 3, 0 ],
+      "to": [ 3, 13, 3 ],
+      "faces": {
+        "north": { "uv": [ 13, 3, 16, 13 ], "texture": "#post" },
+        "east":  { "uv": [  0, 3,  3, 13 ], "texture": "#post" },
+        "south": { "uv": [  0, 3,  3, 13 ], "texture": "#post" },
+        "west":  { "uv": [ 13, 3, 16, 13 ], "texture": "#post" }
+      }
+    },
+    {
+      "__comment": "north-east jamb",
+      "from": [ 13, 3, 0 ],
+      "to": [ 16, 13, 3 ],
+      "faces": {
+        "north": { "uv": [  0, 3,  3, 13 ], "texture": "#post" },
+        "east":  { "uv": [  0, 3,  3, 13 ], "texture": "#post" },
+        "south": { "uv": [ 13, 3, 16, 13 ], "texture": "#post" },
+        "west":  { "uv": [  0, 3,  3, 13 ], "texture": "#post" }
+      }
+    },
+    {
+      "__comment": "south-west jamb",
+      "from": [ 0, 3, 13 ],
+      "to": [ 3, 13, 16 ],
+      "faces": {
+        "north": { "uv": [ 13, 3, 16, 13 ], "texture": "#post" },
+        "east":  { "uv": [ 13, 3, 16, 13 ], "texture": "#post" },
+        "south": { "uv": [  0, 3,  3, 13 ], "texture": "#post" },
+        "west":  { "uv": [  0, 3,  3, 13 ], "texture": "#post" }
+      }
+    },
+    {
+      "__comment": "south-east jamb",
+      "from": [ 13, 3, 13 ],
+      "to": [ 16, 13, 16 ],
+      "faces": {
+        "north": { "uv": [  0, 3,  3, 13 ], "texture": "#post" },
+        "east":  { "uv": [ 13, 3, 16, 13 ], "texture": "#post" },
+        "south": { "uv": [ 13, 3, 16, 13 ], "texture": "#post" },
+        "west":  { "uv": [ 13, 3, 16, 13 ], "texture": "#post" }
+      }
+    },
+    {
+      "__comment": "veil suspended in the arch, clear of every jamb",
+      "from": [ 4, 3.5, 4 ],
+      "to": [ 12, 12.5, 12 ],
+      "faces": {
+        "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#veil" },
+        "east":  { "uv": [ 0, 0, 16, 16 ], "texture": "#veil" },
+        "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#veil" },
+        "west":  { "uv": [ 0, 0, 16, 16 ], "texture": "#veil" },
+        "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#veil" },
+        "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#veil" }
+      }
+    }
+  ]
 }

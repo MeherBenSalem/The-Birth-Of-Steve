@@ -5,6 +5,7 @@ import com.nightbeam.tbos.block.AlignmentDialBlock;
 import com.nightbeam.tbos.block.ArchiveCrateBlock;
 import com.nightbeam.tbos.block.ArchiveCoreBlock;
 import com.nightbeam.tbos.block.ArchiveCacheBlock;
+import com.nightbeam.tbos.block.EngravedMeridianTileBlock;
 import com.nightbeam.tbos.block.GraveyardPropBlock;
 import com.nightbeam.tbos.block.MemoryAnchorBlock;
 import com.nightbeam.tbos.block.FractureCofferBlock;
@@ -54,8 +55,13 @@ public final class ModBlocks {
             properties -> properties.mapColor(MapColor.GOLD).strength(3.2F, 10.0F).lightLevel(state -> 8));
     public static final DeferredBlock<Block> MERIDIAN_TILE = BLOCKS.registerSimpleBlock(
             "meridian_tile", properties -> properties.mapColor(MapColor.COLOR_CYAN).strength(2.2F, 6.0F));
-    public static final DeferredBlock<Block> ENGRAVED_MERIDIAN_TILE = BLOCKS.registerSimpleBlock(
-            "engraved_meridian_tile", properties -> properties.mapColor(MapColor.COLOR_CYAN).strength(2.2F, 6.0F));
+    public static final DeferredBlock<EngravedMeridianTileBlock> ENGRAVED_MERIDIAN_TILE = BLOCKS.registerBlock(
+            "engraved_meridian_tile",
+            EngravedMeridianTileBlock::new,
+            properties -> properties
+                    .mapColor(MapColor.COLOR_CYAN)
+                    .strength(2.2F, 6.0F)
+                    .lightLevel(state -> state.getValue(EngravedMeridianTileBlock.CHARGED) ? 8 : 0));
     public static final DeferredBlock<Block> YESTERGLASS = BLOCKS.registerSimpleBlock(
             "yesterglass",
             () -> BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS)
@@ -66,7 +72,11 @@ public final class ModBlocks {
     public static final DeferredBlock<MemoryAnchorBlock> MEMORY_ANCHOR = BLOCKS.registerBlock(
             "memory_anchor",
             MemoryAnchorBlock::new,
-            properties -> properties.mapColor(MapColor.COLOR_CYAN).strength(3.0F, 9.0F).lightLevel(state -> 7));
+            properties -> properties
+                    .mapColor(MapColor.COLOR_CYAN)
+                    .strength(3.0F, 9.0F)
+                    .lightLevel(state -> 7)
+                    .noOcclusion());
     public static final DeferredBlock<Block> PHASE_PLATFORM = BLOCKS.registerSimpleBlock(
             "phase_platform", properties -> properties.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(2.0F, 6.0F).lightLevel(state -> 4));
     public static final DeferredBlock<Block> RESONANCE_LAMP = BLOCKS.registerSimpleBlock(
@@ -101,7 +111,11 @@ public final class ModBlocks {
     public static final DeferredBlock<AlignmentDialBlock> ALIGNMENT_DIAL = BLOCKS.registerBlock(
             "alignment_dial",
             AlignmentDialBlock::new,
-            properties -> properties.mapColor(MapColor.COLOR_ORANGE).strength(2.5F, 7.0F).lightLevel(state -> 5));
+            properties -> properties
+                    .mapColor(MapColor.COLOR_ORANGE)
+                    .strength(2.5F, 7.0F)
+                    .lightLevel(state -> 5)
+                    .noOcclusion());
     public static final DeferredBlock<ResonantBellBlock> RESONANT_BELL = BLOCKS.registerBlock(
             "resonant_bell",
             ResonantBellBlock::new,
@@ -115,14 +129,16 @@ public final class ModBlocks {
             properties -> properties
                     .mapColor(MapColor.COLOR_ORANGE)
                     .strength(3.0F, 9.0F)
-                    .lightLevel(state -> state.getValue(MeridianRelayBlock.POWERED) ? 11 : 3));
+                    .lightLevel(state -> state.getValue(MeridianRelayBlock.POWERED) ? 11 : 3)
+                    .noOcclusion());
     public static final DeferredBlock<ArchiveCoreBlock> ARCHIVE_CORE = BLOCKS.registerBlock(
             "archive_core",
             ArchiveCoreBlock::new,
             properties -> properties
                     .mapColor(MapColor.COLOR_PURPLE)
                     .strength(4.0F, 12.0F)
-                    .lightLevel(state -> 12));
+                    .lightLevel(state -> 12)
+                    .noOcclusion());
     public static final DeferredBlock<MemoryLanternBlock> MEMORY_LANTERN = BLOCKS.registerBlock(
             "memory_lantern",
             MemoryLanternBlock::new,

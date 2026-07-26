@@ -27,6 +27,9 @@ public final class ArchiveRunProtection {
                 return Decision.ROOM_CACHE;
             }
         }
+        if (state.is(ModBlocks.RIFT_THRESHOLD.get())) {
+            return Decision.DENY;
+        }
         if (ModBlocks.ARCHIVE_CRATES.stream().anyMatch(crate -> state.is(crate.get()))
                 && run.status() == ArchiveRunStatus.ACTIVE
                 && ArchiveRoomPlacer.roomContaining(run, position).isPresent()) {

@@ -1,6 +1,7 @@
 package com.nightbeam.tbos.command;
 
 import com.nightbeam.tbos.registry.ModItems;
+import com.nightbeam.tbos.item.ArchiveSurveyMapItem;
 import com.nightbeam.tbos.item.MemoryPlateItem;
 import com.nightbeam.tbos.item.MemoryScene;
 import com.nightbeam.tbos.site.TemporalSite;
@@ -17,27 +18,42 @@ import com.nightbeam.tbos.run.ArchiveRoomPlacer;
 import com.nightbeam.tbos.run.ArchiveRoomTemplate;
 import com.nightbeam.tbos.run.ArchiveRoomTemplates;
 import com.nightbeam.tbos.world.AdventureWorldManager;
+import com.nightbeam.tbos.world.FractureShrinePlacement;
+import com.nightbeam.tbos.world.FractureShrinePlan;
+import com.nightbeam.tbos.world.FractureShrineVariant;
+import com.nightbeam.tbos.world.PlayerOnboarding;
 import com.google.gson.GsonBuilder;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.serialization.JsonOps;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Optional;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Rotation;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 public final class YesterglassCommands {
+    private static final SuggestionProvider<CommandSourceStack> SHRINE_VARIANTS = (context, builder) ->
+            SharedSuggestionProvider.suggest(
+                    Arrays.stream(FractureShrineVariant.values()).map(FractureShrineVariant::serializedName),
+                    builder);
+
     private YesterglassCommands() {
     }
 
@@ -86,12 +102,26 @@ public final class YesterglassCommands {
                                 .executes(context -> toggleDungeonBoundaries(context.getSource())))
                         .then(Commands.literal("markers")
                                 .executes(context -> toggleDungeonMarkers(context.getSource()))))
+                .then(Commands.literal("shrine")
+                        .then(Commands.literal("locate").executes(context -> locateShrine(context.getSource())))
+                        .then(Commands.literal("list").executes(context -> listShrines(context.getSource())))
+                        .then(Commands.literal("place")
+                                .executes(context -> placeShrineHere(context.getSource(), null))
+                                .then(Commands.argument("variant", StringArgumentType.word())
+                                        .suggests(SHRINE_VARIANTS)
+                                        .executes(context -> placeShrineHere(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "variant")))))
+                        .then(Commands.literal("place_all")
+                                .executes(context -> placeShrines(context.getSource()))))
                 .then(Commands.literal("debug")
                         .then(Commands.literal("transition").executes(context -> debugTransition(context.getSource())))
                         .then(Commands.literal("give_cracked_lens")
                                 .executes(context -> giveCrackedLens(context.getSource())))
                         .then(Commands.literal("give_survey_map")
                                 .executes(context -> giveSurveyMap(context.getSource())))
+                        .then(Commands.literal("give_journal")
+                                .executes(context -> giveJournal(context.getSource())))
                         .then(Commands.literal("place_shrines")
                                 .executes(context -> placeShrines(context.getSource())))
                         .then(Commands.literal("give_memory_kit")
@@ -208,6 +238,120 @@ public final class YesterglassCommands {
                     origin.getZ()), false);
         }
         return count;
+    }
+
+    private static int locateShrine(CommandSourceStack source) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ServerLevel level = source.getLevel();
+        BlockPos from = player.blockPosition();
+
+        // Built shrines report their real origin; planned ones report the seeded
+        // target they will occupy once their chunk generates.
+        Optional<FractureShrinePlacement> built = TemporalSiteManager.data(level).fractureShrines().stream()
+                .min(Comparator.comparingDouble(placement -> placement.distanceToSqr(from)));
+        Optional<FractureShrinePlan> planned = AdventureWorldManager.unbuiltShrines(level).stream()
+                .min(Comparator.comparingDouble(plan -> plan.distanceToSqr(from)));
+
+        FractureShrineVariant variant;
+        BlockPos target;
+        boolean generated;
+        if (built.isPresent()
+                && (planned.isEmpty() || built.get().distanceToSqr(from) <= planned.get().distanceToSqr(from))) {
+            variant = built.get().variant();
+            target = built.get().origin();
+            generated = true;
+        } else if (planned.isPresent()) {
+            variant = planned.get().variant();
+            target = planned.get().target();
+            generated = false;
+        } else {
+            source.sendFailure(Component.translatable("command.tbos.shrine.none"));
+            return 0;
+        }
+
+        int dx = target.getX() - from.getX();
+        int dz = target.getZ() - from.getZ();
+        int distance = (int) Math.round(Math.hypot(dx, dz));
+        source.sendSuccess(() -> Component.translatable(
+                "command.tbos.shrine.located",
+                Component.translatable("shrine.tbos." + variant.serializedName()),
+                ArchiveSurveyMapItem.direction(dx, dz),
+                distance,
+                target.getX(),
+                target.getZ(),
+                Component.translatable(generated
+                        ? "command.tbos.shrine.state.generated"
+                        : "command.tbos.shrine.state.pending")), false);
+        return distance;
+    }
+
+    private static int listShrines(CommandSourceStack source) {
+        ServerLevel level = source.getLevel();
+        var built = TemporalSiteManager.data(level).fractureShrines();
+        var plans = AdventureWorldManager.plannedShrines(level);
+        source.sendSuccess(() -> Component.translatable("command.tbos.shrine.list", plans.size()), false);
+        for (FractureShrinePlan plan : plans) {
+            BlockPos target = built.stream()
+                    .filter(placement -> placement.variant() == plan.variant())
+                    .map(FractureShrinePlacement::origin)
+                    .findFirst()
+                    .orElse(plan.target());
+            boolean generated = AdventureWorldManager.isShrineBuilt(level, plan.variant());
+            source.sendSuccess(() -> Component.translatable(
+                    "command.tbos.shrine.list_entry",
+                    Component.translatable("shrine.tbos." + plan.variant().serializedName()),
+                    target.getX(),
+                    target.getZ(),
+                    Component.translatable(generated
+                            ? "command.tbos.shrine.state.generated"
+                            : "command.tbos.shrine.state.pending")), false);
+        }
+        return plans.size();
+    }
+
+    private static int placeShrineHere(CommandSourceStack source, String variantName)
+            throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
+        ServerLevel level = source.getLevel();
+        FractureShrineVariant variant;
+        if (variantName == null) {
+            variant = AdventureWorldManager.unbuiltShrines(level).stream()
+                    .findFirst()
+                    .map(FractureShrinePlan::variant)
+                    .orElse(FractureShrineVariant.values()[0]);
+        } else {
+            variant = resolveShrineVariant(variantName);
+            if (variant == null) {
+                source.sendFailure(Component.translatable("command.tbos.shrine.unknown_variant", variantName));
+                return 0;
+            }
+        }
+
+        BlockPos origin = player.blockPosition();
+        AdventureWorldManager.placeShrine(level, origin, variant);
+        BlockPos placed = AdventureWorldManager.registerShrine(level, origin, variant).origin();
+        source.sendSuccess(() -> Component.translatable(
+                "command.tbos.shrine.placed",
+                Component.translatable("shrine.tbos." + variant.serializedName()),
+                placed.getX(),
+                placed.getY(),
+                placed.getZ()), true);
+        return 1;
+    }
+
+    private static FractureShrineVariant resolveShrineVariant(String name) {
+        for (FractureShrineVariant variant : FractureShrineVariant.values()) {
+            if (variant.serializedName().equalsIgnoreCase(name)) {
+                return variant;
+            }
+        }
+        return null;
+    }
+
+    private static int giveJournal(CommandSourceStack source) throws CommandSyntaxException {
+        PlayerOnboarding.grantJournal(source.getPlayerOrException());
+        source.sendSuccess(() -> Component.translatable("command.tbos.debug_journal"), false);
+        return 1;
     }
 
     private static int startRun(CommandSourceStack source) throws CommandSyntaxException {

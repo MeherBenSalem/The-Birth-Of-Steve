@@ -1,5 +1,6 @@
 {
   "variants": {
-    "": { "model": "tbos:block/engraved_meridian_tile" }
+    "charged=false": {"model": "tbos:block/engraved_meridian_tile"},
+    "charged=true": {"model": "tbos:block/engraved_meridian_tile_charged"}
   }
 }

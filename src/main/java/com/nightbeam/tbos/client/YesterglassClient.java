@@ -2,6 +2,8 @@ package com.nightbeam.tbos.client;
 
 import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.config.YesterglassClientConfig;
+import com.nightbeam.tbos.client.render.AlignmentDialRenderer;
+import com.nightbeam.tbos.client.render.ArchiveCoreRenderer;
 import com.nightbeam.tbos.client.render.MemoryLanternRenderer;
 import com.nightbeam.tbos.client.render.ArchiveZombieRenderer;
 import com.nightbeam.tbos.client.render.LenswardModel;
@@ -43,10 +45,16 @@ public final class YesterglassClient {
                 VanillaGuiLayers.HOTBAR,
                 Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "archive_puzzle"),
                 ArchivePuzzleHud::render);
+        event.registerAbove(
+                VanillaGuiLayers.HOTBAR,
+                Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "archive_floor_intro"),
+                ArchiveFloorIntroHud::render);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.MEMORY_LANTERN.get(), MemoryLanternRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.ARCHIVE_CORE.get(), ArchiveCoreRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.ALIGNMENT_DIAL.get(), AlignmentDialRenderer::new);
         event.registerEntityRenderer(ModEntities.MEMORY_LEECH.get(), MemoryLeechRenderer::new);
         event.registerEntityRenderer(ModEntities.LENSWARD.get(), LenswardRenderer::new);
         event.registerEntityRenderer(

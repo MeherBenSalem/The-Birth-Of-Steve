@@ -3,7 +3,9 @@ package com.nightbeam.tbos.block;
 import com.nightbeam.tbos.site.TemporalSiteManager;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -43,6 +45,33 @@ public final class MeridianRelayBlock extends Block {
             return InteractionResult.SUCCESS_SERVER;
         }
         return InteractionResult.PASS;
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (!state.getValue(POWERED)) {
+            return;
+        }
+        // Charge arcs around the gimbal ring and vents upward from the conductor.
+        double angle = random.nextDouble() * Math.PI * 2.0D;
+        level.addParticle(
+                ParticleTypes.ELECTRIC_SPARK,
+                pos.getX() + 0.5D + Math.cos(angle) * 0.32D,
+                pos.getY() + 0.63D,
+                pos.getZ() + 0.5D + Math.sin(angle) * 0.32D,
+                -Math.sin(angle) * 0.06D,
+                0.0D,
+                Math.cos(angle) * 0.06D);
+        if (random.nextInt(3) == 0) {
+            level.addParticle(
+                    ParticleTypes.END_ROD,
+                    pos.getX() + 0.42D + random.nextDouble() * 0.16D,
+                    pos.getY() + 0.85D,
+                    pos.getZ() + 0.42D + random.nextDouble() * 0.16D,
+                    0.0D,
+                    0.03D,
+                    0.0D);
+        }
     }
 
     @Override

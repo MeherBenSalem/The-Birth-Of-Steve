@@ -1,0 +1,6 @@
+{
+  "parent": "tbos:block/engraved_meridian_tile",
+  "textures": {
+    "rune": "tbos:block/engraved_meridian_tile_charged"
+  }
+}

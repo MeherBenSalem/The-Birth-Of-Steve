@@ -1,6 +1,230 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": true,
+  "gui_light": "front",
   "textures": {
-    "all": "tbos:block/engraved_meridian_tile"
+    "particle": "tbos:block/engraved_meridian_tile_side",
+    "stone": "tbos:block/engraved_meridian_tile_side",
+    "rune": "tbos:block/engraved_meridian_tile",
+    "bronze": "tbos:block/chronicle_bronze"
+  },
+  "elements": [
+    {
+      "__comment": "substantial archive-stone body",
+      "from": [0, 0, 0],
+      "to": [16, 14, 16],
+      "faces": {
+        "north": {"uv": [0, 2, 16, 16], "texture": "#stone", "cullface": "north"},
+        "east": {"uv": [0, 2, 16, 16], "texture": "#stone", "cullface": "east"},
+        "south": {"uv": [0, 2, 16, 16], "texture": "#stone", "cullface": "south"},
+        "west": {"uv": [0, 2, 16, 16], "texture": "#stone", "cullface": "west"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#stone"},
+        "down": {"uv": [0, 0, 16, 16], "texture": "#stone", "cullface": "down"}
+      }
+    },
+    {
+      "__comment": "recessed inscribed field",
+      "from": [1, 14, 1],
+      "to": [15, 15, 15],
+      "faces": {
+        "north": {"uv": [1, 1, 15, 2], "texture": "#bronze"},
+        "east": {"uv": [1, 1, 15, 2], "texture": "#bronze"},
+        "south": {"uv": [1, 1, 15, 2], "texture": "#bronze"},
+        "west": {"uv": [1, 1, 15, 2], "texture": "#bronze"},
+        "up": {"uv": [1, 1, 15, 15], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "north perimeter rail",
+      "from": [0, 14, 0],
+      "to": [16, 16, 2],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 2], "texture": "#stone", "cullface": "north"},
+        "east": {"uv": [0, 0, 2, 2], "texture": "#bronze"},
+        "south": {"uv": [0, 0, 16, 2], "texture": "#bronze"},
+        "west": {"uv": [0, 0, 2, 2], "texture": "#bronze"},
+        "up": {"uv": [0, 0, 16, 2], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "south perimeter rail",
+      "from": [0, 14, 14],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 2], "texture": "#bronze"},
+        "east": {"uv": [14, 0, 16, 2], "texture": "#bronze"},
+        "south": {"uv": [0, 0, 16, 2], "texture": "#stone", "cullface": "south"},
+        "west": {"uv": [14, 0, 16, 2], "texture": "#bronze"},
+        "up": {"uv": [0, 14, 16, 16], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "west perimeter rail",
+      "from": [0, 14, 2],
+      "to": [2, 16, 14],
+      "faces": {
+        "north": {"uv": [0, 0, 2, 2], "texture": "#bronze"},
+        "east": {"uv": [2, 0, 14, 2], "texture": "#bronze"},
+        "south": {"uv": [0, 0, 2, 2], "texture": "#bronze"},
+        "west": {"uv": [2, 0, 14, 2], "texture": "#stone", "cullface": "west"},
+        "up": {"uv": [0, 2, 2, 14], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "east perimeter rail",
+      "from": [14, 14, 2],
+      "to": [16, 16, 14],
+      "faces": {
+        "north": {"uv": [14, 0, 16, 2], "texture": "#bronze"},
+        "east": {"uv": [2, 0, 14, 2], "texture": "#stone", "cullface": "east"},
+        "south": {"uv": [14, 0, 16, 2], "texture": "#bronze"},
+        "west": {"uv": [2, 0, 14, 2], "texture": "#bronze"},
+        "up": {"uv": [14, 2, 16, 14], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "north routing channel",
+      "from": [7, 14.75, 2],
+      "to": [9, 16, 6],
+      "faces": {
+        "north": {"uv": [7, 0, 9, 1.25], "texture": "#bronze"},
+        "east": {"uv": [2, 0, 6, 1.25], "texture": "#bronze"},
+        "south": {"uv": [7, 0, 9, 1.25], "texture": "#bronze"},
+        "west": {"uv": [2, 0, 6, 1.25], "texture": "#bronze"},
+        "up": {"uv": [7, 2, 9, 6], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "south routing channel",
+      "from": [7, 14.75, 10],
+      "to": [9, 16, 14],
+      "faces": {
+        "north": {"uv": [7, 0, 9, 1.25], "texture": "#bronze"},
+        "east": {"uv": [10, 0, 14, 1.25], "texture": "#bronze"},
+        "south": {"uv": [7, 0, 9, 1.25], "texture": "#bronze"},
+        "west": {"uv": [10, 0, 14, 1.25], "texture": "#bronze"},
+        "up": {"uv": [7, 10, 9, 14], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "west routing channel",
+      "from": [2, 14.75, 7],
+      "to": [6, 16, 9],
+      "faces": {
+        "north": {"uv": [2, 0, 6, 1.25], "texture": "#bronze"},
+        "east": {"uv": [7, 0, 9, 1.25], "texture": "#bronze"},
+        "south": {"uv": [2, 0, 6, 1.25], "texture": "#bronze"},
+        "west": {"uv": [7, 0, 9, 1.25], "texture": "#bronze"},
+        "up": {"uv": [2, 7, 6, 9], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "east routing channel",
+      "from": [10, 14.75, 7],
+      "to": [14, 16, 9],
+      "faces": {
+        "north": {"uv": [10, 0, 14, 1.25], "texture": "#bronze"},
+        "east": {"uv": [7, 0, 9, 1.25], "texture": "#bronze"},
+        "south": {"uv": [10, 0, 14, 1.25], "texture": "#bronze"},
+        "west": {"uv": [7, 0, 9, 1.25], "texture": "#bronze"},
+        "up": {"uv": [10, 7, 14, 9], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "north-east diagonal trace",
+      "from": [7.4, 14.9, 3],
+      "to": [8.6, 15.7, 13],
+      "rotation": {"origin": [8, 15.3, 8], "axis": "y", "angle": 45},
+      "faces": {
+        "north": {"uv": [7.4, 0.3, 8.6, 1.1], "texture": "#bronze"},
+        "east": {"uv": [3, 0.3, 13, 1.1], "texture": "#bronze"},
+        "south": {"uv": [7.4, 0.3, 8.6, 1.1], "texture": "#bronze"},
+        "west": {"uv": [3, 0.3, 13, 1.1], "texture": "#bronze"},
+        "up": {"uv": [7.4, 3, 8.6, 13], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "north-west diagonal trace",
+      "from": [7.4, 14.9, 3],
+      "to": [8.6, 15.7, 13],
+      "rotation": {"origin": [8, 15.3, 8], "axis": "y", "angle": -45},
+      "faces": {
+        "north": {"uv": [7.4, 0.3, 8.6, 1.1], "texture": "#bronze"},
+        "east": {"uv": [3, 0.3, 13, 1.1], "texture": "#bronze"},
+        "south": {"uv": [7.4, 0.3, 8.6, 1.1], "texture": "#bronze"},
+        "west": {"uv": [3, 0.3, 13, 1.1], "texture": "#bronze"},
+        "up": {"uv": [7.4, 3, 8.6, 13], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "diamond routing medallion",
+      "from": [5.5, 14.5, 5.5],
+      "to": [10.5, 15.75, 10.5],
+      "rotation": {"origin": [8, 15.125, 8], "axis": "y", "angle": 45},
+      "faces": {
+        "north": {"uv": [5.5, 0.25, 10.5, 1.5], "texture": "#bronze"},
+        "east": {"uv": [5.5, 0.25, 10.5, 1.5], "texture": "#bronze"},
+        "south": {"uv": [5.5, 0.25, 10.5, 1.5], "texture": "#bronze"},
+        "west": {"uv": [5.5, 0.25, 10.5, 1.5], "texture": "#bronze"},
+        "up": {"uv": [5.5, 5.5, 10.5, 10.5], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "north-west locator stud",
+      "from": [2.75, 15, 2.75],
+      "to": [4.25, 16, 4.25],
+      "faces": {
+        "north": {"uv": [2.75, 0, 4.25, 1], "texture": "#bronze"},
+        "east": {"uv": [2.75, 0, 4.25, 1], "texture": "#bronze"},
+        "south": {"uv": [2.75, 0, 4.25, 1], "texture": "#bronze"},
+        "west": {"uv": [2.75, 0, 4.25, 1], "texture": "#bronze"},
+        "up": {"uv": [2.75, 2.75, 4.25, 4.25], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "north-east locator stud",
+      "from": [11.75, 15, 2.75],
+      "to": [13.25, 16, 4.25],
+      "faces": {
+        "north": {"uv": [11.75, 0, 13.25, 1], "texture": "#bronze"},
+        "east": {"uv": [2.75, 0, 4.25, 1], "texture": "#bronze"},
+        "south": {"uv": [11.75, 0, 13.25, 1], "texture": "#bronze"},
+        "west": {"uv": [2.75, 0, 4.25, 1], "texture": "#bronze"},
+        "up": {"uv": [11.75, 2.75, 13.25, 4.25], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "south-west locator stud",
+      "from": [2.75, 15, 11.75],
+      "to": [4.25, 16, 13.25],
+      "faces": {
+        "north": {"uv": [2.75, 0, 4.25, 1], "texture": "#bronze"},
+        "east": {"uv": [11.75, 0, 13.25, 1], "texture": "#bronze"},
+        "south": {"uv": [2.75, 0, 4.25, 1], "texture": "#bronze"},
+        "west": {"uv": [11.75, 0, 13.25, 1], "texture": "#bronze"},
+        "up": {"uv": [2.75, 11.75, 4.25, 13.25], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "south-east locator stud",
+      "from": [11.75, 15, 11.75],
+      "to": [13.25, 16, 13.25],
+      "faces": {
+        "north": {"uv": [11.75, 0, 13.25, 1], "texture": "#bronze"},
+        "east": {"uv": [11.75, 0, 13.25, 1], "texture": "#bronze"},
+        "south": {"uv": [11.75, 0, 13.25, 1], "texture": "#bronze"},
+        "west": {"uv": [11.75, 0, 13.25, 1], "texture": "#bronze"},
+        "up": {"uv": [11.75, 11.75, 13.25, 13.25], "texture": "#rune"}
+      }
+    }
+  ],
+  "display": {
+    "gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.625, 0.625, 0.625]},
+    "ground": {"translation": [0, 3, 0], "scale": [0.25, 0.25, 0.25]},
+    "fixed": {"rotation": [0, 180, 0], "scale": [0.5, 0.5, 0.5]},
+    "thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.375, 0.375, 0.375]},
+    "thirdperson_lefthand": {"rotation": [75, 225, 0], "translation": [0, 2.5, 0], "scale": [0.375, 0.375, 0.375]},
+    "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 1, 0], "scale": [0.4, 0.4, 0.4]},
+    "firstperson_lefthand": {"rotation": [0, 225, 0], "translation": [0, 1, 0], "scale": [0.4, 0.4, 0.4]}
   }
 }

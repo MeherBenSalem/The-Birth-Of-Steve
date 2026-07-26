@@ -12,6 +12,46 @@ gradlew.bat runDungeonSimulation
 `clean build` also runs the 1,000-seed dungeon simulation through Gradle's
 `check` lifecycle.
 
+### Known flaky test
+
+`tbos:memory_leech_pounce` fails intermittently and is **not** a regression. On an
+unmodified `main` at `a7815be` it failed two of three consecutive
+`runGameTestServer` runs, in both cases at tick 75 with `onGround=false`. Re-run
+the suite before treating a failure in that test as real; every other test in the
+namespace is stable.
+
+## Onboarding and shrine worldgen manual matrix
+
+- Create a fresh world. Confirm the Archivist's Journal is granted once, the
+  welcome and shrine hint appear in chat, and right-clicking the Journal opens
+  the book with all nine pages legible and correctly ordered.
+- Disconnect and rejoin, die and respawn, and travel to the Fractured Archive and
+  back. None of these may grant a second Journal or repeat the welcome.
+- Run `/tbos shrine list` in the fresh world: three shrines, all `PENDING`.
+  Travel to one reported target and confirm the shrine builds as its chunk
+  generates, with no visible tick spike or login stall, then that `list` reports
+  it `GENERATED` and `/tbos shrine locate` gives a correct bearing.
+- Run `/tbos shrine place curator_workshop`, confirm it builds at your feet, is
+  discoverable, and that repeating it moves rather than duplicates the shrine.
+- Use the Archive Survey Map in a world where no shrine has generated. It must
+  report the Meridian Archive without building any shrine.
+- Load a world saved before 0.2.0-alpha.2. Confirm temporal site data migrates
+  from schema 3 to 4, previously built shrines survive, no duplicates are planned,
+  and the existing player is greeted exactly once.
+
+## Utility block visual matrix
+
+- Use `/tbos showcase`, then inspect the Curator Gateway, Meridian Relay, Archive
+  Core, Memory Lantern, and Alignment Dial. Each must show its own geometry and
+  textures, animate, and emit its ambient particles. The relay must only arc while
+  powered. Confirm no magenta/missing textures and no model warnings in the log.
+- Confirm the Archive Core's inner core and the Alignment Dial's armillary rings
+  animate, then enable `reducedMotion` in `config/tbos-client.toml` and confirm
+  both settle while the blocks still render.
+- Solve the Hall of Alignment and the Broken Meridian end to end. The dial and
+  relay must behave identically to before the block-entity conversion.
+- Check the five blocks' inventory icons and held models in the creative tab.
+
 ## Echoes of the Past manual matrix
 
 - In a fresh world, confirm all three Fracture Shrine locations are persistent,

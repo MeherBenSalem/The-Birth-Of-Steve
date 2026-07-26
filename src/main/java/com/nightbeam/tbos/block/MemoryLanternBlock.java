@@ -8,10 +8,12 @@ import com.nightbeam.tbos.registry.ModBlockEntities;
 import com.nightbeam.tbos.registry.ModItems;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -29,6 +31,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 public final class MemoryLanternBlock extends BaseEntityBlock {
     public static final MapCodec<MemoryLanternBlock> CODEC = simpleCodec(MemoryLanternBlock::new);
+    private static final int GLASS_CYAN = 0x8CEFE4;
 
     public MemoryLanternBlock(BlockBehaviour.Properties properties) {
         super(properties);
@@ -133,6 +136,21 @@ public final class MemoryLanternBlock extends BaseEntityBlock {
                 0.8F,
                 playing ? 1.25F : 0.75F);
         return InteractionResult.SUCCESS_SERVER;
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (random.nextInt(3) != 0) {
+            return;
+        }
+        level.addParticle(
+                new DustParticleOptions(GLASS_CYAN, 0.8F),
+                pos.getX() + 0.35D + random.nextDouble() * 0.3D,
+                pos.getY() + 0.2D + random.nextDouble() * 0.6D,
+                pos.getZ() + 0.35D + random.nextDouble() * 0.3D,
+                0.0D,
+                0.015D,
+                0.0D);
     }
 
     @Override

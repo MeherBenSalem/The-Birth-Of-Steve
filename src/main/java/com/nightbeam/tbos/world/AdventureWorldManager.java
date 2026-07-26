@@ -8,8 +8,11 @@ import com.nightbeam.tbos.site.TemporalSiteManager;
 import com.nightbeam.tbos.site.TemporalSiteSavedData;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,24 +32,85 @@ public final class AdventureWorldManager {
     private AdventureWorldManager() {
     }
 
-    public static List<FractureShrinePlacement> ensureShrines(ServerLevel level, BlockPos requester) {
+    /**
+     * Returns the persisted seed-derived shrine plan, deriving and storing it on
+     * first call. Pure lookup: this never writes blocks or loads chunks.
+     */
+    public static List<FractureShrinePlan> plannedShrines(ServerLevel level) {
         TemporalSiteSavedData data = TemporalSiteManager.data(level);
-        if (!data.fractureShrines().isEmpty()) {
-            deactivateLegacyShrineThresholds(level, data.fractureShrines());
-            return data.fractureShrines();
+        if (!data.plannedShrines().isEmpty()) {
+            return data.plannedShrines();
         }
 
-        List<FractureShrinePlacement> placements = new ArrayList<>();
         FractureShrineVariant[] variants = FractureShrineVariant.values();
         List<BlockPos> targets = shrineTargets(level.getSeed(), level.getRespawnData().pos());
+        List<FractureShrinePlan> plans = new ArrayList<>(variants.length);
         for (int index = 0; index < variants.length; index++) {
-            BlockPos target = targets.get(index);
-            BlockPos origin = findDrySurface(level, target.getX(), target.getZ(), index * 37);
-            placeShrine(level, origin, variants[index]);
-            placements.add(new FractureShrinePlacement(variants[index], origin));
+            plans.add(new FractureShrinePlan(variants[index], targets.get(index)));
         }
-        data.setFractureShrines(placements);
+        data.setPlannedShrines(plans);
+        return data.plannedShrines();
+    }
+
+    /** Plans whose shrine has not been built into the world yet. */
+    public static List<FractureShrinePlan> unbuiltShrines(ServerLevel level) {
+        Set<FractureShrineVariant> built = builtVariants(level);
+        return plannedShrines(level).stream()
+                .filter(plan -> !built.contains(plan.variant()))
+                .toList();
+    }
+
+    public static boolean isShrineBuilt(ServerLevel level, FractureShrineVariant variant) {
+        return builtVariants(level).contains(variant);
+    }
+
+    /**
+     * Builds one planned shrine at its resolved dry surface and records the
+     * placement. Returns false when that variant already exists.
+     */
+    public static boolean materializeShrine(ServerLevel level, FractureShrinePlan plan) {
+        TemporalSiteSavedData data = TemporalSiteManager.data(level);
+        if (builtVariants(level).contains(plan.variant())) {
+            return false;
+        }
+        int salt = plan.variant().ordinal() * 37;
+        BlockPos origin = findDrySurface(level, plan.target().getX(), plan.target().getZ(), salt);
+        placeShrine(level, origin, plan.variant());
+        recordShrine(level, data, new FractureShrinePlacement(plan.variant(), origin));
+        return true;
+    }
+
+    /** Records an out-of-plan shrine, such as one an operator forced into place. */
+    public static FractureShrinePlacement registerShrine(
+            ServerLevel level, BlockPos origin, FractureShrineVariant variant) {
+        FractureShrinePlacement placement = new FractureShrinePlacement(variant, origin);
+        recordShrine(level, TemporalSiteManager.data(level), placement);
+        return placement;
+    }
+
+    /** Builds every planned shrine immediately. Operator and migration path only. */
+    public static List<FractureShrinePlacement> ensureShrines(ServerLevel level, BlockPos requester) {
+        TemporalSiteSavedData data = TemporalSiteManager.data(level);
+        deactivateLegacyShrineThresholds(level, data.fractureShrines());
+        for (FractureShrinePlan plan : plannedShrines(level)) {
+            materializeShrine(level, plan);
+        }
         return data.fractureShrines();
+    }
+
+    private static Set<FractureShrineVariant> builtVariants(ServerLevel level) {
+        return TemporalSiteManager.data(level).fractureShrines().stream()
+                .map(FractureShrinePlacement::variant)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(FractureShrineVariant.class)));
+    }
+
+    private static void recordShrine(
+            ServerLevel level, TemporalSiteSavedData data, FractureShrinePlacement placement) {
+        List<FractureShrinePlacement> placements = new ArrayList<>(data.fractureShrines());
+        placements.removeIf(existing -> existing.variant() == placement.variant());
+        placements.add(placement);
+        data.setFractureShrines(placements);
+        FractureShrineQueue.invalidate(level);
     }
 
     /**
@@ -87,10 +151,11 @@ public final class AdventureWorldManager {
             return origin;
         }
 
-        List<FractureShrinePlacement> shrines = ensureShrines(level, requester);
-        BlockPos center = shrines.stream()
-                .min(Comparator.comparingDouble(shrine -> shrine.distanceToSqr(requester)))
-                .map(FractureShrinePlacement::origin)
+        // Anchor on the seed-derived plan rather than built shrines: the Survey Map
+        // must not force three distant shrine regions into existence.
+        BlockPos center = plannedShrines(level).stream()
+                .min(Comparator.comparingDouble(plan -> plan.distanceToSqr(requester)))
+                .map(FractureShrinePlan::target)
                 .orElse(requester);
         int direction = Math.floorMod((int) (level.getSeed() >>> 17), 4);
         int dx = switch (direction) {
@@ -104,7 +169,10 @@ public final class AdventureWorldManager {
             default -> 0;
         };
         BlockPos surface = findDrySurface(level, center.getX() + dx, center.getZ() + dz, 113);
-        BlockPos origin = new BlockPos((surface.getX() >> 4) << 4, surface.getY() - 1, (surface.getZ() >> 4) << 4);
+        // The authored floor now begins at the first air block reported by the
+        // surface heightmap. Individual rooms clear their enclosed volume, so
+        // neither the Atrium nor later puzzle rooms can be buried by terrain.
+        BlockPos origin = new BlockPos((surface.getX() >> 4) << 4, surface.getY(), (surface.getZ() >> 4) << 4);
         placeFullArchive(level, origin);
         data.setArchiveOrigin(origin);
         return origin;

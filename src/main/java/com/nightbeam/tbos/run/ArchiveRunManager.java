@@ -3,6 +3,8 @@ package com.nightbeam.tbos.run;
 import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.config.YesterglassConfig;
 import com.nightbeam.tbos.registry.ModItems;
+import com.nightbeam.tbos.advancement.ModAdvancements;
+import com.nightbeam.tbos.network.payload.ArchiveFloorIntroPayload;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.List;
@@ -21,6 +23,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /** The server-authoritative mutation boundary for archive entry and run allocation. */
 public final class ArchiveRunManager {
@@ -78,7 +81,7 @@ public final class ArchiveRunManager {
         ArchiveRun preparing;
         try {
             ArchiveRunGenerator.GenerationResult generated = ArchiveRunGenerator.generateDetailed(
-                    seed, settings);
+                    seed, 0L, settings);
             preparing = ArchiveRun.create(runId, seed, instanceSlot, members, generated.graph());
             storage.register(preparing);
             ArchiveGenerationQueue.enqueue(preparing);
@@ -150,8 +153,13 @@ public final class ArchiveRunManager {
                     TeleportTransition.DO_NOTHING));
             player.resetFallDistance();
             player.clearFire();
+            ModAdvancements.awardEnterFracturedArchive(player);
+            PacketDistributor.sendToPlayer(player, new ArchiveFloorIntroPayload(active.floor()));
             player.sendOverlayMessage(Component.translatable(
-                    "message.tbos.archive.entered", active.floor(), active.sharedRevives()));
+                    "message.tbos.archive.entered",
+                    ArchiveFloorPresentation.displayFloor(active.floor()),
+                    ArchiveFloorPresentation.name(active.floor()),
+                    active.sharedRevives()));
         }
     }
 
@@ -170,7 +178,7 @@ public final class ArchiveRunManager {
         }
         try {
             UUID runId = UUID.randomUUID();
-            ArchiveDungeonGraph graph = ArchiveRunGenerator.generateDungeon(seed, dungeonSettings());
+            ArchiveDungeonGraph graph = ArchiveRunGenerator.generateDungeon(seed, 0L, dungeonSettings());
             ArchiveRun run = ArchiveRun.create(
                     runId,
                     seed,
@@ -194,7 +202,7 @@ public final class ArchiveRunManager {
         if (run == null || !run.status().holdsInstanceSlot()) {
             return false;
         }
-        ArchiveDungeonGraph graph = ArchiveRunGenerator.generateDungeon(run.seed(), dungeonSettings());
+        ArchiveDungeonGraph graph = ArchiveRunGenerator.generateDungeon(run.seed(), run.floor(), dungeonSettings());
         ArchiveRun preparing = run.regenerate(graph);
         ArchiveGenerationQueue.cancel(run.runId());
         storage.replace(preparing);
@@ -269,7 +277,7 @@ public final class ArchiveRunManager {
         try {
             ArchiveDungeonGraph graph = null;
             for (int attempt = 0; attempt < 16; attempt++) {
-                graph = ArchiveRunGenerator.generateDungeon(candidateSeed, dungeonSettings());
+                graph = ArchiveRunGenerator.generateDungeon(candidateSeed, nextFloor, dungeonSettings());
                 if (!sameStructure(run.dungeonGraph(), graph)) {
                     break;
                 }
@@ -298,6 +306,48 @@ public final class ArchiveRunManager {
         ArchiveRun returning = run.fail(currentTick + FAILURE_RETURN_DELAY_TICKS);
         storage.replace(returning);
         return Optional.of(returning);
+    }
+
+    public static GatewayAdvanceResult advanceFromRewardGateway(ServerPlayer player, BlockPos gatewayPos) {
+        if (!player.level().dimension().equals(ArchiveDimensions.FRACTURED_ARCHIVE)) {
+            return GatewayAdvanceResult.NOT_ARCHIVE;
+        }
+        ArchiveRunSavedData storage = ArchiveRunSavedData.get(player.level().getServer());
+        ArchiveRun run = storage.findByMember(player.getUUID()).orElse(null);
+        if (run == null) {
+            feedback(player, "message.tbos.archive.gateway.not_member");
+            return GatewayAdvanceResult.NOT_MEMBER;
+        }
+        if (run.status() != ArchiveRunStatus.ACTIVE) {
+            feedback(player, "message.tbos.archive.gateway.busy");
+            return GatewayAdvanceResult.RUN_BUSY;
+        }
+        if (!gatewayPos.equals(ArchiveRoomPlacer.rewardGatewayPosition(run))) {
+            feedback(player, "message.tbos.archive.gateway.invalid");
+            return GatewayAdvanceResult.INVALID_GATEWAY;
+        }
+        ArchiveRoomNode reward = run.dungeonGraph().room(run.dungeonGraph().rewardRoom());
+        if (!reward.runtime().completed()) {
+            feedback(player, "message.tbos.archive.gateway.locked");
+            return GatewayAdvanceResult.REWARD_LOCKED;
+        }
+        Optional<ArchiveRun> nextFloor = beginNextFloor(storage, player.getUUID());
+        if (nextFloor.isEmpty()) {
+            feedback(player, "message.tbos.archive.gateway.failed");
+            return GatewayAdvanceResult.PREPARATION_FAILED;
+        }
+        ArchiveRun preparing = nextFloor.get();
+        Component message = Component.translatable(
+                "message.tbos.archive.gateway.advancing",
+                ArchiveFloorPresentation.displayFloor(run.floor()),
+                ArchiveFloorPresentation.displayFloor(preparing.floor()));
+        for (ArchiveRunMember member : preparing.members()) {
+            ServerPlayer online = player.level().getServer().getPlayerList().getPlayer(member.playerId());
+            if (online != null) {
+                online.sendOverlayMessage(message);
+            }
+        }
+        return GatewayAdvanceResult.ADVANCING;
     }
 
     public static ReturnResult completeReturnIfDue(
@@ -551,6 +601,16 @@ public final class ArchiveRunManager {
         ARCHIVE_UNAVAILABLE,
         NO_FREE_SLOT,
         PLACEMENT_FAILED
+    }
+
+    public enum GatewayAdvanceResult {
+        ADVANCING,
+        NOT_ARCHIVE,
+        NOT_MEMBER,
+        RUN_BUSY,
+        INVALID_GATEWAY,
+        REWARD_LOCKED,
+        PREPARATION_FAILED
     }
 
     public enum DeathResult {

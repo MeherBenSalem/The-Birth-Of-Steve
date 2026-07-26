@@ -616,18 +616,10 @@ public final class ArchiveEncounterManager {
             spawnDirectLoot(level, complete, roomIndex);
             if (roomIndex == complete.dungeonGraph().rewardRoom()) {
                 grantFloorCompletionRewards(server, level, complete);
-                var nextFloor = ArchiveRunManager.beginNextFloor(
-                        storage, complete.members().getFirst().playerId());
-                if (nextFloor.isPresent()) {
-                    announce(server, nextFloor.get(), Component.literal(
-                                    "FLOOR " + complete.floor() + " CLEARED - Reconstructing floor "
-                                            + nextFloor.get().floor())
-                            .withStyle(ChatFormatting.AQUA));
-                } else {
-                    announce(server, complete, Component.literal(
-                                    "FLOOR CLEAR - The next Archive floor could not be prepared")
-                            .withStyle(ChatFormatting.RED));
-                }
+                announce(server, complete, Component.translatable(
+                                "message.tbos.archive.gateway.ready",
+                                ArchiveFloorPresentation.displayFloor(complete.floor()))
+                        .withStyle(ChatFormatting.AQUA));
             } else {
                 announce(server, complete, Component.literal(encounterTitle(kind) + " - Path recorded")
                         .withStyle(ChatFormatting.AQUA));
@@ -740,7 +732,12 @@ public final class ArchiveEncounterManager {
         int party = Math.max(1, activePartyInRoom(level.getServer(), run, roomIndex));
         ArchiveDungeonRules rules = dungeonRules();
         List<ArchiveEnemyKind> composition = planWave(
-                run.dungeonGraph().room(roomIndex), run.rooms().get(roomIndex).encounterSeed(), wave, party, rules);
+                run.dungeonGraph().room(roomIndex),
+                run.rooms().get(roomIndex).encounterSeed(),
+                wave,
+                party,
+                run.floor(),
+                rules);
         playWaveStartCue(level, run, roomIndex, wave);
         for (int ordinal = 0; ordinal < composition.size(); ordinal++) {
             spawn(level, run, roomIndex, composition.get(ordinal), ordinal, wave, party, rules);
@@ -847,6 +844,16 @@ public final class ArchiveEncounterManager {
             int wave,
             int activePlayers,
             ArchiveDungeonRules rules) {
+        return planWave(room, encounterSeed, wave, activePlayers, 0L, rules);
+    }
+
+    public static List<ArchiveEnemyKind> planWave(
+            ArchiveRoomNode room,
+            long encounterSeed,
+            int wave,
+            int activePlayers,
+            long floorIndex,
+            ArchiveDungeonRules rules) {
         ArchiveEncounterKind kind = room.encounterKind();
         if (kind == ArchiveEncounterKind.BOSS) {
             return List.of(ArchiveEnemyKind.HOUR_CANTOR);
@@ -866,7 +873,8 @@ public final class ArchiveEncounterManager {
         int difficultyBonus = room.difficulty() >= 25 && base > 0 ? 1 : 0;
         int partyBonus = (int) Math.ceil(
                 Math.max(0, activePlayers - 1) * rules.enemiesPerAdditionalPlayer());
-        int count = Math.min(16, base + sizeBonus + difficultyBonus + partyBonus);
+        int floorBonus = base > 0 ? ArchiveFloorPresentation.additionalEnemies(floorIndex) : 0;
+        int count = Math.min(16, base + sizeBonus + difficultyBonus + partyBonus + floorBonus);
         if (count == 0) {
             return List.of();
         }

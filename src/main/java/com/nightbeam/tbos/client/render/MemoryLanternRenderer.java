@@ -4,13 +4,11 @@ import com.nightbeam.tbos.blockentity.MemoryLanternBlockEntity;
 import com.nightbeam.tbos.config.YesterglassClientConfig;
 import com.nightbeam.tbos.item.MemoryScene;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.phys.Vec3;
 
@@ -54,10 +52,12 @@ public final class MemoryLanternRenderer
             PoseStack poseStack,
             SubmitNodeCollector collector,
             CameraRenderState cameraState) {
+        float idleTime = YesterglassClientConfig.REDUCED_MOTION.getAsBoolean() ? 0.0F : state.time;
         if (!state.playing || state.scene == null) {
+            submitIdleMote(poseStack, collector, idleTime);
             return;
         }
-        float time = YesterglassClientConfig.REDUCED_MOTION.getAsBoolean() ? 0.0F : state.time;
+        float time = idleTime;
         poseStack.pushPose();
         poseStack.translate(0.5F, 1.15F + (float) Math.sin(time * 0.08F) * 0.025F, 0.5F);
         poseStack.scale(0.72F, 0.72F, 0.72F);
@@ -68,6 +68,15 @@ public final class MemoryLanternRenderer
     @Override
     public int getViewDistance() {
         return 24;
+    }
+
+    /** A dormant lantern still holds one drifting mote so it never looks inert. */
+    private static void submitIdleMote(PoseStack poseStack, SubmitNodeCollector collector, float time) {
+        poseStack.pushPose();
+        poseStack.translate(0.5F, 0.42F + (float) Math.sin(time * 0.05F) * 0.06F, 0.5F);
+        poseStack.mulPose(Axis.YP.rotation(time * 0.03F));
+        submitBox(poseStack, collector, 0.0F, 0.0F, 0.0F, 0.09F, 0.09F, 0.09F, CYAN);
+        poseStack.popPose();
     }
 
     private static void renderScene(
@@ -215,63 +224,6 @@ public final class MemoryLanternRenderer
             float height,
             float depth,
             int color) {
-        poseStack.pushPose();
-        poseStack.translate(centerX, bottomY, centerZ);
-        collector.submitCustomGeometry(
-                poseStack,
-                RenderTypes.debugQuads(),
-                (pose, vertices) -> drawBox(pose, vertices, width, height, depth, color));
-        poseStack.popPose();
-    }
-
-    private static void drawBox(
-            PoseStack.Pose pose,
-            VertexConsumer vertices,
-            float width,
-            float height,
-            float depth,
-            int color) {
-        float x0 = -width * 0.5F;
-        float x1 = width * 0.5F;
-        float z0 = -depth * 0.5F;
-        float z1 = depth * 0.5F;
-        quad(pose, vertices, color, x0, 0.0F, z1, x1, 0.0F, z1, x1, height, z1, x0, height, z1);
-        quad(pose, vertices, color, x1, 0.0F, z0, x0, 0.0F, z0, x0, height, z0, x1, height, z0);
-        quad(pose, vertices, color, x0, 0.0F, z0, x0, 0.0F, z1, x0, height, z1, x0, height, z0);
-        quad(pose, vertices, color, x1, 0.0F, z1, x1, 0.0F, z0, x1, height, z0, x1, height, z1);
-        quad(pose, vertices, color, x0, height, z1, x1, height, z1, x1, height, z0, x0, height, z0);
-        quad(pose, vertices, color, x0, 0.0F, z0, x1, 0.0F, z0, x1, 0.0F, z1, x0, 0.0F, z1);
-    }
-
-    private static void quad(
-            PoseStack.Pose pose,
-            VertexConsumer vertices,
-            int color,
-            float ax,
-            float ay,
-            float az,
-            float bx,
-            float by,
-            float bz,
-            float cx,
-            float cy,
-            float cz,
-            float dx,
-            float dy,
-            float dz) {
-        vertex(pose, vertices, color, ax, ay, az);
-        vertex(pose, vertices, color, bx, by, bz);
-        vertex(pose, vertices, color, cx, cy, cz);
-        vertex(pose, vertices, color, dx, dy, dz);
-    }
-
-    private static void vertex(
-            PoseStack.Pose pose,
-            VertexConsumer vertices,
-            int color,
-            float x,
-            float y,
-            float z) {
-        vertices.addVertex(pose, x, y, z).setColor(color);
+        ArchiveGeometry.submitBox(poseStack, collector, centerX, bottomY, centerZ, width, height, depth, color);
     }
 }

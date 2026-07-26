@@ -1,12 +1,94 @@
 {
-  "parent": "minecraft:block/cube",
+  "parent": "minecraft:block/block",
   "textures": {
-    "down": "tbos:block/chronicle_bronze",
-    "east": "tbos:block/meridian_tile",
-    "north": "tbos:block/archive_core",
-    "particle": "tbos:block/archive_core",
-    "south": "tbos:block/archive_core",
-    "up": "tbos:block/rift_threshold",
-    "west": "tbos:block/meridian_tile"
-  }
+    "particle": "tbos:block/alignment_dial_base",
+    "base": "tbos:block/alignment_dial_base",
+    "face": "tbos:block/alignment_dial_face",
+    "glyphs": "tbos:block/alignment_dial_glyphs"
+  },
+  "elements": [
+    {
+      "__comment": "footing, full width so the dial never reads as floating",
+      "from": [ 0, 0, 0 ],
+      "to": [ 16, 2, 16 ],
+      "faces": {
+        "north": { "uv": [ 0, 14, 16, 16 ], "texture": "#base" },
+        "east":  { "uv": [ 0, 14, 16, 16 ], "texture": "#base" },
+        "south": { "uv": [ 0, 14, 16, 16 ], "texture": "#base" },
+        "west":  { "uv": [ 0, 14, 16, 16 ], "texture": "#base" },
+        "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#base" },
+        "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#base", "cullface": "down" }
+      }
+    },
+    {
+      "__comment": "plinth",
+      "from": [ 3, 2, 3 ],
+      "to": [ 13, 5, 13 ],
+      "faces": {
+        "north": { "uv": [ 3, 11, 13, 14 ], "texture": "#base" },
+        "east":  { "uv": [ 3, 11, 13, 14 ], "texture": "#base" },
+        "south": { "uv": [ 3, 11, 13, 14 ], "texture": "#base" },
+        "west":  { "uv": [ 3, 11, 13, 14 ], "texture": "#base" },
+        "up":    { "uv": [ 3,  3, 13, 13 ], "texture": "#base" }
+      }
+    },
+    {
+      "__comment": "mount",
+      "from": [ 6, 5, 7 ],
+      "to": [ 10, 8, 10 ],
+      "faces": {
+        "north": { "uv": [ 6, 8, 10, 11 ], "texture": "#base" },
+        "east":  { "uv": [ 7, 8, 10, 11 ], "texture": "#base" },
+        "south": { "uv": [ 6, 8, 10, 11 ], "texture": "#base" },
+        "west":  { "uv": [ 7, 8, 10, 11 ], "texture": "#base" }
+      }
+    },
+    {
+      "__comment": "tilted dial face",
+      "from": [ 2.5, 6.5, 8 ],
+      "to": [ 13.5, 15.5, 9 ],
+      "rotation": { "origin": [ 8, 11, 8.5 ], "axis": "x", "angle": -22.5 },
+      "faces": {
+        "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#face" },
+        "east":  { "uv": [ 7, 0,  9, 16 ], "texture": "#base" },
+        "south": { "uv": [ 16, 0, 0, 16 ], "texture": "#face" },
+        "west":  { "uv": [ 7, 0,  9, 16 ], "texture": "#base" },
+        "up":    { "uv": [ 2, 7, 14,  9 ], "texture": "#base" },
+        "down":  { "uv": [ 2, 7, 14,  9 ], "texture": "#base" }
+      }
+    },
+    {
+      "__comment": "glyph plane in front of the face",
+      "from": [ 2, 6, 7.35 ],
+      "to": [ 14, 16, 7.55 ],
+      "rotation": { "origin": [ 8, 11, 8.5 ], "axis": "x", "angle": -22.5 },
+      "faces": {
+        "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#glyphs" },
+        "south": { "uv": [ 16, 0, 0, 16 ], "texture": "#glyphs" }
+      }
+    },
+    {
+      "__comment": "glyph plane behind the face",
+      "from": [ 2, 6, 9.45 ],
+      "to": [ 14, 16, 9.65 ],
+      "rotation": { "origin": [ 8, 11, 8.5 ], "axis": "x", "angle": -22.5 },
+      "faces": {
+        "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#glyphs" },
+        "south": { "uv": [ 16, 0, 0, 16 ], "texture": "#glyphs" }
+      }
+    },
+    {
+      "__comment": "gnomon",
+      "from": [ 7.5, 8, 4.5 ],
+      "to": [ 8.5, 12, 7 ],
+      "faces": {
+        "north": { "uv": [ 7, 4, 8, 8 ], "texture": "#base" },
+        "east":  { "uv": [ 5, 4, 8, 8 ], "texture": "#base" },
+        "south": { "uv": [ 7, 4, 8, 8 ], "texture": "#base" },
+        "west":  { "uv": [ 5, 4, 8, 8 ], "texture": "#base" },
+        "up":    { "uv": [ 7, 4, 8, 7 ], "texture": "#base" },
+        "down":  { "uv": [ 7, 4, 8, 7 ], "texture": "#base" }
+      }
+    }
+  ]
 }

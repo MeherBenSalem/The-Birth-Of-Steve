@@ -7,6 +7,7 @@ import com.nightbeam.tbos.network.payload.BeginTransitionPayload;
 import com.nightbeam.tbos.network.payload.SiteSnapshotPayload;
 import com.nightbeam.tbos.registry.ModBlocks;
 import com.nightbeam.tbos.registry.ModItems;
+import com.nightbeam.tbos.block.EngravedMeridianTileBlock;
 import com.nightbeam.tbos.block.MeridianRelayBlock;
 import com.nightbeam.tbos.block.ResonantBellBlock;
 import java.util.ArrayList;
@@ -73,7 +74,8 @@ public final class TemporalSiteManager {
             }
         }
 
-        for (int y = 1; y <= 4; y++) {
+        clearInterior(level, definition, immutableOrigin, rotation, 6);
+        for (int y = 1; y <= 5; y++) {
             for (int edge = 0; edge < definition.sizeX(); edge++) {
                 Block wallBlock = (edge + y) % 5 == 0 ? ModBlocks.CRACKED_ARCHIVE_STONE.get() : ModBlocks.ARCHIVE_STONE.get();
                 setRelative(level, definition, immutableOrigin, rotation, new BlockPos(edge, y, 0), wallBlock);
@@ -82,12 +84,14 @@ public final class TemporalSiteManager {
                 setRelative(level, definition, immutableOrigin, rotation, new BlockPos(definition.sizeX() - 1, y, edge), wallBlock);
             }
         }
+        placeCeiling(level, definition, immutableOrigin, rotation, 6);
 
         // Safe entrance in the south wall and an elevated remembered-state exit in the north wall.
         setRelative(level, definition, immutableOrigin, rotation, new BlockPos(8, 1, 0), Blocks.AIR);
         setRelative(level, definition, immutableOrigin, rotation, new BlockPos(8, 2, 0), Blocks.AIR);
         for (int x = 7; x <= 8; x++) {
             setRelative(level, definition, immutableOrigin, rotation, new BlockPos(x, 4, 15), Blocks.AIR);
+            setRelative(level, definition, immutableOrigin, rotation, new BlockPos(x, 5, 15), Blocks.AIR);
         }
         level.setBlock(
                 definition.worldPosition(immutableOrigin, definition.memoryAnchor(), rotation),
@@ -127,6 +131,7 @@ public final class TemporalSiteManager {
             }
         }
 
+        clearInterior(level, definition, immutableOrigin, rotation, 6);
         for (int y = 1; y <= 5; y++) {
             for (int x = 0; x < definition.sizeX(); x++) {
                 Block wall = (x + y) % 6 == 0 ? ModBlocks.CRACKED_ARCHIVE_STONE.get() : ModBlocks.ARCHIVE_STONE.get();
@@ -139,6 +144,7 @@ public final class TemporalSiteManager {
                 setRelative(level, definition, immutableOrigin, rotation, new BlockPos(definition.sizeX() - 1, y, z), wall);
             }
         }
+        placeCeiling(level, definition, immutableOrigin, rotation, 6);
 
         for (int x = 11; x <= 12; x++) {
             setRelative(level, definition, immutableOrigin, rotation, new BlockPos(x, 1, 0), Blocks.AIR);
@@ -192,6 +198,7 @@ public final class TemporalSiteManager {
             }
         }
 
+        clearInterior(level, definition, immutableOrigin, rotation, 6);
         for (int y = 1; y <= 5; y++) {
             for (int x = 0; x < definition.sizeX(); x++) {
                 Block wall = (x + y) % 5 == 0 ? ModBlocks.CRACKED_ARCHIVE_STONE.get() : ModBlocks.ARCHIVE_STONE.get();
@@ -204,6 +211,7 @@ public final class TemporalSiteManager {
                 setRelative(level, definition, immutableOrigin, rotation, new BlockPos(definition.sizeX() - 1, y, z), wall);
             }
         }
+        placeCeiling(level, definition, immutableOrigin, rotation, 6);
 
         for (int x = 9; x <= 10; x++) {
             setRelative(level, definition, immutableOrigin, rotation, new BlockPos(x, 1, 0), Blocks.AIR);
@@ -260,6 +268,7 @@ public final class TemporalSiteManager {
             }
         }
 
+        clearInterior(level, definition, immutableOrigin, rotation, 6);
         for (int y = 1; y <= 5; y++) {
             for (int x = 0; x < definition.sizeX(); x++) {
                 Block wall = (x + y) % 7 == 0
@@ -276,6 +285,7 @@ public final class TemporalSiteManager {
                 setRelative(level, definition, immutableOrigin, rotation, new BlockPos(19, y, z), wall);
             }
         }
+        placeCeiling(level, definition, immutableOrigin, rotation, 6);
 
         for (int x = 9; x <= 10; x++) {
             for (int y = 1; y <= 2; y++) {
@@ -302,6 +312,13 @@ public final class TemporalSiteManager {
                         ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState(),
                         BLOCK_UPDATE_FLAGS);
             }
+        }
+        for (List<BlockPos> channel : relay.powerChannels()) {
+            BlockPos seal = channel.getLast().above();
+            level.setBlock(
+                    definition.worldPosition(immutableOrigin, seal, rotation),
+                    ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState(),
+                    BLOCK_UPDATE_FLAGS);
         }
         placeMeridianEscapeLadder(level, definition, immutableOrigin, rotation, 5);
         placeMeridianEscapeLadder(level, definition, immutableOrigin, rotation, 19);
@@ -344,6 +361,7 @@ public final class TemporalSiteManager {
             }
         }
 
+        clearInterior(level, definition, immutableOrigin, rotation, 8);
         for (int y = 1; y <= 7; y++) {
             for (int edge = 0; edge < definition.sizeX(); edge++) {
                 Block wall = (edge + y) % 8 == 0
@@ -355,6 +373,7 @@ public final class TemporalSiteManager {
                 setRelative(level, definition, immutableOrigin, rotation, new BlockPos(31, y, edge), wall);
             }
         }
+        placeCeiling(level, definition, immutableOrigin, rotation, 8);
         for (int x = 15; x <= 16; x++) {
             for (int y = 1; y <= 3; y++) {
                 setRelative(level, definition, immutableOrigin, rotation, new BlockPos(x, y, 0), Blocks.AIR);
@@ -618,8 +637,76 @@ public final class TemporalSiteManager {
         if (currentPosition >= positions.size() || !positions.get(currentPosition).equals(pos)) {
             return false;
         }
-        BrokenMeridianPuzzle.Move move = BrokenMeridianPuzzle.advance(site.progressFlags());
-        BlockPos destination = positions.get(move.position());
+        player.sendOverlayMessage(Component.translatable(
+                BrokenMeridianPuzzle.isRouteArmed(site.progressFlags())
+                        ? "message.tbos.meridian.choose_socket"
+                        : "message.tbos.meridian.follow_channel",
+                meridianPositionComponent(BrokenMeridianPuzzle.nextPosition(site.progressFlags()))));
+        return true;
+    }
+
+    /**
+     * Resolves the Broken Meridian's spatial route: follow the live channel to
+     * its remote seal, arm it, then cross back to the highlighted destination
+     * socket. This replaces repeated interaction with the relay itself.
+     */
+    public static boolean routeBrokenMeridian(ServerPlayer player, BlockPos pos) {
+        ServerLevel level = player.level();
+        Optional<TemporalSite> found = data(level).findContaining(pos)
+                .filter(site -> site.definitionId().equals(BuiltInTemporalSites.BROKEN_MERIDIAN_ID));
+        if (found.isEmpty()) {
+            return false;
+        }
+        TemporalSite site = found.get();
+        if (site.isTransitioning()) {
+            player.sendOverlayMessage(Component.translatable("message.tbos.meridian.wait"));
+            return true;
+        }
+        if (site.state() != TemporalState.REMEMBERED) {
+            player.sendOverlayMessage(Component.translatable("message.tbos.meridian.remembered_only"));
+            return true;
+        }
+        if (BrokenMeridianPuzzle.isComplete(site.progressFlags())) {
+            player.sendOverlayMessage(Component.translatable("message.tbos.meridian.already_complete"));
+            return true;
+        }
+
+        int currentPosition = BrokenMeridianPuzzle.position(site.progressFlags());
+        List<BlockPos> seals = meridianRoutingSealPositions(site);
+        if (!BrokenMeridianPuzzle.isRouteArmed(site.progressFlags())
+                && currentPosition < seals.size()
+                && seals.get(currentPosition).equals(pos)) {
+            TemporalSite armed = site.withProgressFlags(BrokenMeridianPuzzle.armRoute(site.progressFlags()));
+            data(level).replace(armed);
+            applyPhaseGeometry(level, armed);
+            broadcastSnapshot(level, armed);
+            level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 1.0F, 1.15F);
+            level.sendParticles(
+                    ParticleTypes.END_ROD,
+                    pos.getX() + 0.5D,
+                    pos.getY() + 1.1D,
+                    pos.getZ() + 0.5D,
+                    18,
+                    0.35D,
+                    0.4D,
+                    0.35D,
+                    0.03D);
+            notifyNearbyOverlay(level, armed, Component.translatable(
+                    "message.tbos.meridian.route_armed",
+                    meridianPositionComponent(BrokenMeridianPuzzle.nextPosition(armed.progressFlags()))));
+            return true;
+        }
+
+        int nextPosition = BrokenMeridianPuzzle.nextPosition(site.progressFlags());
+        List<BlockPos> sockets = meridianSocketPositions(site);
+        if (!BrokenMeridianPuzzle.isRouteArmed(site.progressFlags())
+                || nextPosition >= sockets.size()
+                || !sockets.get(nextPosition).equals(pos)) {
+            return false;
+        }
+
+        List<BlockPos> relayPositions = meridianRelayPositions(site);
+        BlockPos destination = relayPositions.get(nextPosition);
         AABB destinationVolume = new AABB(
                 destination.getX() + 0.05D,
                 destination.getY(),
@@ -632,6 +719,7 @@ public final class TemporalSiteManager {
             return true;
         }
 
+        BrokenMeridianPuzzle.Move move = BrokenMeridianPuzzle.advance(site.progressFlags());
         TemporalSite updated = site.withProgressFlags(move.progressFlags());
         data(level).replace(updated);
         applyPhaseGeometry(level, updated);
@@ -795,6 +883,7 @@ public final class TemporalSiteManager {
     public static void tick(MinecraftServer server) {
         ChoirPlaybackTracker.tick(server);
         LastCuratorEncounterTracker.tick(server);
+        tickOverworldPuzzleParticles(server);
         if (ACTIVE_LEVELS.isEmpty()) {
             return;
         }
@@ -805,6 +894,60 @@ public final class TemporalSiteManager {
                 continue;
             }
             tickLevel(level);
+        }
+    }
+
+    private static void tickOverworldPuzzleParticles(MinecraftServer server) {
+        ServerLevel level = server.overworld();
+        if (level.getGameTime() % 4L != 0L) {
+            return;
+        }
+        for (TemporalSite site : data(level).all()) {
+            if (site.isTransitioning() || site.state() != TemporalState.REMEMBERED) {
+                continue;
+            }
+            TemporalSiteDefinition definition = BuiltInTemporalSites.require(site.definitionId());
+            if (site.definitionId().equals(BuiltInTemporalSites.HALL_OF_ALIGNMENT_ID)) {
+                for (int index = 0; index < definition.alignmentMechanisms().size(); index++) {
+                    if (!HallAlignmentPuzzle.isAligned(site.progressFlags(), index)) {
+                        continue;
+                    }
+                    for (BlockPos relative : definition.alignmentMechanisms().get(index).beamSegments()) {
+                        emitConduitParticle(level, definition.worldPosition(site.origin(), relative, site.rotation()));
+                    }
+                }
+            } else if (site.definitionId().equals(BuiltInTemporalSites.BROKEN_MERIDIAN_ID)) {
+                MeridianRelayDefinition relay = definition.meridianRelays().getFirst();
+                int active = BrokenMeridianPuzzle.position(site.progressFlags());
+                for (BlockPos relative : relay.powerChannels().get(active)) {
+                    emitConduitParticle(level, definition.worldPosition(site.origin(), relative, site.rotation()));
+                }
+            }
+        }
+    }
+
+    private static void emitConduitParticle(ServerLevel level, BlockPos pos) {
+        level.sendParticles(
+                ParticleTypes.ELECTRIC_SPARK,
+                pos.getX() + 0.5D,
+                pos.getY() + 1.04D,
+                pos.getZ() + 0.5D,
+                1,
+                0.12D,
+                0.04D,
+                0.12D,
+                0.005D);
+        if ((level.getGameTime() + pos.getX() + pos.getZ()) % 12L == 0L) {
+            level.sendParticles(
+                    ParticleTypes.END_ROD,
+                    pos.getX() + 0.5D,
+                    pos.getY() + 1.08D,
+                    pos.getZ() + 0.5D,
+                    1,
+                    0.04D,
+                    0.02D,
+                    0.04D,
+                    0.002D);
         }
     }
 
@@ -952,22 +1095,10 @@ public final class TemporalSiteManager {
         if (!YesterglassConfig.PROTECT_ACTIVE_SITE.getAsBoolean()) {
             return false;
         }
-        return data(level).findContaining(pos)
-                .map(site -> pos.equals(anchorPosition(site))
-                        || phasePositions(site).contains(pos)
-                        || ruinRewardPositions(site).contains(pos)
-                        || lampPositions(site).contains(pos)
-                        || alignmentDialPositions(site).contains(pos)
-                        || alignmentBeamPositions(site).contains(pos)
-                        || alignmentTargetPositions(site).contains(pos)
-                        || choirBellPositions(site).contains(pos)
-                        || choirImprintPositions(site).contains(pos)
-                        || meridianRelayPositions(site).contains(pos)
-                        || meridianPowerChannelPositions(site).contains(pos)
-                        || orreryCorePositions(site).contains(pos)
-                        || orreryAnchorPositions(site).contains(pos)
-                        || orreryRingPositions(site).contains(pos))
-                .orElse(false);
+        // A marker-only allowlist left ordinary walls, floors, and ceilings
+        // editable. Protect the complete authored bounds of every overworld
+        // Meridian Archive room so players cannot bypass its puzzles.
+        return data(level).findContaining(pos).isPresent();
     }
 
     public static void sendNearbySnapshots(ServerPlayer player) {
@@ -1060,9 +1191,11 @@ public final class TemporalSiteManager {
             Block rewardBlock = site.definitionId().equals(BuiltInTemporalSites.BROKEN_MERIDIAN_ID)
                     ? ModBlocks.CRACKED_ARCHIVE_STONE.get()
                     : ModBlocks.PHASE_PLATFORM.get();
+            boolean immediateHallBridge =
+                    site.definitionId().equals(BuiltInTemporalSites.HALL_OF_ALIGNMENT_ID);
             level.setBlock(
                     pos,
-                    !remembered && ruinRewardUnlocked
+                    ruinRewardUnlocked && (!remembered || immediateHallBridge)
                             ? rewardBlock.defaultBlockState()
                             : Blocks.AIR.defaultBlockState(),
                     BLOCK_UPDATE_FLAGS);
@@ -1083,13 +1216,12 @@ public final class TemporalSiteManager {
             } else {
                 level.setBlock(dialPos, Blocks.AIR.defaultBlockState(), BLOCK_UPDATE_FLAGS);
             }
-            boolean showBeam = remembered && HallAlignmentPuzzle.isAligned(site.progressFlags(), index);
             for (BlockPos relativeBeam : mechanism.beamSegments()) {
                 BlockPos beamPos = definition.worldPosition(site.origin(), relativeBeam, site.rotation());
-                level.setBlock(
-                        beamPos,
-                        showBeam ? ModBlocks.YESTERGLASS.get().defaultBlockState() : Blocks.AIR.defaultBlockState(),
-                        BLOCK_UPDATE_FLAGS);
+                // Aligned connections are drawn by a persistent particle
+                // conduit. Keeping these cells as air removes the old chunky
+                // glass path and preserves room movement.
+                level.setBlock(beamPos, Blocks.AIR.defaultBlockState(), BLOCK_UPDATE_FLAGS);
             }
         }
 
@@ -1123,11 +1255,31 @@ public final class TemporalSiteManager {
                             site.origin(), relativeSegment, site.rotation());
                     level.setBlock(
                             channelPos,
-                            remembered && index == activePosition
-                                    ? ModBlocks.YESTERGLASS.get().defaultBlockState()
-                                    : ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState(),
+                            ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState()
+                                    .setValue(
+                                            EngravedMeridianTileBlock.CHARGED,
+                                            remembered && index == activePosition),
                             BLOCK_UPDATE_FLAGS);
                 }
+                BlockPos sealPos = definition.worldPosition(
+                        site.origin(), relay.powerChannels().get(index).getLast().above(), site.rotation());
+                level.setBlock(
+                        sealPos,
+                        ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState()
+                                .setValue(
+                                        EngravedMeridianTileBlock.CHARGED,
+                                        remembered && index == activePosition),
+                        BLOCK_UPDATE_FLAGS);
+                BlockPos socketPos =
+                        definition.worldPosition(site.origin(), relay.positions().get(index).below(), site.rotation());
+                boolean destinationCharged = remembered
+                        && BrokenMeridianPuzzle.isRouteArmed(site.progressFlags())
+                        && index == BrokenMeridianPuzzle.nextPosition(site.progressFlags());
+                level.setBlock(
+                        socketPos,
+                        ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState()
+                                .setValue(EngravedMeridianTileBlock.CHARGED, destinationCharged),
+                        BLOCK_UPDATE_FLAGS);
             }
         }
 
@@ -1370,6 +1522,27 @@ public final class TemporalSiteManager {
                 .toList();
     }
 
+    public static List<BlockPos> meridianSocketPositions(TemporalSite site) {
+        TemporalSiteDefinition definition = BuiltInTemporalSites.require(site.definitionId());
+        return definition.meridianRelays().stream()
+                .flatMap(relay -> relay.positions().stream())
+                .map(BlockPos::below)
+                .map(position -> definition.worldPosition(site.origin(), position, site.rotation()))
+                .distinct()
+                .toList();
+    }
+
+    public static List<BlockPos> meridianRoutingSealPositions(TemporalSite site) {
+        TemporalSiteDefinition definition = BuiltInTemporalSites.require(site.definitionId());
+        return definition.meridianRelays().stream()
+                .flatMap(relay -> relay.powerChannels().stream())
+                .map(List::getLast)
+                .map(BlockPos::above)
+                .map(position -> definition.worldPosition(site.origin(), position, site.rotation()))
+                .distinct()
+                .toList();
+    }
+
     public static List<BlockPos> orreryCorePositions(TemporalSite site) {
         TemporalSiteDefinition definition = BuiltInTemporalSites.require(site.definitionId());
         return definition.orreries().stream()
@@ -1405,6 +1578,48 @@ public final class TemporalSiteManager {
                 origin,
                 new BlockPos(definition.sizeX() - 1, 0, definition.sizeZ() - 1),
                 rotation));
+    }
+
+    /**
+     * Overworld terrain may rise through a surface-authored room. Carve only
+     * the enclosed player volume; floors, walls, and the new roof are authored
+     * separately and remain deterministic.
+     */
+    private static void clearInterior(
+            ServerLevel level,
+            TemporalSiteDefinition definition,
+            BlockPos origin,
+            Rotation rotation,
+            int ceilingY) {
+        for (int x = 1; x < definition.sizeX() - 1; x++) {
+            for (int z = 1; z < definition.sizeZ() - 1; z++) {
+                for (int y = 1; y < ceilingY; y++) {
+                    setRelative(level, definition, origin, rotation, new BlockPos(x, y, z), Blocks.AIR);
+                }
+            }
+        }
+    }
+
+    private static void placeCeiling(
+            ServerLevel level,
+            TemporalSiteDefinition definition,
+            BlockPos origin,
+            Rotation rotation,
+            int ceilingY) {
+        for (int x = 0; x < definition.sizeX(); x++) {
+            for (int z = 0; z < definition.sizeZ(); z++) {
+                boolean border = x == 0
+                        || z == 0
+                        || x == definition.sizeX() - 1
+                        || z == definition.sizeZ() - 1;
+                Block material = border
+                        ? ModBlocks.ARCHIVE_STONE.get()
+                        : (x + z) % 11 == 0
+                                ? ModBlocks.CHRONICLE_BRONZE.get()
+                                : ModBlocks.ARCHIVE_BRICKS.get();
+                setRelative(level, definition, origin, rotation, new BlockPos(x, ceilingY, z), material);
+            }
+        }
     }
 
     private static void placeMeridianEscapeLadder(

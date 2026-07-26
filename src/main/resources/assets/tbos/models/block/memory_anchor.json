@@ -1,4 +1,192 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": { "all": "tbos:block/memory_anchor" }
+  "parent": "minecraft:block/block",
+  "ambientocclusion": true,
+  "gui_light": "front",
+  "textures": {
+    "particle": "tbos:block/memory_anchor",
+    "base": "tbos:block/memory_anchor",
+    "frame": "tbos:block/memory_anchor_side",
+    "core": "tbos:block/memory_anchor_core"
+  },
+  "elements": [
+    {
+      "__comment": "full archive-mechanism footing",
+      "from": [0, 0, 0],
+      "to": [16, 2, 16],
+      "faces": {
+        "north": {"uv": [0, 14, 16, 16], "texture": "#base"},
+        "east": {"uv": [0, 14, 16, 16], "texture": "#base"},
+        "south": {"uv": [0, 14, 16, 16], "texture": "#base"},
+        "west": {"uv": [0, 14, 16, 16], "texture": "#base"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#base"},
+        "down": {"uv": [0, 0, 16, 16], "texture": "#base", "cullface": "down"}
+      }
+    },
+    {
+      "__comment": "stepped stone plinth",
+      "from": [2, 2, 2],
+      "to": [14, 4, 14],
+      "faces": {
+        "north": {"uv": [2, 12, 14, 14], "texture": "#base"},
+        "east": {"uv": [2, 12, 14, 14], "texture": "#base"},
+        "south": {"uv": [2, 12, 14, 14], "texture": "#base"},
+        "west": {"uv": [2, 12, 14, 14], "texture": "#base"},
+        "up": {"uv": [2, 2, 14, 14], "texture": "#base"},
+        "down": {"uv": [2, 2, 14, 14], "texture": "#base"}
+      }
+    },
+    {
+      "__comment": "bronze memory mount",
+      "from": [4, 4, 4],
+      "to": [12, 6, 12],
+      "faces": {
+        "north": {"uv": [4, 10, 12, 12], "texture": "#frame"},
+        "east": {"uv": [4, 10, 12, 12], "texture": "#frame"},
+        "south": {"uv": [4, 10, 12, 12], "texture": "#frame"},
+        "west": {"uv": [4, 10, 12, 12], "texture": "#frame"},
+        "up": {"uv": [4, 4, 12, 12], "texture": "#frame"},
+        "down": {"uv": [4, 4, 12, 12], "texture": "#base"}
+      }
+    },
+    {
+      "__comment": "north-west clean support",
+      "from": [3.5, 5, 3.5],
+      "to": [5, 13, 5],
+      "faces": {
+        "north": {"uv": [3, 3, 5, 13], "texture": "#frame"},
+        "east": {"uv": [3, 3, 5, 13], "texture": "#frame"},
+        "south": {"uv": [3, 3, 5, 13], "texture": "#frame"},
+        "west": {"uv": [3, 3, 5, 13], "texture": "#frame"},
+        "up": {"uv": [3, 3, 5, 5], "texture": "#frame"},
+        "down": {"uv": [3, 3, 5, 5], "texture": "#frame"}
+      }
+    },
+    {
+      "__comment": "north-east clean support",
+      "from": [11, 5, 3.5],
+      "to": [12.5, 13, 5],
+      "faces": {
+        "north": {"uv": [11, 3, 13, 13], "texture": "#frame"},
+        "east": {"uv": [3, 3, 5, 13], "texture": "#frame"},
+        "south": {"uv": [11, 3, 13, 13], "texture": "#frame"},
+        "west": {"uv": [3, 3, 5, 13], "texture": "#frame"},
+        "up": {"uv": [11, 3, 13, 5], "texture": "#frame"},
+        "down": {"uv": [11, 3, 13, 5], "texture": "#frame"}
+      }
+    },
+    {
+      "__comment": "south-west clean support",
+      "from": [3.5, 5, 11],
+      "to": [5, 13, 12.5],
+      "faces": {
+        "north": {"uv": [3, 3, 5, 13], "texture": "#frame"},
+        "east": {"uv": [11, 3, 13, 13], "texture": "#frame"},
+        "south": {"uv": [3, 3, 5, 13], "texture": "#frame"},
+        "west": {"uv": [11, 3, 13, 13], "texture": "#frame"},
+        "up": {"uv": [3, 11, 5, 13], "texture": "#frame"},
+        "down": {"uv": [3, 11, 5, 13], "texture": "#frame"}
+      }
+    },
+    {
+      "__comment": "south-east clean support",
+      "from": [11, 5, 11],
+      "to": [12.5, 13, 12.5],
+      "faces": {
+        "north": {"uv": [11, 3, 13, 13], "texture": "#frame"},
+        "east": {"uv": [11, 3, 13, 13], "texture": "#frame"},
+        "south": {"uv": [11, 3, 13, 13], "texture": "#frame"},
+        "west": {"uv": [11, 3, 13, 13], "texture": "#frame"},
+        "up": {"uv": [11, 11, 13, 13], "texture": "#frame"},
+        "down": {"uv": [11, 11, 13, 13], "texture": "#frame"}
+      }
+    },
+    {
+      "__comment": "contained animated mnemonic prism",
+      "from": [5.75, 6, 5.75],
+      "to": [10.25, 12.75, 10.25],
+      "shade": false,
+      "faces": {
+        "north": {"uv": [5.5, 3.25, 10.5, 11], "texture": "#core"},
+        "east": {"uv": [5.5, 3.25, 10.5, 11], "texture": "#core"},
+        "south": {"uv": [5.5, 3.25, 10.5, 11], "texture": "#core"},
+        "west": {"uv": [5.5, 3.25, 10.5, 11], "texture": "#core"},
+        "up": {"uv": [5.5, 5.5, 10.5, 10.5], "texture": "#core"},
+        "down": {"uv": [5.5, 5.5, 10.5, 10.5], "texture": "#core"}
+      }
+    },
+    {
+      "__comment": "upper ring north",
+      "from": [4, 12.5, 3.5],
+      "to": [12, 14, 5],
+      "faces": {
+        "north": {"uv": [4, 2, 12, 4], "texture": "#frame"},
+        "east": {"uv": [3, 2, 5, 4], "texture": "#frame"},
+        "south": {"uv": [4, 2, 12, 4], "texture": "#frame"},
+        "west": {"uv": [3, 2, 5, 4], "texture": "#frame"},
+        "up": {"uv": [4, 3, 12, 5], "texture": "#frame"},
+        "down": {"uv": [4, 3, 12, 5], "texture": "#frame"}
+      }
+    },
+    {
+      "__comment": "upper ring south",
+      "from": [4, 12.5, 11],
+      "to": [12, 14, 12.5],
+      "faces": {
+        "north": {"uv": [4, 2, 12, 4], "texture": "#frame"},
+        "east": {"uv": [11, 2, 13, 4], "texture": "#frame"},
+        "south": {"uv": [4, 2, 12, 4], "texture": "#frame"},
+        "west": {"uv": [11, 2, 13, 4], "texture": "#frame"},
+        "up": {"uv": [4, 11, 12, 13], "texture": "#frame"},
+        "down": {"uv": [4, 11, 12, 13], "texture": "#frame"}
+      }
+    },
+    {
+      "__comment": "upper ring west",
+      "from": [3.5, 12.5, 5],
+      "to": [5, 14, 11],
+      "faces": {
+        "north": {"uv": [3, 2, 5, 4], "texture": "#frame"},
+        "east": {"uv": [5, 2, 11, 4], "texture": "#frame"},
+        "south": {"uv": [3, 2, 5, 4], "texture": "#frame"},
+        "west": {"uv": [5, 2, 11, 4], "texture": "#frame"},
+        "up": {"uv": [3, 5, 5, 11], "texture": "#frame"},
+        "down": {"uv": [3, 5, 5, 11], "texture": "#frame"}
+      }
+    },
+    {
+      "__comment": "upper ring east",
+      "from": [11, 12.5, 5],
+      "to": [12.5, 14, 11],
+      "faces": {
+        "north": {"uv": [11, 2, 13, 4], "texture": "#frame"},
+        "east": {"uv": [5, 2, 11, 4], "texture": "#frame"},
+        "south": {"uv": [11, 2, 13, 4], "texture": "#frame"},
+        "west": {"uv": [5, 2, 11, 4], "texture": "#frame"},
+        "up": {"uv": [11, 5, 13, 11], "texture": "#frame"},
+        "down": {"uv": [11, 5, 13, 11], "texture": "#frame"}
+      }
+    },
+    {
+      "__comment": "restrained stone cap",
+      "from": [5.5, 14, 5.5],
+      "to": [10.5, 16, 10.5],
+      "faces": {
+        "north": {"uv": [5.5, 0, 10.5, 2], "texture": "#base"},
+        "east": {"uv": [5.5, 0, 10.5, 2], "texture": "#base"},
+        "south": {"uv": [5.5, 0, 10.5, 2], "texture": "#base"},
+        "west": {"uv": [5.5, 0, 10.5, 2], "texture": "#base"},
+        "up": {"uv": [5.5, 5.5, 10.5, 10.5], "texture": "#frame"},
+        "down": {"uv": [5.5, 5.5, 10.5, 10.5], "texture": "#base"}
+      }
+    }
+  ],
+  "display": {
+    "gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.625, 0.625, 0.625]},
+    "ground": {"translation": [0, 3, 0], "scale": [0.25, 0.25, 0.25]},
+    "fixed": {"rotation": [0, 180, 0], "scale": [0.5, 0.5, 0.5]},
+    "thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.375, 0.375, 0.375]},
+    "thirdperson_lefthand": {"rotation": [75, 225, 0], "translation": [0, 2.5, 0], "scale": [0.375, 0.375, 0.375]},
+    "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 1, 0], "scale": [0.4, 0.4, 0.4]},
+    "firstperson_lefthand": {"rotation": [0, 225, 0], "translation": [0, 1, 0], "scale": [0.4, 0.4, 0.4]}
+  }
 }

@@ -57,10 +57,23 @@ public final class ArchiveRunGenerator {
     }
 
     public static ArchiveDungeonGraph generateDungeon(long seed, ArchiveDungeonSettings settings) {
-        return generateDetailed(seed, settings).graph();
+        return generateDungeon(seed, 0L, settings);
+    }
+
+    public static ArchiveDungeonGraph generateDungeon(
+            long seed, long floorIndex, ArchiveDungeonSettings settings) {
+        return generateDetailed(seed, floorIndex, settings).graph();
     }
 
     public static GenerationResult generateDetailed(long seed, ArchiveDungeonSettings settings) {
+        return generateDetailed(seed, 0L, settings);
+    }
+
+    public static GenerationResult generateDetailed(
+            long seed, long floorIndex, ArchiveDungeonSettings settings) {
+        if (floorIndex < 0L) {
+            throw new IllegalArgumentException("Archive floor index must not be negative");
+        }
         if (!ArchiveRoomTemplates.validateAll().isEmpty()) {
             throw new IllegalStateException("The built-in archive room template catalog is invalid: "
                     + ArchiveRoomTemplates.validateAll());
@@ -70,7 +83,7 @@ public final class ArchiveRunGenerator {
         ArrayList<String> rejected = new ArrayList<>();
         for (int attempt = 0; attempt < settings.generationAttempts(); attempt++) {
             try {
-                ArchiveDungeonGraph graph = generateAttempt(seed, settings, attempt);
+                ArchiveDungeonGraph graph = generateAttempt(seed, floorIndex, settings, attempt);
                 long elapsed = System.nanoTime() - started;
                 return new GenerationResult(
                         graph,
@@ -106,10 +119,12 @@ public final class ArchiveRunGenerator {
     }
 
     private static ArchiveDungeonGraph generateAttempt(
-            long seed, ArchiveDungeonSettings settings, int attempt) throws RejectedGeneration {
+            long seed, long floorIndex, ArchiveDungeonSettings settings, int attempt) throws RejectedGeneration {
         RandomSource random = RandomSource.create(mix64(seed ^ ATTEMPT_SALT ^ attempt));
-        int targetRooms = settings.minimumRooms()
-                + random.nextInt(settings.maximumRooms() - settings.minimumRooms() + 1);
+        int additionalRooms = ArchiveFloorPresentation.additionalRooms(floorIndex);
+        int minimumRooms = Math.min(48, settings.minimumRooms() + additionalRooms);
+        int maximumRooms = Math.min(48, settings.maximumRooms() + additionalRooms);
+        int targetRooms = minimumRooms + random.nextInt(maximumRooms - minimumRooms + 1);
         ArrayList<MutableNode> nodes = new ArrayList<>();
         Map<ArchiveGridPos, Integer> occupied = new HashMap<>();
         ArchiveRoomTemplate startTemplate = singleTemplate(ArchiveRoomCategory.STARTING, settings);
@@ -202,7 +217,9 @@ public final class ArchiveRunGenerator {
         ArrayList<ArchiveRoomNode> immutable = new ArrayList<>(nodes.size());
         for (MutableNode node : nodes) {
             int depth = shortestDepths.get(node.index);
-            int difficulty = Math.min(100, 1 + depth * 3);
+            int difficulty = Math.min(
+                    100,
+                    1 + depth * 3 + ArchiveFloorPresentation.difficultyBonus(floorIndex));
             List<ArchiveRoomModifier> modifiers =
                     chooseModifiers(node.template.category(), difficulty, settings, random);
             ArchiveRoomRuntimeState runtime = node.index == 0

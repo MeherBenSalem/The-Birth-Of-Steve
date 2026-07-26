@@ -24,12 +24,12 @@ has not yet been measured with a stopwatch.
 
 1. Move fully into the Hall, use the Lens, and wait for all three dials to
    reconstruct.
-2. Turn each dial until its solid glass beam reaches the engraved target. Feedback
-   uses geometry and text in addition to lighting and color.
+2. Turn each dial until its particle conduit reaches the engraved target. Confirm
+   the connection is readable without any physical glass blocks.
 3. Crouch-use the Hall's Memory Anchor at any time before completion to reset all
    three dials to their north marks.
-4. Once all three beams lock, use the Lens to return to Ruin and cross the new
-   two-wide projected path.
+4. Once all three conduits lock, confirm the two-wide crossing appears immediately
+   and the raised central target leaves clear bridge headroom.
 
 ## Choir of Hours
 
@@ -50,11 +50,11 @@ has not yet been measured with a stopwatch.
 1. Enter the fourth connected room in Ruin and confirm neither chasm has a usable
    crossing. Use the Lens; the first two-wide bridge should exist only in Remembered.
 2. Cross to the central island. The Meridian Relay starts on the western engraved
-   socket, with one solid luminous power channel identifying its active position.
-3. Move the relay once to the center, then crouch-use the Memory Anchor. Confirm the
-   relay and channel return to the western socket.
-4. Move it twice: west to center, then center to east. Confirm the eastern relay
-   lights and the completion text explicitly tells you to return to Ruin.
+   socket, with a particle channel leading to its active remote seal.
+3. Follow the channel, arm the western seal, and activate the charged center
+   socket. Then crouch-use the Memory Anchor and confirm the relay returns west.
+4. Route west to center and center to east through both seal/socket pairs. Confirm
+   the eastern relay lights and completion text explicitly tells you to return.
 5. Use the Lens. The first bridge must disappear and the relay must decay into a
    cracked, two-wide second crossing. Cross it to the north exit.
 6. Deliberately step into each chasm once. Water should prevent fall damage and the

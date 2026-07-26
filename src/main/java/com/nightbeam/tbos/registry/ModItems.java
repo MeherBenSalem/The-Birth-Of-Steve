@@ -76,6 +76,14 @@ public final class ModItems {
                             DataComponents.LORE,
                             new ItemLore(List.of(Component.translatable(
                                     "item.tbos.archive_survey_map.tooltip")))));
+    public static final DeferredItem<Item> ARCHIVISTS_JOURNAL = ITEMS.registerSimpleItem(
+            "archivists_journal",
+            properties -> properties
+                    .stacksTo(1)
+                    .component(
+                            DataComponents.LORE,
+                            new ItemLore(List.of(Component.translatable(
+                                    "item.tbos.archivists_journal.tooltip")))));
     public static final DeferredItem<MemoryPlateItem> MEMORY_PLATE = ITEMS.registerItem(
             "memory_plate",
             MemoryPlateItem::new,

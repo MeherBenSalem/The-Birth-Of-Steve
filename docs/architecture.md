@@ -7,7 +7,14 @@
   origin, rotation, progress flags, transition timing, and deterministic seed.
 - `network`: versioned and bounded C2S/S2C custom payloads.
 - `item`: server-validated Lens interaction.
-- `command`: guarded showcase, locate, reset, and developer commands.
+- `command`: guarded showcase, locate, reset, shrine, and developer commands.
+- `world`: Overworld adventure provisioning. It derives the deterministic
+  three-variant Fracture Shrine plan from the world seed, materializes each shrine
+  when its own chunk generates, anchors the Meridian Archive on that plan, and
+  grants first-join onboarding.
+- `blockentity`: block-entity types. The Memory Lantern persists its scene and
+  playback; the Archive Core and Alignment Dial anchors are stateless and carry no
+  NBT, existing only so a renderer can attach.
 - `client`: client-only effects, HUD, and render spike; never referenced from common
   dedicated-server classloading paths.
 - `advancement`: server-owned story progression and showcase-chain reconciliation.
@@ -28,6 +35,20 @@ Authored definitions store local-space bounds and semantic markers. Rotation is
 applied at the definition boundary, so placement, chunk indexing, interaction
 range, transition geometry, and safety checks all consume the same transformed
 coordinates instead of duplicating world-space constants.
+
+Fracture Shrine generation is split into a plan and a build. `AdventureWorldManager`
+derives one target per variant from the world seed and persists it; nothing is
+written to the world at that point. A chunk-load callback that covers an unbuilt
+target only enqueues it into `FractureShrineQueue`, because chunk loading must not
+be re-entered from inside a load callback. The server tick then drains at most one
+shrine per tick, resolving its dry surface and recording the placement. Temporal
+site SavedData is schema `4`; a save without a persisted plan re-derives it from
+the seed and keeps whatever shrines it had already built.
+
+Block-entity renderers for the Archive Core and Alignment Dial are cosmetic. They
+read world time and, for the dial, its facing — never puzzle state. That keeps
+`progressFlags` the single store for Hall dial orientation, so no visual blockstate
+property can drift away from the authoritative value.
 
 Hall dial orientations use three bounded two-bit fields in `progressFlags`; a
 separate completion bit is monotonic during normal play. Interacting with a dial
