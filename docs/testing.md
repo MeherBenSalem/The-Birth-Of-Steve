@@ -12,13 +12,37 @@ gradlew.bat runDungeonSimulation
 `clean build` also runs the 1,000-seed dungeon simulation through Gradle's
 `check` lifecycle.
 
-### Known flaky test
+`runGameTestServer` covers the Archive creatures through `memory_leech_pounce`,
+`lensward_contract`, `lensward_beam`, `lensward_line_of_sight`, `lensward_tether`,
+`parallax_wraith_displacement`, `meridian_sentinel_slam`, and `hour_cantor_refrain`.
+The last three assert that each signature move resolves exactly once per cooldown,
+respects its radius, and returns the creature to idle.
 
-`tbos:memory_leech_pounce` fails intermittently and is **not** a regression. On an
-unmodified `main` at `a7815be` it failed two of three consecutive
-`runGameTestServer` runs, in both cases at tick 75 with `onGround=false`. Re-run
-the suite before treating a failure in that test as real; every other test in the
-namespace is stable.
+### Flaky tests and their shared cause
+
+Both known flakes come from the same mismatch: chunk loading is asynchronous and
+therefore bound to wall clock time, while the assertions are counted in ticks. When
+chunk work lags the tick counter, the world is not ready when the assertion fires.
+Suite duration is **not** a reliable predictor — failures were observed across runs
+from 15 s to 38 s.
+
+`tbos:memory_leech_pounce` — **fixed in 0.2.0-alpha.3.** It laid its own floor
+without force-loading the chunks, so `onGround()` never became true and the pounce
+goal, which is gated on it, never fired. It now uses the shared `combatFloor`
+helper, which force-loads first. Measured on 2026-07-26: it failed 6 of 9
+`runGameTestServer` runs before the change and 0 of 5 after, including runs at
+20.3 s and 25.7 s that had previously failed.
+
+`tbos:orrery_interaction` — **still flaky, not a regression.** It fails at tick 45
+with "did not reverse the arena toward Ruin". `TemporalSiteManager.hasLoadedChunks`
+returns false, so `beginTransition` bails out, but `activateCuratorAnchor` returns
+`true` regardless, so the test's earlier "interaction was rejected" assertion passes
+while the site silently never leaves `REMEMBERED`. Reproduced on an unmodified
+`main` at `d2e99e4` on 2026-07-26 — 1 of 8 consecutive runs there. Re-run the suite
+before treating a failure in it as real.
+
+Every other test in the namespace is stable, including all eight Archive creature
+tests.
 
 ## Onboarding and shrine worldgen manual matrix
 
@@ -51,6 +75,32 @@ namespace is stable.
 - Solve the Hall of Alignment and the Broken Meridian end to end. The dial and
   relay must behave identically to before the block-entity conversion.
 - Check the five blocks' inventory icons and held models in the creative tab.
+
+## Archive creature matrix
+
+Unverified until run and dated below.
+
+- `/summon tbos:parallax_wraith`, `/summon tbos:meridian_sentinel`, and
+  `/summon tbos:hour_cantor` on flat ground. Each must render its own silhouette —
+  no zombie proportions — with no magenta textures and no model warnings in the
+  log. Confirm the emissive cores glow in darkness: the wraith's core and mask
+  slit, the sentinel's gnomon and gear teeth, the Cantor's metronome, crown, and
+  hour marks.
+- Let each acquire you and confirm the full signature move plays, with the
+  telegraph strictly *before* the damage: wraith plates scatter and reform around
+  the teleport, sentinel mauls reach full height before the slam lands, Cantor
+  rings open through all four conducting strokes before the refrain releases.
+- Damage each one and confirm the hurt animation, hurt sound, and ambient sound.
+  None of the three may play zombie audio.
+- Take the Cantor below half health. The pendulum swing and the refrain cadence
+  must visibly tighten and the rings must tilt steeper, while the boss bar still
+  tracks health correctly.
+- Submerge a wraith and a sentinel. Neither may convert to a Drowned. Stand a
+  villager and an iron golem nearby; neither may be targeted.
+- In a live run, fight a wave containing wraiths and sentinels. A wraith must
+  never blink mid-fracture, and delayed shockwaves must come only from husks,
+  vindicators, and ravagers. Confirm the slam and refrain never damage other
+  Archive monsters.
 
 ## Echoes of the Past manual matrix
 
@@ -146,6 +196,26 @@ procedure.
   overworld, Nether, and End, and `runClient` ended with `BUILD SUCCESSFUL`.
 - This confirmation does not yet cover the dedicated two-client, interrupted
   save/reload, or repeated ten-transition profiling cases.
+
+## Automated results — 2026-07-26
+
+- `gradlew.bat clean build --console=plain`: PASS. The 1,000-seed simulation ran
+  through `check` with zero failed generations, zero unreachable rooms, zero
+  overlapping volumes, zero lesser-boss mismatches, and zero quest-gate
+  violations. Artifact: `build/libs/tbos-0.2.0-alpha.3.jar`.
+- `gradlew.bat runGameTestServer --console=plain`: 54 required tests, run
+  fourteen times. The last five runs, after the `memory_leech_pounce` chunk fix,
+  were clean at 54/54. The three new creature tests —
+  `parallax_wraith_displacement`, `meridian_sentinel_slam`, `hour_cantor_refrain`
+  — passed in all fourteen.
+- Baseline comparison: eight `runGameTestServer` runs on unmodified `main` at
+  `d2e99e4` reproduced both known flaky failures, confirming neither belongs to
+  the creature rewrite.
+- Model geometry: all three new entity models were checked for rest-pose volume
+  overlaps between parts, since coplanar faces z-fight in world. Four real
+  overlaps were found and corrected before release.
+- The Archive creature manual matrix above is **unverified**; it needs a client
+  session.
 
 ## Automated results — 2026-07-23
 

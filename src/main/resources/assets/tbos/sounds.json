@@ -33,5 +33,89 @@
       { "name": "minecraft:block/amethyst/break2", "pitch": 0.7 }
     ],
     "subtitle": "subtitles.tbos.lensward.hurt"
+  },
+  "entity.parallax_wraith.fracture": {
+    "sounds": [
+      { "name": "minecraft:block/amethyst/break1", "pitch": 1.4 },
+      { "name": "minecraft:block/amethyst/break3", "pitch": 1.4 }
+    ],
+    "subtitle": "subtitles.tbos.parallax_wraith.fracture"
+  },
+  "entity.parallax_wraith.reform": {
+    "sounds": [
+      { "name": "minecraft:mob/endermen/portal", "pitch": 1.25 },
+      { "name": "minecraft:block/amethyst/place2", "pitch": 1.3 }
+    ],
+    "subtitle": "subtitles.tbos.parallax_wraith.reform"
+  },
+  "entity.parallax_wraith.ambient": {
+    "sounds": [
+      { "name": "minecraft:block/amethyst/shimmer", "pitch": 1.2, "volume": 0.5 },
+      { "name": "minecraft:portal/portal", "pitch": 1.6, "volume": 0.3 }
+    ],
+    "subtitle": "subtitles.tbos.parallax_wraith.ambient"
+  },
+  "entity.parallax_wraith.hurt": {
+    "sounds": [
+      { "name": "minecraft:block/amethyst/break2", "pitch": 1.5 },
+      { "name": "minecraft:block/amethyst/break4", "pitch": 1.5 }
+    ],
+    "subtitle": "subtitles.tbos.parallax_wraith.hurt"
+  },
+  "entity.meridian_sentinel.wind_up": {
+    "sounds": [
+      { "name": "minecraft:block/vault/open_shutter", "pitch": 0.7 },
+      { "name": "minecraft:random/anvil_use", "pitch": 0.6 }
+    ],
+    "subtitle": "subtitles.tbos.meridian_sentinel.wind_up"
+  },
+  "entity.meridian_sentinel.slam": {
+    "sounds": [
+      { "name": "minecraft:random/anvil_land", "pitch": 0.55 },
+      { "name": "minecraft:mob/warden/sonic_boom1", "pitch": 0.8, "volume": 0.7 }
+    ],
+    "subtitle": "subtitles.tbos.meridian_sentinel.slam"
+  },
+  "entity.meridian_sentinel.ambient": {
+    "sounds": [
+      { "name": "minecraft:block/vault/ambient1", "pitch": 0.7, "volume": 0.5 },
+      { "name": "minecraft:block/vault/ambient3", "pitch": 0.7, "volume": 0.5 }
+    ],
+    "subtitle": "subtitles.tbos.meridian_sentinel.ambient"
+  },
+  "entity.meridian_sentinel.hurt": {
+    "sounds": [
+      { "name": "minecraft:block/copper/break1", "pitch": 0.7 },
+      { "name": "minecraft:block/copper/break3", "pitch": 0.7 }
+    ],
+    "subtitle": "subtitles.tbos.meridian_sentinel.hurt"
+  },
+  "entity.hour_cantor.intone": {
+    "sounds": [
+      { "name": "minecraft:block/bell/resonate", "pitch": 0.8 },
+      { "name": "minecraft:mob/warden/sonic_charge1", "pitch": 1.1, "volume": 0.7 }
+    ],
+    "subtitle": "subtitles.tbos.hour_cantor.intone"
+  },
+  "entity.hour_cantor.refrain": {
+    "sounds": [
+      { "name": "minecraft:block/bell/bell_use01", "pitch": 0.6 },
+      { "name": "minecraft:block/sculk_shrieker/shriek2", "pitch": 0.9, "volume": 0.8 }
+    ],
+    "subtitle": "subtitles.tbos.hour_cantor.refrain"
+  },
+  "entity.hour_cantor.ambient": {
+    "sounds": [
+      { "name": "minecraft:block/beacon/ambient", "pitch": 0.8, "volume": 0.6 },
+      { "name": "minecraft:mob/warden/heartbeat_1", "pitch": 1.2, "volume": 0.4 }
+    ],
+    "subtitle": "subtitles.tbos.hour_cantor.ambient"
+  },
+  "entity.hour_cantor.hurt": {
+    "sounds": [
+      { "name": "minecraft:block/bell/bell_use02", "pitch": 1.4, "volume": 0.8 },
+      { "name": "minecraft:block/amethyst/break1", "pitch": 0.7 }
+    ],
+    "subtitle": "subtitles.tbos.hour_cantor.hurt"
   }
 }

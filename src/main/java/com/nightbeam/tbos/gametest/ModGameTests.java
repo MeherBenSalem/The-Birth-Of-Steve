@@ -20,8 +20,11 @@ import com.nightbeam.tbos.block.ResonantBellBlock;
 import com.nightbeam.tbos.block.EngravedMeridianTileBlock;
 import com.nightbeam.tbos.block.FractureCofferBlock;
 import com.nightbeam.tbos.block.MeridianRelayBlock;
+import com.nightbeam.tbos.entity.HourCantorEntity;
 import com.nightbeam.tbos.entity.LenswardEntity;
 import com.nightbeam.tbos.entity.MemoryLeechEntity;
+import com.nightbeam.tbos.entity.MeridianSentinelEntity;
+import com.nightbeam.tbos.entity.ParallaxWraithEntity;
 import com.nightbeam.tbos.registry.ModBlocks;
 import com.nightbeam.tbos.registry.ModEntities;
 import com.nightbeam.tbos.registry.ModItems;
@@ -207,6 +210,13 @@ public final class ModGameTests {
             FUNCTIONS.register("lensward_line_of_sight", () -> ModGameTests::lenswardBeamAbortsWithoutLineOfSight);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> LENSWARD_TETHER =
             FUNCTIONS.register("lensward_tether", () -> ModGameTests::lenswardHoldsItsWard);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> PARALLAX_WRAITH_DISPLACEMENT =
+            FUNCTIONS.register(
+                    "parallax_wraith_displacement", () -> ModGameTests::parallaxWraithDisplacesBehindTarget);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> MERIDIAN_SENTINEL_SLAM =
+            FUNCTIONS.register("meridian_sentinel_slam", () -> ModGameTests::meridianSentinelSlamStrikesInRadius);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> HOUR_CANTOR_REFRAIN =
+            FUNCTIONS.register("hour_cantor_refrain", () -> ModGameTests::hourCantorRefrainSlowsAudience);
 
     private ModGameTests() {
     }
@@ -270,6 +280,9 @@ public final class ModGameTests {
         registerTest(event, "lensward_beam", environment, LENSWARD_BEAM, 300);
         registerTest(event, "lensward_line_of_sight", environment, LENSWARD_LINE_OF_SIGHT, 300);
         registerTest(event, "lensward_tether", environment, LENSWARD_TETHER, 300);
+        registerTest(event, "parallax_wraith_displacement", environment, PARALLAX_WRAITH_DISPLACEMENT, 300);
+        registerTest(event, "meridian_sentinel_slam", environment, MERIDIAN_SENTINEL_SLAM, 300);
+        registerTest(event, "hour_cantor_refrain", environment, HOUR_CANTOR_REFRAIN, 300);
     }
 
     private static void registerTest(
@@ -1045,11 +1058,33 @@ public final class ModGameTests {
                         .contains(ArchiveEnemyAbility.ECHO_BOLT)
                         && ArchiveEncounterManager.abilitiesFor(ArchiveEnemyKind.CAVE_SPIDER, 12L, false)
                                 .contains(ArchiveEnemyAbility.SPLITTER)
-                        && ArchiveEncounterManager.abilitiesFor(ArchiveEnemyKind.MERIDIAN_SENTINEL, 13L, true)
+                        && ArchiveEncounterManager.abilitiesFor(ArchiveEnemyKind.VINDICATOR, 13L, true)
                                 .containsAll(Set.of(
                                         ArchiveEnemyAbility.MERIDIAN_SHOCKWAVE,
                                         ArchiveEnemyAbility.WARD_AURA)),
                 "Archive enemies did not retain ranged, splitting, shockwave, and lesser-boss mutations");
+        helper.assertTrue(
+                ArchiveEncounterManager.abilitiesFor(ArchiveEnemyKind.MERIDIAN_SENTINEL, 13L, true)
+                        .equals(Set.of(ArchiveEnemyAbility.WARD_AURA)),
+                "A lesser-boss Sentinel kept a tag shockwave now that it slams natively");
+        for (ArchiveEnemyKind native_ : List.of(
+                ArchiveEnemyKind.PARALLAX_WRAITH,
+                ArchiveEnemyKind.MERIDIAN_SENTINEL,
+                ArchiveEnemyKind.HOUR_CANTOR,
+                ArchiveEnemyKind.MEMORY_LEECH,
+                ArchiveEnemyKind.LENSWARD)) {
+            helper.assertTrue(
+                    ArchiveEncounterManager.ownsNativeAbility(native_)
+                            && java.util.stream.LongStream.range(0L, 64L)
+                                    .noneMatch(seed -> ArchiveEncounterManager
+                                            .abilitiesFor(native_, seed, false)
+                                            .contains(ArchiveEnemyAbility.PARALLAX_BLINK)),
+                    "A creature that telegraphs its own move received a blink mutation: " + native_);
+        }
+        helper.assertTrue(
+                ArchiveEncounterManager.abilitiesFor(ArchiveEnemyKind.HOUR_CANTOR, 14L, false)
+                        .equals(Set.of(ArchiveEnemyAbility.WARD_AURA)),
+                "The Hour Cantor kept tag mutations that would interrupt its own refrain");
         Set<ArchiveEnemyDropKind> sampledDrops = new HashSet<>();
         for (long dropSeed = 0L; dropSeed < 256L; dropSeed++) {
             sampledDrops.add(ArchiveEncounterManager.rollEnemyDrop(
@@ -1147,14 +1182,10 @@ public final class ModGameTests {
 
     @SuppressWarnings("removal")
     private static void memoryLeechPounceSiphonsOnce(GameTestHelper helper) {
-        for (int x = 0; x <= 9; x++) {
-            for (int z = 2; z <= 6; z++) {
-                helper.getLevel().setBlock(
-                        helper.absolutePos(new BlockPos(x, 0, z)),
-                        Blocks.STONE.defaultBlockState(),
-                        3);
-            }
-        }
+        // Same floor as before, but force-loaded: the leech's pounce is gated on
+        // onGround(), which never becomes true while the floor's chunk is still
+        // arriving, and the assertion below is counted in ticks rather than time.
+        combatFloor(helper, 9);
 
         var victim = helper.spawn(
                 EntityType.SHEEP,
@@ -1253,7 +1284,7 @@ public final class ModGameTests {
         helper.succeed();
     }
 
-    private static void lenswardFloor(GameTestHelper helper, int maxX) {
+    private static void combatFloor(GameTestHelper helper, int maxX) {
         // Force-load chunks so spawned entities tick; without this they sit at tickCount==0.
         BlockPos min = helper.absolutePos(new BlockPos(-2, 0, 0));
         BlockPos max = helper.absolutePos(new BlockPos(maxX + 2, 0, 8));
@@ -1278,7 +1309,7 @@ public final class ModGameTests {
 
     @SuppressWarnings("removal")
     private static void lenswardBeamStrikesOnce(GameTestHelper helper) {
-        lenswardFloor(helper, 11);
+        combatFloor(helper, 11);
         var victim = helper.spawn(
                 EntityType.SHEEP, new Vec3(9.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
         victim.setNoAi(true);
@@ -1320,7 +1351,7 @@ public final class ModGameTests {
 
     @SuppressWarnings("removal")
     private static void lenswardBeamAbortsWithoutLineOfSight(GameTestHelper helper) {
-        lenswardFloor(helper, 11);
+        combatFloor(helper, 11);
         var victim = helper.spawn(
                 EntityType.SHEEP, new Vec3(9.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
         victim.setNoAi(true);
@@ -1372,7 +1403,7 @@ public final class ModGameTests {
 
     @SuppressWarnings("removal")
     private static void lenswardHoldsItsWard(GameTestHelper helper) {
-        lenswardFloor(helper, 20);
+        combatFloor(helper, 20);
 
         net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
         Vec3 observerPosition = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
@@ -1405,6 +1436,153 @@ public final class ModGameTests {
                             drift <= LenswardEntity.LEASH_RADIUS,
                             "Lensward drifted outside its own ward radius while idle"
                                     + " [drift=" + drift + ", radius=" + LenswardEntity.LEASH_RADIUS + "]");
+                })
+                .thenSucceed();
+    }
+
+    /** Parks a mock observer clear of the fixture so entities are tracked and ticked. */
+    @SuppressWarnings("removal")
+    private static void combatObserver(GameTestHelper helper) {
+        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        Vec3 position = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
+        observer.snapTo(position.x, position.y, position.z, 90.0F, 0.0F);
+    }
+
+    private static void parallaxWraithDisplacesBehindTarget(GameTestHelper helper) {
+        combatFloor(helper, 15);
+        combatObserver(helper);
+
+        var victim = helper.spawn(EntityType.SHEEP, new Vec3(10.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        victim.setNoAi(true);
+        Vec3 victimPosition = helper.absoluteVec(new Vec3(10.5D, 1.0D, 4.5D));
+        // Facing +X, so the landing block behind the sheep sits back down the floor.
+        victim.snapTo(victimPosition.x, victimPosition.y, victimPosition.z, 270.0F, 0.0F);
+        float startHealth = victim.getHealth();
+
+        ParallaxWraithEntity wraith = helper.spawn(
+                ModEntities.PARALLAX_WRAITH.get(), new Vec3(2.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        wraith.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0D);
+        wraith.setTarget(victim);
+
+        helper.assertTrue(
+                wraith.distanceToSqr(victim) > 9.0D,
+                "The wraith fixture began inside its own minimum displacement range");
+
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(
+                        wraith.getDisplacePhase() != ParallaxWraithEntity.DisplacePhase.IDLE,
+                        "Parallax Wraith never began a displacement"
+                                + " [phase=" + wraith.getDisplacePhase()
+                                + ", cooldown=" + wraith.getDisplaceCooldown()
+                                + ", ticks=" + wraith.tickCount
+                                + ", hasTarget=" + (wraith.getTarget() == victim)
+                                + ", lineOfSight=" + wraith.getSensing().hasLineOfSight(victim)
+                                + "]"))
+                .thenWaitUntil(() -> helper.assertTrue(
+                        wraith.getDisplacePhase() == ParallaxWraithEntity.DisplacePhase.IDLE
+                                && wraith.getDisplaceCooldown() > 0,
+                        "Parallax Wraith never finished reforming into its cooldown"
+                                + " [phase=" + wraith.getDisplacePhase()
+                                + ", cooldown=" + wraith.getDisplaceCooldown()
+                                + "]"))
+                .thenExecute(() -> {
+                    helper.assertTrue(
+                            wraith.distanceToSqr(victim) <= 9.0D,
+                            "Parallax Wraith did not reassemble beside its target"
+                                    + " [distanceSqr=" + wraith.distanceToSqr(victim) + "]");
+                    helper.assertTrue(
+                            victim.isAlive() && victim.getHealth() == startHealth,
+                            "The displacement dealt damage; it is a reposition, not an attack");
+                })
+                .thenSucceed();
+    }
+
+    private static void meridianSentinelSlamStrikesInRadius(GameTestHelper helper) {
+        combatFloor(helper, 15);
+        combatObserver(helper);
+
+        var near = helper.spawn(EntityType.SHEEP, new Vec3(5.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        near.setNoAi(true);
+        var far = helper.spawn(EntityType.SHEEP, new Vec3(14.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        far.setNoAi(true);
+        float nearStart = near.getHealth();
+        float farStart = far.getHealth();
+
+        MeridianSentinelEntity sentinel = helper.spawn(
+                ModEntities.MERIDIAN_SENTINEL.get(), new Vec3(2.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        sentinel.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0D);
+        sentinel.setTarget(near);
+
+        float expected = nearStart - 3.0F;
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(
+                        Math.abs(near.getHealth() - expected) < 0.01F,
+                        "Meridian Sentinel slam never landed on a target inside its radius"
+                                + " [phase=" + sentinel.getSlamPhase()
+                                + ", cooldown=" + sentinel.getSlamCooldown()
+                                + ", ticks=" + sentinel.tickCount
+                                + ", health=" + near.getHealth() + "/" + nearStart
+                                + ", distanceSqr=" + sentinel.distanceToSqr(near)
+                                + "]"))
+                .thenIdle(40)
+                .thenExecute(() -> {
+                    helper.assertTrue(
+                            Math.abs(near.getHealth() - expected) < 0.01F,
+                            "Meridian Sentinel slammed more than once inside a single cooldown");
+                    helper.assertTrue(
+                            far.getHealth() == farStart,
+                            "Meridian Sentinel slam reached a target twelve blocks away"
+                                    + " [radius=" + MeridianSentinelEntity.SLAM_RADIUS
+                                    + ", distanceSqr=" + sentinel.distanceToSqr(far) + "]");
+                    helper.assertTrue(
+                            sentinel.getSlamPhase() == MeridianSentinelEntity.SlamPhase.IDLE
+                                    && sentinel.getSlamCooldown() > 0,
+                            "Meridian Sentinel did not settle into its post-slam cooldown");
+                })
+                .thenSucceed();
+    }
+
+    private static void hourCantorRefrainSlowsAudience(GameTestHelper helper) {
+        combatFloor(helper, 15);
+        combatObserver(helper);
+
+        var victim = helper.spawn(EntityType.SHEEP, new Vec3(7.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        victim.setNoAi(true);
+        float startHealth = victim.getHealth();
+
+        HourCantorEntity cantor = helper.spawn(
+                ModEntities.HOUR_CANTOR.get(), new Vec3(2.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        cantor.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0D);
+        cantor.setTarget(victim);
+
+        helper.assertTrue(
+                !cantor.isEscalated(),
+                "A Cantor at full health already reported its wounded cadence");
+
+        float expected = startHealth - 2.5F;
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(
+                        Math.abs(victim.getHealth() - expected) < 0.01F && victim.hasEffect(MobEffects.SLOWNESS),
+                        "Hour Cantor refrain never damaged and slowed its audience"
+                                + " [phase=" + cantor.getRefrainPhase()
+                                + ", cooldown=" + cantor.getRefrainCooldown()
+                                + ", ticks=" + cantor.tickCount
+                                + ", health=" + victim.getHealth() + "/" + startHealth
+                                + ", slowed=" + victim.hasEffect(MobEffects.SLOWNESS)
+                                + "]"))
+                .thenIdle(40)
+                .thenExecute(() -> {
+                    helper.assertTrue(
+                            Math.abs(victim.getHealth() - expected) < 0.01F,
+                            "Hour Cantor released more than one refrain inside a single cooldown");
+                    helper.assertTrue(
+                            cantor.getRefrainPhase() == HourCantorEntity.RefrainPhase.IDLE
+                                    && cantor.getRefrainCooldown() > 0,
+                            "Hour Cantor did not rest into its post-refrain cooldown");
+                    cantor.setHealth(cantor.getMaxHealth() * 0.4F);
+                    helper.assertTrue(
+                            cantor.isEscalated(),
+                            "A Cantor below half health did not tighten its cadence");
                 })
                 .thenSucceed();
     }

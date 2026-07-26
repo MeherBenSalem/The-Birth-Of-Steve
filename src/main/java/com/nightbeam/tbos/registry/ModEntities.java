@@ -9,7 +9,7 @@ import com.nightbeam.tbos.entity.ParallaxWraithEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.entity.monster.Monster;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -74,7 +74,7 @@ public final class ModEntities {
     private static void createAttributes(EntityAttributeCreationEvent event) {
         event.put(
                 PARALLAX_WRAITH.get(),
-                Zombie.createAttributes()
+                Monster.createMonsterAttributes()
                         .add(Attributes.MAX_HEALTH, 24.0D)
                         .add(Attributes.ATTACK_DAMAGE, 4.0D)
                         .add(Attributes.MOVEMENT_SPEED, 0.34D)
@@ -82,7 +82,7 @@ public final class ModEntities {
                         .build());
         event.put(
                 MERIDIAN_SENTINEL.get(),
-                Zombie.createAttributes()
+                Monster.createMonsterAttributes()
                         .add(Attributes.MAX_HEALTH, 44.0D)
                         .add(Attributes.ATTACK_DAMAGE, 7.0D)
                         .add(Attributes.MOVEMENT_SPEED, 0.22D)
@@ -91,7 +91,7 @@ public final class ModEntities {
                         .build());
         event.put(
                 HOUR_CANTOR.get(),
-                Zombie.createAttributes()
+                Monster.createMonsterAttributes()
                         .add(Attributes.MAX_HEALTH, 180.0D)
                         .add(Attributes.ATTACK_DAMAGE, 10.0D)
                         .add(Attributes.MOVEMENT_SPEED, 0.27D)
@@ -101,7 +101,7 @@ public final class ModEntities {
                         .build());
         event.put(
                 MEMORY_LEECH.get(),
-                net.minecraft.world.entity.monster.Monster.createMonsterAttributes()
+                Monster.createMonsterAttributes()
                         .add(Attributes.MAX_HEALTH, 32.0D)
                         .add(Attributes.ATTACK_DAMAGE, 6.0D)
                         .add(Attributes.MOVEMENT_SPEED, 0.31D)
@@ -111,7 +111,7 @@ public final class ModEntities {
                         .build());
         event.put(
                 LENSWARD.get(),
-                net.minecraft.world.entity.monster.Monster.createMonsterAttributes()
+                Monster.createMonsterAttributes()
                         .add(Attributes.MAX_HEALTH, 28.0D)
                         .add(Attributes.ATTACK_DAMAGE, 5.0D)
                         .add(Attributes.MOVEMENT_SPEED, 0.24D)

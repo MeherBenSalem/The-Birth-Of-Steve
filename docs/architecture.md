@@ -15,8 +15,18 @@
 - `blockentity`: block-entity types. The Memory Lantern persists its scene and
   playback; the Archive Core and Alignment Dial anchors are stateless and carry no
   NBT, existing only so a renderer can attach.
+- `entity`: the five original creatures. Each is a `Monster` subclass owning one
+  signature move as a phase enum plus a phase-tick counter in `SynchedEntityData`,
+  driven by a single non-interruptable `Goal`. The server resolves every effect;
+  the client only reads the phase and its progress. A move in flight is reset to
+  idle on load rather than resumed.
 - `client`: client-only effects, HUD, and render spike; never referenced from common
   dedicated-server classloading paths.
+- `client/render`: block-entity renderers plus one `EntityModel`, `RenderState`, and
+  `MobRenderer` per creature. Animation is procedural inside `setupAnim`: continuous
+  motion from `ageInTicks` and the walk animation, signature motion from the phase
+  and progress carried on the render state. `ArchiveEmissiveLayer` is the shared
+  full-bright overlay for their glowing cores.
 - `advancement`: server-owned story progression and showcase-chain reconciliation.
 - `gametest`: idempotency, transition, range, authored-definition, codec, geometry,
   and reward-safety tests.

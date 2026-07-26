@@ -1,5 +1,72 @@
 # Changelog
 
+## 0.2.0-alpha.3 - 2026-07-26
+
+### The last three zombies are gone
+
+- The Parallax Wraith, Meridian Sentinel, and Hour Cantor were re-skinned
+  zombies: vanilla zombie bodies, zombie proportions, zombie walk cycles, and
+  zombie sounds, including on the final boss. All three are now original
+  creatures with their own geometry, animation, art, and sounds. They keep their
+  names, stats, and places in every encounter pool.
+- The **Parallax Wraith** has no legs. Four shard plates orbit a hollow indigo
+  core and deliberately lag behind the body's own turn, so every change of
+  heading smears its silhouette. Two long forelimbs scythe across the body when
+  it strikes.
+- The **Meridian Sentinel** is a headless bronze golem. Where a head would be,
+  two counter-rotating armillary rings turn around a glowing gnomon, and it
+  carries a counterweighted maul in each hand. It stomps, and the body dips on
+  every footfall.
+- The **Hour Cantor** hovers. It is a robed column of parchment and bronze with
+  four arms, clock-hand blades, hour rings on two axes, and a caged metronome in
+  its chest. The pendulum is a real tell: its swing tightens as the next refrain
+  approaches, and tightens again once the Cantor is wounded.
+
+### Enemies now telegraph their own attacks
+
+- All three signature moves used to be run by the dungeon manager on a fixed
+  timer, with no animation — a shockwave simply went off next to a monster that
+  was standing still. Each creature now owns and animates its own move, so the
+  windup is always visible before the damage.
+- **Parallax Displacement**: the wraith's plates fly apart, it reassembles behind
+  its quarry, and the plates snap shut. It deals no damage; it buys a flank.
+- **Meridian Slam**: the sentinel raises both mauls to full height, holds them,
+  then drives them into the floor for six blocks of knockback and damage.
+- **Refrain**: the Cantor beats out four conducting strokes, its rings opening
+  through the intone, then releases damage and slowness across the hall. Below
+  half health the intone shortens and the rings tilt steeper.
+- Balance is unchanged. Every damage, knockback, radius, slow duration, and
+  cooldown value carried over exactly. The moves now require a real target in
+  real range, so they no longer fire into an empty room.
+- The slam and the refrain never hit other monsters, so a wave of Archive enemies
+  can no longer shatter its own formation.
+- Husks, vindicators, and ravagers keep the manager-driven shockwave; skeletons,
+  strays, and evokers keep Echo Bolts. Lesser wardens still project ward auras.
+
+### Art and sound
+
+- Six new 64×64 entity textures — a base sheet and a glowing overlay for each
+  creature — on the same fixed Archive palette as the block family, with hard
+  pixel edges and light from the top-left. These are final, owned project art;
+  `tools/textures/archive_entities.py` is their authoring source.
+- Each creature now glows in the dark: the wraith's core and mask slit, the
+  sentinel's gnomon and gear teeth, the Cantor's metronome, crown, and hour marks.
+- Twelve new sounds. All three had been using zombie grunts; each now has its own
+  ambient and hurt voice plus two cues for its signature move.
+
+### Fixes
+
+- The three no longer inherit zombie behaviour that never belonged in the
+  Archive: they turned into Drowned underwater, hunted villagers, iron golems,
+  and turtles, searched for turtle eggs to trample, walked village paths, and
+  carried a zombie reinforcement-summoning attribute.
+- Added three GameTests covering the displacement, the slam's radius, and the
+  refrain's damage, slow, and escalation threshold.
+- Fixed the long-standing `memory_leech_pounce` test flake. It built its floor
+  without force-loading the chunks, so the leech never registered as standing on
+  the ground and its pounce, which is gated on that, never fired. It failed 6 of 9
+  runs before the fix and 0 of 5 after.
+
 ## 0.2.0-alpha.2 - 2026-07-26
 
 ### Onboarding

@@ -100,11 +100,31 @@ that room. Health, damage, and enemy count have separate depth/player scaling.
 Spawn markers must be in-room, air-filled, floor-supported, and at least five
 blocks from every party member.
 
-The Lensward is the one stationary threat. It hovers, wards the marker it spawned
-on, engages only within ten blocks of that anchor, and returns rather than
-pursuing. Its focused beam telegraphs for thirty ticks and is cancelled outright
-if the target breaks line of sight before it fires, so room geometry is a
-defence. It never appears in lesser-boss or final-boss pools.
+The five original creatures each own a telegraphed signature move implemented on
+the entity itself, as a server-synched phase machine the client only reads. None
+of them are zombie-derived; all five are bespoke `Monster` subclasses with their
+own models, procedural animation, and sounds.
+
+- **Parallax Wraith** — Displacement, on a 125-tick cooldown, at ranges above
+  three and up to twenty blocks. It fractures for ten ticks, hangs displaced for
+  six, and reassembles behind its quarry, which must have two air blocks over a
+  solid floor. It deals no damage; it buys a flank.
+- **Meridian Sentinel** — Meridian Slam, on a 110-tick cooldown, only with a
+  visible target inside six blocks. Eighteen ticks of raise precede a radial wave
+  dealing 3.0 damage with knockback across those six blocks.
+- **Hour Cantor** — Refrain, on an 80-tick cooldown, at up to twelve blocks. A
+  thirty-tick intone precedes 2.5 damage and 50 ticks of Slowness II across the
+  hall. Below half health the intone shortens to eighteen ticks.
+- **Memory Leech** — a siphoning pounce that weakens its victim and heals itself.
+- **Lensward** — the one stationary threat. It hovers, wards the marker it spawned
+  on, engages only within ten blocks of that anchor, and returns rather than
+  pursuing. Its focused beam telegraphs for thirty ticks and is cancelled outright
+  if the target breaks line of sight before it fires, so room geometry is a
+  defence. It never appears in lesser-boss or final-boss pools.
+
+The slam and the refrain skip other monsters, so a wave cannot shatter its own
+formation. All three windups abort back to a shortened cooldown when the target
+dies or breaks line of sight, and none of them survive a reload mid-move.
 
 Skirmishes, hunts, guardians, puzzle waves, ambush-style entry waves, multi-wave
 rooms, lesser wardens, the final boss, and trap hazards share the same durable
@@ -113,17 +133,18 @@ three random lesser-warden rooms. Their scaled Meridian Sentinel, vindicator,
 evoker, or ravager bosses are weaker than the final Hour Cantor. Trap rooms
 combine weighted enemies with timed marker hazards.
 
-Each spawn also receives a deterministic mutation from its enemy kind and seed.
-Skeleton-family enemies telegraph ranged Echo Bolts; heavy guardians release
-delayed Meridian shockwaves; Parallax enemies blink behind valid targets; Memory
-Leeches telegraph siphoning pounces that weaken victims and restore their health;
-lesser wardens project resistance auras; and spider/silverfish splitters create
-exactly one bounded generation of children. Memory Leeches and Lenswards carry no
-tag mutations at all, because both own native attack logic a blink would
-interrupt. Clear particles and sound cues precede
-the damaging effects. Enemy deaths can release Echo Heart or Soul Heart potions,
-Memory Coins, Archive Keys, Ash Bombs, or Soul Charges; lesser wardens always
-release a pickup.
+Vanilla spawns also receive a deterministic tag mutation from their enemy kind and
+seed, ticked by the encounter manager rather than by the mob. Skeleton-family
+enemies telegraph ranged Echo Bolts; husks, vindicators, and ravagers release
+delayed Meridian shockwaves; spider and silverfish splitters create exactly one
+bounded generation of children; a one-in-five seed grants a blink; and lesser
+wardens project resistance auras. None of the five original creatures carry tag
+mutations beyond the lesser-boss ward aura, because a blink or a manager-timed
+shockwave would interrupt the windup they telegraph themselves —
+`ArchiveEncounterManager.ownsNativeAbility` is the single list that decides this.
+Clear particles and sound cues precede the damaging effects. Enemy deaths can
+release Echo Heart or Soul Heart potions, Memory Coins, Archive Keys, Ash Bombs,
+or Soul Charges; lesser wardens always release a pickup.
 
 All nine modifiers have runtime behavior:
 

@@ -19,6 +19,33 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> LENSWARD_AMBIENT = event("entity.lensward.ambient");
     public static final DeferredHolder<SoundEvent, SoundEvent> LENSWARD_HURT = event("entity.lensward.hurt");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> PARALLAX_WRAITH_FRACTURE =
+            event("entity.parallax_wraith.fracture");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PARALLAX_WRAITH_REFORM =
+            event("entity.parallax_wraith.reform");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PARALLAX_WRAITH_AMBIENT =
+            event("entity.parallax_wraith.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> PARALLAX_WRAITH_HURT =
+            event("entity.parallax_wraith.hurt");
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> MERIDIAN_SENTINEL_WIND_UP =
+            event("entity.meridian_sentinel.wind_up");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MERIDIAN_SENTINEL_SLAM =
+            event("entity.meridian_sentinel.slam");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MERIDIAN_SENTINEL_AMBIENT =
+            event("entity.meridian_sentinel.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MERIDIAN_SENTINEL_HURT =
+            event("entity.meridian_sentinel.hurt");
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> HOUR_CANTOR_INTONE =
+            event("entity.hour_cantor.intone");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HOUR_CANTOR_REFRAIN =
+            event("entity.hour_cantor.refrain");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HOUR_CANTOR_AMBIENT =
+            event("entity.hour_cantor.ambient");
+    public static final DeferredHolder<SoundEvent, SoundEvent> HOUR_CANTOR_HURT =
+            event("entity.hour_cantor.hurt");
+
     private ModSounds() {
     }
 

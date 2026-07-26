@@ -11,10 +11,12 @@ public final class LenswardRenderer
         extends MobRenderer<LenswardEntity, LenswardRenderState, LenswardModel> {
     private static final Identifier TEXTURE =
             Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "textures/entity/lensward.png");
+    private static final Identifier CORE =
+            Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "textures/entity/lensward_core.png");
 
     public LenswardRenderer(EntityRendererProvider.Context context) {
         super(context, new LenswardModel(context.bakeLayer(LenswardModel.MODEL_LAYER)), 0.45F);
-        addLayer(new LenswardCoreLayer(this));
+        addLayer(new ArchiveEmissiveLayer<>(this, CORE));
     }
 
     @Override

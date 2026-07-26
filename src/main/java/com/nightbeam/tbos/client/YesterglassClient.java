@@ -5,11 +5,16 @@ import com.nightbeam.tbos.config.YesterglassClientConfig;
 import com.nightbeam.tbos.client.render.AlignmentDialRenderer;
 import com.nightbeam.tbos.client.render.ArchiveCoreRenderer;
 import com.nightbeam.tbos.client.render.MemoryLanternRenderer;
-import com.nightbeam.tbos.client.render.ArchiveZombieRenderer;
+import com.nightbeam.tbos.client.render.HourCantorModel;
+import com.nightbeam.tbos.client.render.HourCantorRenderer;
 import com.nightbeam.tbos.client.render.LenswardModel;
 import com.nightbeam.tbos.client.render.LenswardRenderer;
 import com.nightbeam.tbos.client.render.MemoryLeechModel;
 import com.nightbeam.tbos.client.render.MemoryLeechRenderer;
+import com.nightbeam.tbos.client.render.MeridianSentinelModel;
+import com.nightbeam.tbos.client.render.MeridianSentinelRenderer;
+import com.nightbeam.tbos.client.render.ParallaxWraithModel;
+import com.nightbeam.tbos.client.render.ParallaxWraithRenderer;
 import com.nightbeam.tbos.registry.ModBlockEntities;
 import com.nightbeam.tbos.registry.ModEntities;
 import net.neoforged.api.distmarker.Dist;
@@ -57,23 +62,17 @@ public final class YesterglassClient {
         event.registerBlockEntityRenderer(ModBlockEntities.ALIGNMENT_DIAL.get(), AlignmentDialRenderer::new);
         event.registerEntityRenderer(ModEntities.MEMORY_LEECH.get(), MemoryLeechRenderer::new);
         event.registerEntityRenderer(ModEntities.LENSWARD.get(), LenswardRenderer::new);
-        event.registerEntityRenderer(
-                ModEntities.PARALLAX_WRAITH.get(),
-                context -> new ArchiveZombieRenderer<>(context, texture("parallax_wraith"), 0.45F));
-        event.registerEntityRenderer(
-                ModEntities.MERIDIAN_SENTINEL.get(),
-                context -> new ArchiveZombieRenderer<>(context, texture("meridian_sentinel"), 0.55F));
-        event.registerEntityRenderer(
-                ModEntities.HOUR_CANTOR.get(),
-                context -> new ArchiveZombieRenderer<>(context, texture("hour_cantor"), 0.8F));
+        event.registerEntityRenderer(ModEntities.PARALLAX_WRAITH.get(), ParallaxWraithRenderer::new);
+        event.registerEntityRenderer(ModEntities.MERIDIAN_SENTINEL.get(), MeridianSentinelRenderer::new);
+        event.registerEntityRenderer(ModEntities.HOUR_CANTOR.get(), HourCantorRenderer::new);
     }
 
     private static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(MemoryLeechModel.MODEL_LAYER, MemoryLeechModel::createBodyLayer);
         event.registerLayerDefinition(LenswardModel.MODEL_LAYER, LenswardModel::createBodyLayer);
-    }
-
-    private static Identifier texture(String name) {
-        return Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "textures/entity/" + name + ".png");
+        event.registerLayerDefinition(ParallaxWraithModel.MODEL_LAYER, ParallaxWraithModel::createBodyLayer);
+        event.registerLayerDefinition(
+                MeridianSentinelModel.MODEL_LAYER, MeridianSentinelModel::createBodyLayer);
+        event.registerLayerDefinition(HourCantorModel.MODEL_LAYER, HourCantorModel::createBodyLayer);
     }
 }

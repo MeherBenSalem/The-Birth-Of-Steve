@@ -73,6 +73,43 @@ stdlib-only and deterministic, so the art can be revised and regenerated rather
 than hand-patched pixel by pixel; it also emits contact sheets for review. Editing
 that script and re-running it is the supported way to change these textures.
 
+Entity art is held to the same standard on the same palette, at 64×64 rather than
+16×16, from `tools/textures/archive_entities.py`. Each creature has a base sheet
+and a transparent emissive sheet whose lit pixels sit on the same UV rectangles,
+because the emissive layer reuses the model's own geometry. The UV constants at
+the top of each section of that script must stay in step with the `texOffs` calls
+in the matching model class; they are the one place the two files agree.
+
+### Archive enemy presentation
+
+The five original creatures are silhouette-distinct before they are anything else,
+because in a dark procedural room shape is all that arrives first:
+
+- The **Parallax Wraith** has no legs and no solid body — four shard plates orbit a
+  hollow core. Those plates lag the head's turn rather than following it, so
+  turning smears the outline. That lag *is* the creature; a solid body animated the
+  same way would read as an ordinary floating mob.
+- The **Meridian Sentinel** is headless. Two counter-rotating armillary rings sit
+  where a head belongs, and they never track the player — they keep their own time,
+  which is what makes it read as a mechanism rather than a soldier. Its weight is
+  carried by a body dip on each footfall.
+- The **Hour Cantor** hovers, has four arms, and beats its intone out in four
+  strokes. Its caged pendulum is a genuine tell rather than decoration: the swing
+  tightens as the refrain approaches and tightens again below half health, so a
+  player who watches the chest knows what a player who watches the health bar knows.
+
+Animation is procedural trigonometry inside `setupAnim`, not keyframe tables. The
+vanilla `AnimationDefinition`/`KeyframeAnimation` API is available and was
+considered; it was rejected because its definitions are Blockbench exports running
+tens of kilobytes each, which are impractical to hand-author and would sit badly
+beside the hand-written Memory Leech and Lensward models. Revisit this only if the
+models start being authored in Blockbench.
+
+Every signature move is a server-owned phase machine. The client receives the phase
+and a tick count and derives the pose; it never runs the state machine itself, and
+a move interrupted by a reload restarts rather than resolving. This is the same
+rule the authored sites follow for transitions.
+
 The Hall of Alignment is the first complete principal puzzle loop. Three mechanisms
 begin at broad cardinal stops rather than continuous angles, so aiming is never
 pixel-perfect. Each has a spatially distinct engraved target. A correct stop forms

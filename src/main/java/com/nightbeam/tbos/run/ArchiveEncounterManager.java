@@ -1026,27 +1026,32 @@ public final class ArchiveEncounterManager {
     public static Set<ArchiveEnemyAbility> abilitiesFor(
             ArchiveEnemyKind kind, long spawnSeed, boolean lesserBoss) {
         EnumSet<ArchiveEnemyAbility> abilities = switch (kind) {
-            case PARALLAX_WRAITH -> EnumSet.of(ArchiveEnemyAbility.PARALLAX_BLINK);
-            case MERIDIAN_SENTINEL, HUSK, VINDICATOR, RAVAGER ->
-                    EnumSet.of(ArchiveEnemyAbility.MERIDIAN_SHOCKWAVE);
-            case HOUR_CANTOR -> EnumSet.of(
-                    ArchiveEnemyAbility.ECHO_BOLT,
-                    ArchiveEnemyAbility.PARALLAX_BLINK,
-                    ArchiveEnemyAbility.WARD_AURA);
-            case MEMORY_LEECH, LENSWARD -> EnumSet.noneOf(ArchiveEnemyAbility.class);
+            case HUSK, VINDICATOR, RAVAGER -> EnumSet.of(ArchiveEnemyAbility.MERIDIAN_SHOCKWAVE);
+            case HOUR_CANTOR -> EnumSet.of(ArchiveEnemyAbility.WARD_AURA);
+            case PARALLAX_WRAITH, MERIDIAN_SENTINEL, MEMORY_LEECH, LENSWARD ->
+                    EnumSet.noneOf(ArchiveEnemyAbility.class);
             case SKELETON, STRAY, EVOKER -> EnumSet.of(ArchiveEnemyAbility.ECHO_BOLT);
             case CAVE_SPIDER, SILVERFISH -> EnumSet.of(ArchiveEnemyAbility.SPLITTER);
         };
-        if (kind != ArchiveEnemyKind.HOUR_CANTOR
-                && kind != ArchiveEnemyKind.MEMORY_LEECH
-                && kind != ArchiveEnemyKind.LENSWARD
-                && Math.floorMod(spawnSeed, 5L) == 0L) {
+        if (!ownsNativeAbility(kind) && Math.floorMod(spawnSeed, 5L) == 0L) {
             abilities.add(ArchiveEnemyAbility.PARALLAX_BLINK);
         }
         if (lesserBoss) {
             abilities.add(ArchiveEnemyAbility.WARD_AURA);
         }
         return Set.copyOf(abilities);
+    }
+
+    /**
+     * True for the original creatures that telegraph and resolve their own
+     * signature move. A tag mutation would interrupt their windup, so they
+     * carry none beyond the lesser-boss ward aura.
+     */
+    public static boolean ownsNativeAbility(ArchiveEnemyKind kind) {
+        return switch (kind) {
+            case PARALLAX_WRAITH, MERIDIAN_SENTINEL, HOUR_CANTOR, MEMORY_LEECH, LENSWARD -> true;
+            default -> false;
+        };
     }
 
     public static ArchiveEnemyDropKind rollEnemyDrop(
