@@ -42,6 +42,7 @@ import com.nightbeam.tbos.run.ArchiveEncounterKind;
 import com.nightbeam.tbos.run.ArchiveEncounterManager;
 import com.nightbeam.tbos.run.ArchiveEncounterState;
 import com.nightbeam.tbos.run.ArchiveInstanceLayout;
+import com.nightbeam.tbos.run.ArchiveGenerationQueue;
 import com.nightbeam.tbos.run.ArchiveRoomPlacer;
 import com.nightbeam.tbos.run.ArchiveReturnPoint;
 import com.nightbeam.tbos.run.ArchiveRoomPlan;
@@ -171,8 +172,8 @@ public final class ModGameTests {
             FUNCTIONS.register("archive_run_entry", () -> ModGameTests::archiveRunEntryValidatesBeforeMutation);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_SHARED_REVIVES =
             FUNCTIONS.register("archive_shared_revives", () -> ModGameTests::archiveSharedRevivesFailOnFourthDeath);
-    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_RETURN_STATE =
-            FUNCTIONS.register("archive_return_state", () -> ModGameTests::archiveReturnStateIsDeadlineDriven);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_FLOOR_PROGRESSION =
+            FUNCTIONS.register("archive_floor_progression", () -> ModGameTests::archiveFloorProgressionIsEndless);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_CHOIR_PATTERNS =
             FUNCTIONS.register("archive_choir_patterns", () -> ModGameTests::archiveChoirPatternsAreDeterministic);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_ENCOUNTER_STATE =
@@ -240,7 +241,7 @@ public final class ModGameTests {
         registerTest(event, "archive_room_blueprint", environment, ARCHIVE_ROOM_BLUEPRINT);
         registerTest(event, "archive_run_entry", environment, ARCHIVE_RUN_ENTRY);
         registerTest(event, "archive_shared_revives", environment, ARCHIVE_SHARED_REVIVES);
-        registerTest(event, "archive_return_state", environment, ARCHIVE_RETURN_STATE);
+        registerTest(event, "archive_floor_progression", environment, ARCHIVE_FLOOR_PROGRESSION);
         registerTest(event, "archive_choir_patterns", environment, ARCHIVE_CHOIR_PATTERNS);
         registerTest(event, "archive_encounter_state", environment, ARCHIVE_ENCOUNTER_STATE);
         registerTest(event, "archive_dungeon_contract", environment, ARCHIVE_DUNGEON_CONTRACT, 80);
@@ -1429,46 +1430,57 @@ public final class ModGameTests {
         helper.succeed();
     }
 
-    private static void archiveReturnStateIsDeadlineDriven(GameTestHelper helper) {
+    private static void archiveFloorProgressionIsEndless(GameTestHelper helper) {
+        helper.assertTrue(
+                ArchiveGenerationQueue.fairShare(4096, 0) == 0
+                        && ArchiveGenerationQueue.fairShare(0, 1) == 0
+                        && ArchiveGenerationQueue.fairShare(4096, 2) == 2048,
+                "Archive queue budgeting can divide by zero during a generation-to-cleanup handoff");
         ArchiveRunSavedData storage = new ArchiveRunSavedData();
         UUID memberId = UUID.fromString("00000000-0000-0000-0000-000000000041");
         ArchiveRun active = testArchiveRun(
                         UUID.fromString("10000000-0000-0000-0000-000000000041"), 0, memberId)
                 .markGeometryPlaced()
-                .activate();
+                .activate()
+                .consumeRevive();
         storage.register(active);
-        ArchiveRun returning = ArchiveRunManager.beginVictoryReturn(storage, memberId, 1000L).orElseThrow();
         helper.assertTrue(
-                returning.status() == ArchiveRunStatus.RETURNING_VICTORY
-                        && returning.returnDeadlineTick() == 1600L,
-                "Victory return did not persist an exact 600-tick deadline");
-        helper.assertTrue(
-                ArchiveRunManager.completeReturnIfDue(storage, active.runId(), 1599L)
-                        == ArchiveRunManager.ReturnResult.NOT_DUE,
-                "Victory return completed one tick early");
-        helper.assertTrue(
-                ArchiveRunManager.completeReturnIfDue(storage, active.runId(), 1600L)
-                        == ArchiveRunManager.ReturnResult.COMPLETED,
-                "Victory return did not complete on its deadline");
-        helper.assertTrue(
-                storage.find(active.runId()).orElseThrow().status() == ArchiveRunStatus.COMPLETED,
-                "Victory return did not persist terminal state before teleportation");
-        helper.assertTrue(
-                ArchiveRunManager.completeReturnIfDue(storage, active.runId(), 1601L)
-                        == ArchiveRunManager.ReturnResult.ALREADY_TERMINAL,
-                "Repeated victory return was not idempotent");
+                active.floor() == 0L,
+                "A new Archive run did not begin on visible floor 0");
 
-        ArchiveReturnPoint missingDimension = new ArchiveReturnPoint(
-                Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "missing_test_dimension"),
-                new BlockPos(99, 99, 99),
-                20.0F,
-                5.0F);
-        ArchiveRunManager.ReturnDestination fallback = ArchiveRunManager.resolveReturnDestination(
-                helper.getLevel().getServer(), missingDimension);
+        ArchiveRun floorOne = ArchiveRunManager.beginNextFloor(storage, memberId).orElseThrow();
         helper.assertTrue(
-                fallback.level() == helper.getLevel().getServer().overworld()
-                        && fallback.position().equals(helper.getLevel().getServer().overworld().getRespawnData().pos()),
-                "Missing return dimension did not fall back to the Overworld spawn");
+                floorOne.status() == ArchiveRunStatus.PREPARING
+                        && floorOne.floor() == 1L
+                        && floorOne.returnDeadlineTick() == -1L,
+                "Floor victory entered an Overworld-return state instead of preparing floor 1");
+        helper.assertTrue(
+                floorOne.runId().equals(active.runId())
+                        && floorOne.sharedRevives() == active.sharedRevives()
+                        && floorOne.members().getFirst().returnPoint().equals(active.members().getFirst().returnPoint()),
+                "Floor progression did not preserve durable run, party, and revive state");
+        helper.assertTrue(
+                floorOne.seed() != active.seed()
+                        && floorOne.instanceSlot() != active.instanceSlot()
+                        && !floorOne.dungeonGraph().rooms().equals(active.dungeonGraph().rooms()),
+                "Floor progression did not allocate a fresh generated Archive layout");
+        helper.assertTrue(
+                floorOne.floorState().retiredFloors().size() == 1
+                        && floorOne.floorState().retiredFloors().getFirst().instanceSlot() == active.instanceSlot(),
+                "The completed floor was not durably queued for safe geometry deletion");
+
+        ArchiveRun floorTwoActive = floorOne.markGeometryPlaced().activate();
+        storage.replace(floorTwoActive);
+        ArchiveRun floorTwo = ArchiveRunManager.beginNextFloor(storage, memberId).orElseThrow();
+        helper.assertTrue(
+                floorTwo.floor() == 2L
+                        && floorTwo.status() == ArchiveRunStatus.PREPARING
+                        && floorTwo.floorState().retiredFloors().size() == 2,
+                "The Archive floor sequence did not continue from 0 to 1 to 2");
+        com.google.gson.JsonElement encoded = ArchiveRun.CODEC.encodeStart(JsonOps.INSTANCE, floorTwo).getOrThrow();
+        ArchiveRun decoded = ArchiveRun.CODEC.parse(JsonOps.INSTANCE, encoded).getOrThrow();
+        helper.assertTrue(decoded.equals(floorTwo), "Archive floor and cleanup state did not survive serialization");
+        ArchiveRunManager.clearRuntimeState();
         helper.succeed();
     }
 

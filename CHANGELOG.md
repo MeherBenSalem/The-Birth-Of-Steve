@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.0-alpha.1 - 2026-07-25
+
+- Replaced the Archive victory return with endless floor progression. Runs begin
+  at floor 0 and advance through floor 1, floor 2, and onward without a normal
+  victory teleport to the Overworld.
+- Every cleared floor receives a new deterministic seed, wholly new dungeon
+  graph, and a freshly allocated isolated instance in the Fractured Archive.
+- Preserved party identity, original return points, inventory, and remaining
+  shared revives between floors while resetting floor-local rooms, checkpoints,
+  encounters, container claims, and rewards.
+- Persisted the unbounded floor counter and all retired-floor cleanup descriptors
+  in Archive SavedData so generation and cleanup recover safely after restart.
+- Teleport players directly to the new floor only after staged construction is
+  complete, then delete every retired layout through the tick-budgeted cleanup
+  queue and release its allocation slot.
+- Fixed a server-tick divide-by-zero crash when generation completed and created
+  the first retired-floor cleanup task in the same tick. The handoff now verifies
+  a solid entrance floor and two blocks of spawn headroom before teleporting, and
+  cleanup starts only after no online player remains in the retired instance.
+- Updated Archive entry/status messages and replaced the former victory-return
+  GameTest with floor-progression, fresh-layout, state-preservation, and codec
+  coverage.
+
 ## 0.1.0-alpha.4 - 2026-07-24
 
 - Added a dedicated **The Birth of Steve** creative tab that automatically

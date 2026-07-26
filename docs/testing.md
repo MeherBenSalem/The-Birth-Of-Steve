@@ -23,8 +23,10 @@ gradlew.bat runDungeonSimulation
   the Curator Core, and using another block must not enter the dimension.
 - Carry the Curator Core, hold the repaired Lens, and right-click the gateway.
   Confirm the run is constructed, the nearby party is teleported into
-  `tbos:fractured_archive`, and every member returns to their captured Overworld
-  position after victory, failure, or abandonment.
+  `tbos:fractured_archive`. Clear floors 0, 1, and 2; confirm each produces a
+  different layout and teleports the party directly to the next Archive floor.
+  Confirm only failure or abandonment returns members to their captured
+  Overworld positions.
 - Generate a fresh run after this overhaul. Existing generated instances retain
   their old placed geometry and cannot prove the new roofs, corridors, stair
   tunnels, or final-room palette.
@@ -107,7 +109,7 @@ procedure.
 
 ## Automated results — 2026-07-23
 
-- `gradlew.bat runGameTestServer --stacktrace --console=plain`: PASS, all 42
+- `gradlew.bat runGameTestServer --stacktrace --console=plain`: PASS, all 47
   required tests. The suite covers world-seeded Shrine placement, dormant Shrine
   centers, Curator Gateway transformation, Lens/Core entry validation, the
   authored phase sites, and dungeon generation
@@ -126,7 +128,7 @@ procedure.
   `build/reports/tbos/archive-dungeon-simulation.json`.
 - `gradlew.bat clean build --stacktrace --console=plain`: PASS. The build includes
   the 1,000-seed simulation through `check`; the regenerated artifact is
-  `build/libs/tbos-0.1.0-alpha.4.jar`.
+  `build/libs/tbos-0.2.0-alpha.1.jar`.
 - `gradlew.bat runData --no-daemon`: PASS.
 - Standards `JSON.parse`: PASS, all 157 checked-in JSON resources.
 - Texture/model validation: PASS. All 32 item/block textures are 16×16 or 32×32

@@ -615,12 +615,19 @@ public final class ArchiveEncounterManager {
             unlockRoomAndQuestGate(level, run, complete, roomIndex);
             spawnDirectLoot(level, complete, roomIndex);
             if (roomIndex == complete.dungeonGraph().rewardRoom()) {
-                ArchiveRunManager.beginVictoryReturn(
-                        storage,
-                        complete.members().getFirst().playerId(),
-                        server.overworld().getGameTime());
-                announce(server, complete, Component.literal("LAST RECOLLECTION - Cache open - Return in 30s")
-                        .withStyle(ChatFormatting.AQUA));
+                grantFloorCompletionRewards(server, level, complete);
+                var nextFloor = ArchiveRunManager.beginNextFloor(
+                        storage, complete.members().getFirst().playerId());
+                if (nextFloor.isPresent()) {
+                    announce(server, nextFloor.get(), Component.literal(
+                                    "FLOOR " + complete.floor() + " CLEARED - Reconstructing floor "
+                                            + nextFloor.get().floor())
+                            .withStyle(ChatFormatting.AQUA));
+                } else {
+                    announce(server, complete, Component.literal(
+                                    "FLOOR CLEAR - The next Archive floor could not be prepared")
+                            .withStyle(ChatFormatting.RED));
+                }
             } else {
                 announce(server, complete, Component.literal(encounterTitle(kind) + " - Path recorded")
                         .withStyle(ChatFormatting.AQUA));
@@ -696,6 +703,36 @@ public final class ArchiveEncounterManager {
                             ? "HOUR CANTOR DEFEATED - The Last Recollection is open"
                             : encounterTitle(kind) + " - Cleared; path opened")
                     .withStyle(ChatFormatting.AQUA));
+        }
+    }
+
+    private static void grantFloorCompletionRewards(
+            MinecraftServer server, ServerLevel level, ArchiveRun run) {
+        BlockPos rewardPosition = ArchiveRoomPlacer.rewardCachePosition(run);
+        ArchiveRoomNode rewardRoom = run.dungeonGraph().room(run.dungeonGraph().rewardRoom());
+        for (ArchiveRunMember member : run.members()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(member.playerId());
+            if (player == null) {
+                continue;
+            }
+            int shards = 4 + Math.floorMod(
+                    (int) (run.seed() ^ player.getUUID().getMostSignificantBits()), 5);
+            giveOrDrop(player, new ItemStack(ModItems.CHRONICLE_SHARD.get(), shards));
+            long rewardSeed = mix64(run.seed()
+                    ^ player.getUUID().getMostSignificantBits()
+                    ^ player.getUUID().getLeastSignificantBits());
+            ArchiveLootRoller.roll(
+                            level,
+                            player,
+                            rewardPosition,
+                            rewardRoom,
+                            dungeonRules(),
+                            rewardSeed,
+                            true)
+                    .forEach(stack -> giveOrDrop(player, stack));
+            player.sendOverlayMessage(Component.literal(
+                            "FLOOR " + run.floor() + " REWARD - Recollection secured")
+                    .withStyle(ChatFormatting.GOLD));
         }
     }
 
@@ -1632,6 +1669,12 @@ public final class ArchiveEncounterManager {
         item.setDefaultPickUpDelay();
         item.setTarget(player.getUUID());
         level.addFreshEntity(item);
+    }
+
+    private static void giveOrDrop(ServerPlayer player, ItemStack stack) {
+        if (!player.addItem(stack)) {
+            player.drop(stack, false);
+        }
     }
 
     private static boolean debugEnabled() {

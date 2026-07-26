@@ -113,14 +113,22 @@ public final class ArchiveRunSavedData extends SavedData {
     }
 
     private void validateAllocation(ArchiveRun run, UUID ignoredRunId) {
+        java.util.ArrayList<Integer> slots = new java.util.ArrayList<>();
+        if (run.status().holdsInstanceSlot()) {
+            slots.add(run.instanceSlot());
+        }
+        run.floorState().retiredFloors().stream()
+                .map(ArchiveFloorSnapshot::instanceSlot)
+                .forEach(slots::add);
+        for (int slot : slots) {
+            UUID slotOwner = activeRunBySlot.get(slot);
+            if (slotOwner != null && !slotOwner.equals(ignoredRunId)) {
+                throw new IllegalArgumentException(
+                        "Archive instance slot " + slot + " is already held by " + slotOwner);
+            }
+        }
         if (!run.status().holdsInstanceSlot()) {
             return;
-        }
-
-        UUID slotOwner = activeRunBySlot.get(run.instanceSlot());
-        if (slotOwner != null && !slotOwner.equals(ignoredRunId)) {
-            throw new IllegalArgumentException(
-                    "Archive instance slot " + run.instanceSlot() + " is already held by " + slotOwner);
         }
         for (ArchiveRunMember member : run.members()) {
             UUID memberRun = activeRunByMember.get(member.playerId());
@@ -135,15 +143,14 @@ public final class ArchiveRunSavedData extends SavedData {
         activeRunByMember.clear();
         activeRunBySlot.clear();
         for (ArchiveRun run : runs.values()) {
+            if (run.status().holdsInstanceSlot()) {
+                reserveSlot(run, run.instanceSlot());
+            }
+            for (ArchiveFloorSnapshot retired : run.floorState().retiredFloors()) {
+                reserveSlot(run, retired.instanceSlot());
+            }
             if (!run.status().holdsInstanceSlot()) {
                 continue;
-            }
-
-            UUID previousSlot = activeRunBySlot.putIfAbsent(run.instanceSlot(), run.runId());
-            if (previousSlot != null) {
-                throw new IllegalStateException(
-                        "Archive runs " + previousSlot + " and " + run.runId()
-                                + " both reserve instance slot " + run.instanceSlot());
             }
             for (ArchiveRunMember member : run.members()) {
                 UUID previousRun = activeRunByMember.putIfAbsent(member.playerId(), run.runId());
@@ -153,6 +160,15 @@ public final class ArchiveRunSavedData extends SavedData {
                                     + " and " + run.runId());
                 }
             }
+        }
+    }
+
+    private void reserveSlot(ArchiveRun run, int instanceSlot) {
+        UUID previousSlot = activeRunBySlot.putIfAbsent(instanceSlot, run.runId());
+        if (previousSlot != null) {
+            throw new IllegalStateException(
+                    "Archive runs " + previousSlot + " and " + run.runId()
+                            + " both reserve instance slot " + instanceSlot);
         }
     }
 

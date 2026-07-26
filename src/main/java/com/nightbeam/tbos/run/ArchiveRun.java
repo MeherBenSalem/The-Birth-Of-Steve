@@ -25,8 +25,9 @@ public record ArchiveRun(
         boolean geometryPlaced,
         ArchiveEncounterState encounterState,
         ArchiveDungeonGraph dungeonGraph,
-        List<ArchiveEncounterState> roomEncounterStates) {
-    public static final int SCHEMA_REVISION = 4;
+        List<ArchiveEncounterState> roomEncounterStates,
+        ArchiveFloorState floorState) {
+    public static final int SCHEMA_REVISION = 5;
     public static final int MAX_PARTY_SIZE = 4;
     public static final int MAX_SHARED_REVIVES = 3;
     public static final int MAX_PARTY_CONTAINER_KEYS = 48 * 64;
@@ -49,10 +50,12 @@ public record ArchiveRun(
             ArchiveDungeonGraph.CODEC.optionalFieldOf("dungeon_graph")
                     .forGetter(run -> Optional.of(run.dungeonGraph())),
             ArchiveEncounterState.CODEC.listOf().optionalFieldOf("room_encounters", List.of())
-                    .forGetter(ArchiveRun::roomEncounterStates)
+                    .forGetter(ArchiveRun::roomEncounterStates),
+            ArchiveFloorState.CODEC.optionalFieldOf("floor_state", ArchiveFloorState.FIRST)
+                    .forGetter(ArchiveRun::floorState)
     ).apply(instance, (schemaRevision, runId, seed, instanceSlot, members, rooms, currentRoom,
             checkpointRoom, sharedRevives, status, returnDeadlineTick, geometryPlaced,
-            encounterState, graph, roomEncounters) -> new ArchiveRun(
+            encounterState, graph, roomEncounters, floorState) -> new ArchiveRun(
                     schemaRevision,
                     runId,
                     seed,
@@ -67,7 +70,8 @@ public record ArchiveRun(
                     geometryPlaced,
                     encounterState,
                     graph.orElseGet(() -> ArchiveDungeonGraph.fromLegacy(seed, rooms)),
-                    normalizeEncounters(rooms.size(), currentRoom, encounterState, roomEncounters))));
+                    normalizeEncounters(rooms.size(), currentRoom, encounterState, roomEncounters),
+                    floorState)));
 
     public ArchiveRun(
             int schemaRevision,
@@ -97,7 +101,8 @@ public record ArchiveRun(
                 geometryPlaced,
                 ArchiveEncounterState.IDLE,
                 ArchiveDungeonGraph.fromLegacy(seed, rooms),
-                idleEncounters(rooms.size()));
+                idleEncounters(rooms.size()),
+                ArchiveFloorState.FIRST);
     }
 
     public ArchiveRun(
@@ -129,7 +134,8 @@ public record ArchiveRun(
                 geometryPlaced,
                 encounterState,
                 ArchiveDungeonGraph.fromLegacy(seed, rooms),
-                normalizeEncounters(rooms.size(), currentRoom, encounterState, List.of()));
+                normalizeEncounters(rooms.size(), currentRoom, encounterState, List.of()),
+                ArchiveFloorState.FIRST);
     }
 
     public static ArchiveRun create(
@@ -154,7 +160,8 @@ public record ArchiveRun(
                 false,
                 ArchiveEncounterState.IDLE,
                 dungeonGraph,
-                idleEncounters(plans.size()));
+                idleEncounters(plans.size()),
+                ArchiveFloorState.FIRST);
     }
 
     public ArchiveRun {
@@ -165,6 +172,7 @@ public record ArchiveRun(
         encounterState = Objects.requireNonNull(encounterState, "encounterState");
         dungeonGraph = Objects.requireNonNull(dungeonGraph, "dungeonGraph");
         roomEncounterStates = List.copyOf(Objects.requireNonNull(roomEncounterStates, "roomEncounterStates"));
+        floorState = Objects.requireNonNull(floorState, "floorState");
         if (schemaRevision < 1) {
             throw new IllegalArgumentException("Archive run schema revision must be positive");
         }
@@ -204,6 +212,9 @@ public record ArchiveRun(
         if (dungeonGraph.seed() != seed || dungeonGraph.rooms().size() != rooms.size()) {
             throw new IllegalArgumentException("Archive dungeon graph does not match the run seed or room count");
         }
+        if (floorState.retiredFloors().stream().anyMatch(snapshot -> snapshot.instanceSlot() == instanceSlot)) {
+            throw new IllegalArgumentException("Current Archive floor cannot also be retired");
+        }
         if (roomEncounterStates.size() != rooms.size()) {
             throw new IllegalArgumentException("Archive run requires one persisted encounter state per room");
         }
@@ -218,6 +229,15 @@ public record ArchiveRun(
 
     public Optional<ArchiveRunMember> member(UUID playerId) {
         return members.stream().filter(member -> member.playerId().equals(playerId)).findFirst();
+    }
+
+    public long floor() {
+        return floorState.floor();
+    }
+
+    public boolean ownsInstanceSlot(int slot) {
+        return instanceSlot == slot || floorState.retiredFloors().stream()
+                .anyMatch(snapshot -> snapshot.instanceSlot() == slot);
     }
 
     public boolean containsMember(UUID playerId) {
@@ -368,7 +388,59 @@ public record ArchiveRun(
                 false,
                 ArchiveEncounterState.IDLE,
                 graph,
-                idleEncounters(plans.size()));
+                idleEncounters(plans.size()),
+                floorState);
+    }
+
+    public ArchiveRun advanceToNextFloor(long nextSeed, int nextInstanceSlot, ArchiveDungeonGraph graph) {
+        requireStatus(ArchiveRunStatus.ACTIVE);
+        if (graph.seed() != nextSeed) {
+            throw new IllegalArgumentException("Next Archive floor graph does not match its seed");
+        }
+        List<ArchiveRoomPlan> plans = graph.roomPlans();
+        ArchiveFloorState nextFloorState = floorState.advance(
+                new ArchiveFloorSnapshot(seed, instanceSlot, dungeonGraph));
+        return new ArchiveRun(
+                SCHEMA_REVISION,
+                runId,
+                nextSeed,
+                nextInstanceSlot,
+                members.stream().map(member -> member.resetForRegeneration(graph.startingRoom())).toList(),
+                plans,
+                graph.startingRoom(),
+                graph.startingRoom(),
+                sharedRevives,
+                ArchiveRunStatus.PREPARING,
+                -1L,
+                false,
+                ArchiveEncounterState.IDLE,
+                graph,
+                idleEncounters(plans.size()),
+                nextFloorState);
+    }
+
+    public ArchiveRun finishRetiredFloorCleanup(int retiredInstanceSlot) {
+        ArchiveFloorState cleaned = floorState.removeRetiredSlot(retiredInstanceSlot);
+        if (cleaned == floorState) {
+            return this;
+        }
+        return new ArchiveRun(
+                schemaRevision,
+                runId,
+                seed,
+                instanceSlot,
+                members,
+                rooms,
+                currentRoom,
+                checkpointRoom,
+                sharedRevives,
+                status,
+                returnDeadlineTick,
+                geometryPlaced,
+                encounterState,
+                dungeonGraph,
+                roomEncounterStates,
+                cleaned);
     }
 
     public ArchiveRun checkpoint(int roomIndex) {
@@ -506,7 +578,8 @@ public record ArchiveRun(
                 geometryPlaced,
                 encounterState,
                 dungeonGraph,
-                roomEncounterStates);
+                roomEncounterStates,
+                floorState);
     }
 
     private static int containerKey(int roomIndex, int markerIndex) {
@@ -608,7 +681,8 @@ public record ArchiveRun(
                 newGeometryPlaced,
                 newEncounterState,
                 newDungeonGraph,
-                newRoomEncounterStates);
+                newRoomEncounterStates,
+                floorState);
     }
 
     private static List<ArchiveEncounterState> idleEncounters(int roomCount) {

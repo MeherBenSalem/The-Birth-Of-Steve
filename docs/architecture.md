@@ -17,7 +17,7 @@
   generation, reusable transformed room schematics, instance allocation,
   tick-budgeted placement/cleanup, independent per-room encounters, weighted
   loot/enemy selection, secret discovery, member-specific checkpoints, debug
-  overlays, and codec-backed run persistence.
+  overlays, endless floor progression, and codec-backed run persistence.
 
 The server owns physical and puzzle state. Network schema `2` broadcasts site ID,
 definition ID, origin, authored transition center, rotation, progress flags, target
@@ -59,11 +59,18 @@ path that applies those operations, on the server tick with a shared mutation
 budget.
 
 `ArchiveRunSavedData` lives in overworld server SavedData so all Archive dimension
-instances share one allocation index without sharing gameplay state. Run schema 4
-persists graph schema 2, room/door/runtime state, independent encounter states,
-member room/checkpoint/container/reward state, return points, seed, status, and
-allocation. PREPARING runs are safely reconstructed after restart; active entities
-use vanilla entity persistence plus run/room tags.
+instances share one allocation index without sharing gameplay state. Run schema 5
+persists graph schema 2, the visible floor number, retired-floor cleanup
+descriptors, room/door/runtime state, independent encounter states, member
+room/checkpoint/container/reward state, return points, seed, status, and allocation.
+PREPARING floors and retired cleanup reservations are safely reconstructed after
+restart; active entities use vanilla entity persistence plus run/room tags.
+
+Minecraft's datapack registry owns the single `tbos:fractured_archive` dimension.
+Each endless floor is therefore a fresh, isolated dimension instance cell rather
+than a runtime-registered dimension key. The next cell is fully generated before
+the direct Archive-to-Archive teleport; only then may the previous cell enter
+staged deletion.
 
 `ArchiveEncounterManager` resolves the player's containing room instead of using a
 global linear cursor. This is what permits simultaneous party branches: each room

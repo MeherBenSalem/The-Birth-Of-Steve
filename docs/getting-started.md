@@ -7,7 +7,7 @@ or cheats to begin the adventure.
 
 1. Install **Minecraft Java Edition 26.1.2** and **NeoForge 26.1.2.83 or newer**
    for that Minecraft version.
-2. Put `tbos-0.1.0-alpha.4.jar` in the instance's `mods` folder.
+2. Put `tbos-0.2.0-alpha.1.jar` in the instance's `mods` folder.
 3. Launch NeoForge and create or open an Overworld save. For multiplayer, put
    the same JAR on both the server and every client.
 4. Because this is an alpha, make a backup before updating an existing world.
@@ -63,7 +63,7 @@ alter a run can spoil or remove live player progress.
 | `/tbos debug_transition` or `/tbos debug transition` | Toggles a nearby site transition for testing. |
 | `/tbos run start` | Starts a run from the threshold at your position. |
 | `/tbos run status` | Shows your current run state. |
-| `/tbos run complete` | Forces the current active run into its victory return. |
+| `/tbos run complete` | Treats the current floor as won and queues the next Archive floor. |
 | `/tbos run abandon` | Forces the current active run into its failure return. |
 | `/tbos debug give_cracked_lens` | Gives a Cracked Yesterglass Lens. |
 | `/tbos debug give_survey_map` | Gives an Archive Survey Map. |

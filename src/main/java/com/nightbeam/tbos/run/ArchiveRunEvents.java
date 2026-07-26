@@ -246,7 +246,9 @@ public final class ArchiveRunEvents {
 
     private static ArchiveRun runAt(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos position) {
         return ArchiveRunSavedData.get(level.getServer()).all().stream()
-                .filter(run -> ArchiveInstanceLayout.boundsForSlot(run.instanceSlot()).isInside(position))
+                .filter(run -> ArchiveInstanceLayout.boundsForSlot(run.instanceSlot()).isInside(position)
+                        || run.floorState().retiredFloors().stream().anyMatch(retired ->
+                                ArchiveInstanceLayout.boundsForSlot(retired.instanceSlot()).isInside(position)))
                 .findFirst()
                 .orElse(null);
     }
@@ -285,7 +287,7 @@ public final class ArchiveRunEvents {
                 BossEvent.BossBarOverlay.PROGRESS));
         long remainingTicks = Math.max(0L, run.returnDeadlineTick() - tick);
         int duration = run.status() == ArchiveRunStatus.RETURNING_VICTORY
-                ? ArchiveRunManager.VICTORY_RETURN_DELAY_TICKS
+                ? ArchiveRunManager.LEGACY_VICTORY_RETURN_DELAY_TICKS
                 : ArchiveRunManager.FAILURE_RETURN_DELAY_TICKS;
         int seconds = (int) ((remainingTicks + 19L) / 20L);
         bar.setName(Component.translatable("message.tbos.archive.return_countdown", seconds));

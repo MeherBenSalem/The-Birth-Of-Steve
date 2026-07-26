@@ -231,11 +231,10 @@ public final class YesterglassCommands {
             source.sendFailure(Component.translatable("command.tbos.run.none"));
             return 0;
         }
-        int level = run.rooms().get(run.currentRoom()).level() + 1;
         source.sendSuccess(() -> Component.translatable(
                 "command.tbos.run.status",
                 run.runId().toString().substring(0, 8),
-                level,
+                run.floor(),
                 run.currentRoom() + 1,
                 run.rooms().size(),
                 run.sharedRevives(),
@@ -245,9 +244,8 @@ public final class YesterglassCommands {
 
     private static int completeRun(CommandSourceStack source) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
-        long tick = source.getServer().overworld().getGameTime();
-        if (ArchiveRunManager.beginVictoryReturn(
-                        ArchiveRunSavedData.get(source.getServer()), player.getUUID(), tick)
+        if (ArchiveRunManager.beginNextFloor(
+                        ArchiveRunSavedData.get(source.getServer()), player.getUUID())
                 .isEmpty()) {
             source.sendFailure(Component.translatable("command.tbos.run.not_active"));
             return 0;

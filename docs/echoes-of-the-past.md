@@ -12,7 +12,7 @@ instance.
 
 ## Runtime shape
 
-An Archive run owns one deterministic `ArchiveDungeonGraph`. The graph contains
+Each floor of an Archive run owns one deterministic `ArchiveDungeonGraph`. The graph contains
 7–48 room nodes, reciprocal six-direction connections, transformed template
 metadata, difficulty, loot and encounter allowlists, modifiers, and durable room
 state. Construction rejects non-cardinal edges, non-reciprocal doors, overlapping
@@ -43,15 +43,16 @@ connections begin as cracked walls.
 
 ## Server lifecycle
 
-1. Entry captures every party member's exact return location and allocates one
-   isolated 1536-block instance cell in the void Archive dimension.
+1. Entry captures every party member's exact return location, starts the run at
+   visible floor 0, and allocates one isolated 1536-block instance cell in the
+   void Archive dimension.
 2. The graph and `PREPARING` state are persisted before world mutation.
 3. `ArchiveGenerationQueue` clears and places only a configurable number of
    blocks per server tick. It loads a chunk only when the cursor enters that
    chunk, skips already-correct air/blocks, and shares the budget fairly between
    simultaneous builds and cleanups.
 4. Players teleport only after geometry is complete. A restart requeues an
-   incomplete `PREPARING` run without duplicating its allocation.
+   incomplete `PREPARING` floor without duplicating its allocation.
 5. Each occupied room advances independently. First entry persists visit and
    per-member checkpoint state. Combat/puzzle/trap rooms seal their actual routes,
    start a deterministic encounter, wait for tagged room enemies to be gone,
@@ -69,10 +70,20 @@ connections begin as cracked walls.
    shared mode removes it after the first valid claim. The final Cantor Cache
    additionally requires victory.
 9. Death consumes the shared revive pool and returns only that player to their
-   own persisted branch checkpoint. Victory, failure, abandonment, reconnect, and
-   offline return paths are server-authoritative.
-10. By default, terminal geometry and storage are removed after all members return.
-   Operators may retain completed runs through config.
+   own persisted branch checkpoint. Failure, abandonment, reconnect, and offline
+   return paths are server-authoritative.
+10. Clearing the reward room advances to floor 1, floor 2, and onward. The server
+    derives a new seed, rejects a structurally identical graph, allocates and
+    constructs a fresh Archive instance, then teleports the party directly from
+    the completed floor into the new one. Run identity, return points, inventories,
+    and remaining shared revives persist; room, encounter, checkpoint, container,
+    and reward state reset for the new floor.
+11. Completed floor descriptors remain persisted until their full old blueprints
+    are deleted by the staged cleanup queue. Their slots stay reserved throughout
+    construction and cleanup, including across restarts, and are released only
+    after deletion completes.
+12. Normal floor victory never returns players to the Overworld. Only failure,
+    abandonment, or explicit operator removal ends an endless run.
 
 All world mutations, entity spawns, loot rolls, door changes, and SavedData writes
 occur on the server thread. No global "current dungeon" singleton exists; runtime

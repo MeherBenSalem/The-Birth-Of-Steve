@@ -26,7 +26,7 @@ import net.minecraft.world.scores.PlayerTeam;
 public final class ArchiveRunManager {
     private static final double SHRINE_RING_RADIUS_SQR = 16.0D;
     public static final int FAILURE_RETURN_DELAY_TICKS = 100;
-    public static final int VICTORY_RETURN_DELAY_TICKS = 600;
+    public static final int LEGACY_VICTORY_RETURN_DELAY_TICKS = 600;
     private static final Map<UUID, Long> LAST_HANDLED_DEATH_TICK = new ConcurrentHashMap<>();
 
     private ArchiveRunManager() {
@@ -121,6 +121,18 @@ public final class ArchiveRunManager {
         if (preparing == null || preparing.status() != ArchiveRunStatus.PREPARING || archive == null) {
             return;
         }
+        archive.getChunkAt(spawn);
+        if (!archive.getBlockState(spawn).isAir()
+                || !archive.getBlockState(spawn.above()).isAir()
+                || archive.getBlockState(spawn.below()).isAir()) {
+            storage.replace(preparing.abortPreparation());
+            Yesterglass.LOGGER.error(
+                    "Archive floor {} for run {} has an unsafe generated spawn {}; teleport canceled",
+                    preparing.floor(),
+                    preparing.runId(),
+                    spawn);
+            return;
+        }
         ArchiveRun active = preparing.markGeometryPlaced().activate();
         storage.replace(active);
         Vec3 destination = Vec3.atBottomCenterOf(spawn);
@@ -136,7 +148,10 @@ public final class ArchiveRunManager {
                     0.0F,
                     0.0F,
                     TeleportTransition.DO_NOTHING));
-            feedback(player, "message.tbos.archive.entered");
+            player.resetFallDistance();
+            player.clearFire();
+            player.sendOverlayMessage(Component.translatable(
+                    "message.tbos.archive.entered", active.floor(), active.sharedRevives()));
         }
     }
 
@@ -238,15 +253,40 @@ public final class ArchiveRunManager {
         return DeathResult.RUN_FAILED;
     }
 
-    public static Optional<ArchiveRun> beginVictoryReturn(
-            ArchiveRunSavedData storage, UUID playerId, long currentTick) {
+    public static Optional<ArchiveRun> beginNextFloor(ArchiveRunSavedData storage, UUID playerId) {
         ArchiveRun run = storage.findByMember(playerId).orElse(null);
         if (run == null || run.status() != ArchiveRunStatus.ACTIVE) {
             return Optional.empty();
         }
-        ArchiveRun returning = run.beginReturn(currentTick + VICTORY_RETURN_DELAY_TICKS);
-        storage.replace(returning);
-        return Optional.of(returning);
+        int nextInstanceSlot = storage.nextFreeSlot();
+        if (nextInstanceSlot >= ArchiveInstanceLayout.MAX_INSTANCE_SLOTS) {
+            Yesterglass.LOGGER.error("Cannot advance Archive run {} from floor {}: no free instance slot",
+                    run.runId(), run.floor());
+            return Optional.empty();
+        }
+        long nextFloor = run.floor() + 1L;
+        long candidateSeed = nextFloorSeed(run, nextFloor);
+        try {
+            ArchiveDungeonGraph graph = null;
+            for (int attempt = 0; attempt < 16; attempt++) {
+                graph = ArchiveRunGenerator.generateDungeon(candidateSeed, dungeonSettings());
+                if (!sameStructure(run.dungeonGraph(), graph)) {
+                    break;
+                }
+                candidateSeed = mix64(candidateSeed + 0x9E3779B97F4A7C15L + attempt);
+            }
+            if (graph == null || sameStructure(run.dungeonGraph(), graph)) {
+                throw new IllegalStateException("Could not produce a structurally distinct next Archive floor");
+            }
+            ArchiveRun preparing = run.advanceToNextFloor(candidateSeed, nextInstanceSlot, graph);
+            storage.replace(preparing);
+            ArchiveGenerationQueue.enqueue(preparing);
+            return Optional.of(preparing);
+        } catch (RuntimeException exception) {
+            Yesterglass.LOGGER.error(
+                    "Failed to prepare Archive run {} floor {}", run.runId(), nextFloor, exception);
+            return Optional.empty();
+        }
     }
 
     public static Optional<ArchiveRun> beginFailureReturn(
@@ -461,6 +501,45 @@ public final class ArchiveRunManager {
         value = (value ^ (value >>> 30)) * 0xBF58476D1CE4E5B9L;
         value = (value ^ (value >>> 27)) * 0x94D049BB133111EBL;
         return value ^ (value >>> 31);
+    }
+
+    private static long nextFloorSeed(ArchiveRun run, long nextFloor) {
+        long seed = mix64(run.seed()
+                ^ run.runId().getMostSignificantBits()
+                ^ Long.rotateLeft(run.runId().getLeastSignificantBits(), 17)
+                ^ nextFloor * 0x9E3779B97F4A7C15L);
+        return seed == run.seed() ? mix64(seed + 0xD1B54A32D192ED03L) : seed;
+    }
+
+    private static boolean sameStructure(ArchiveDungeonGraph first, ArchiveDungeonGraph second) {
+        if (first.rooms().size() != second.rooms().size()) {
+            return false;
+        }
+        for (int index = 0; index < first.rooms().size(); index++) {
+            ArchiveRoomNode left = first.room(index);
+            ArchiveRoomNode right = second.room(index);
+            if (!left.templateId().equals(right.templateId())
+                    || !left.placement().equals(right.placement())
+                    || !sameConnectionLayout(left.connections(), right.connections())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean sameConnectionLayout(
+            List<ArchiveConnection> first, List<ArchiveConnection> second) {
+        if (first.size() != second.size()) {
+            return false;
+        }
+        for (int index = 0; index < first.size(); index++) {
+            ArchiveConnection left = first.get(index);
+            ArchiveConnection right = second.get(index);
+            if (left.targetRoom() != right.targetRoom() || left.direction() != right.direction()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public enum EntryResult {
