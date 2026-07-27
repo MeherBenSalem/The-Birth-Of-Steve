@@ -46,9 +46,21 @@ tests.
 
 ## Onboarding and shrine worldgen manual matrix
 
-- Create a fresh world. Confirm the Archivist's Journal is granted once, the
-  welcome and shrine hint appear in chat, and right-clicking the Journal opens
-  the book with all nine pages legible and correctly ordered.
+- Create a fresh world. Confirm the Archivist's Journal is granted once and the
+  welcome and shrine hint appear in chat.
+- Right-click the Journal. The quest screen must open directly, with a bronze
+  frame, both tabs, quest seals and item icons rendering — no magenta, and no
+  missing-sprite warnings in the log. Shift+right-click must open the same screen;
+  the vanilla book interface should be unreachable by any input.
+- Click between the Story and Run tabs. The active tab must read as joined to the
+  panel and the inactive one as sunk, with a page-turn cue on each change. Hover
+  each quest row and confirm the detail pane follows the pointer, then returns to
+  the current step when the pointer leaves the list.
+- Complete a story step and confirm its seal changes from keyhole to tick and the
+  progress bar advances. Start a run and confirm the Run tab fills in its floor,
+  revives, rooms, wardens and gateway state, refreshing about once a second.
+- Resize the window small and confirm the panel clamps without the frame corners
+  stretching or the tabs overlapping.
 - Disconnect and rejoin, die and respawn, and travel to the Fractured Archive and
   back. None of these may grant a second Journal or repeat the welcome.
 - Run `/tbos shrine list` in the fresh world: three shrines, all `PENDING`.
@@ -86,6 +98,14 @@ Unverified until run and dated below.
   log. Confirm the emissive cores glow in darkness: the wraith's core and mask
   slit, the sentinel's gnomon and gear teeth, the Cantor's metronome, crown, and
   hour marks.
+- Check the double-density textures at melee range. No face may look stretched,
+  seamed, or half-resolution — a wrong `texScale` shows up as one box sampling at
+  the wrong size rather than as a missing texture, so this needs eyes on each
+  creature rather than a clean log.
+- Confirm light falls from above: tops of boxes lit, undersides dark. An earlier
+  build had this inverted.
+- Confirm the Sentinel reads as riveted bronze plate and the Cantor's robe as
+  hanging parchment. Neither may read as wooden planking.
 - Let each acquire you and confirm the full signature move plays, with the
   telegraph strictly *before* the damage: wraith plates scatter and reform around
   the teleport, sentinel mauls reach full height before the slam lands, Cantor
@@ -196,6 +216,28 @@ procedure.
   overworld, Nether, and End, and `runClient` ended with `BUILD SUCCESSFUL`.
 - This confirmation does not yet cover the dedicated two-client, interrupted
   save/reload, or repeated ten-transition profiling cases.
+
+## Automated results — 2026-07-27
+
+- `gradlew.bat clean build --console=plain`: PASS. The 1,000-seed simulation ran
+  through `check` with zero failures across every counter. Artifact:
+  `build/libs/tbos-0.2.0-alpha.4.jar`.
+- `gradlew.bat runGameTestServer --console=plain`: 54 required tests, run four
+  times. Three were clean at 54/54; one hit the known `orrery_interaction` flake
+  documented above, which reproduces on unmodified `main` and is unrelated to this
+  change.
+- `python tools/textures/archive_entities.py`: PASS, six 128×128 sheets, UV
+  `validate()` clean. `python tools/textures/archive_gui.py`: PASS, nine sprites.
+- Sprite metadata: all six nine-slice `.png.mcmeta` files parse, declare
+  dimensions matching their PNG, and have borders smaller than the sprite.
+- `gradlew.bat runClient`: the client reached the main menu and stitched
+  `minecraft:textures/atlas/gui.png-atlas` with the `tbos:journal/*` sprites
+  present in the resource set and **no** texture, sprite, atlas or model errors in
+  the log.
+- **Unverified, needs a person at the keyboard:** how the creatures and the
+  Journal screen actually look. The Archive creature matrix and the Journal rows
+  in the onboarding matrix above are the checklist for that pass. A wrong
+  `texScale` or a mis-sliced frame renders without logging anything.
 
 ## Automated results — 2026-07-26
 

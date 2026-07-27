@@ -65,7 +65,6 @@ import com.nightbeam.tbos.world.FractureShrineVariant;
 import com.nightbeam.tbos.blockentity.AlignmentDialBlockEntity;
 import com.nightbeam.tbos.blockentity.ArchiveCoreBlockEntity;
 import com.nightbeam.tbos.block.AlignmentDialBlock;
-import com.nightbeam.tbos.item.ArchivistJournalPages;
 import com.mojang.serialization.JsonOps;
 import java.util.List;
 import java.util.HashSet;
@@ -2659,12 +2658,6 @@ public final class ModGameTests {
         helper.assertTrue(data.hasBeenGreeted(first), "The greeted player was not remembered");
         helper.assertTrue(!data.hasBeenGreeted(second), "An unseen player was recorded as greeted");
         helper.assertTrue(data.markGreeted(second), "A second player was not greeted independently");
-
-        List<net.minecraft.network.chat.Component> pages = ArchivistJournalPages.pages();
-        helper.assertTrue(pages.size() == ArchivistJournalPages.PAGE_COUNT,
-                "The Archivist's Journal page count does not match its declared length");
-        helper.assertTrue(pages.stream().distinct().count() == pages.size(),
-                "The Archivist's Journal repeated a page");
         helper.succeed();
     }
 

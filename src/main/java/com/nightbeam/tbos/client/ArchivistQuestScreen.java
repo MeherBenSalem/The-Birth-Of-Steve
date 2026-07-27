@@ -1,17 +1,57 @@
 package com.nightbeam.tbos.client;
 
+import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.advancement.ModAdvancements;
 import com.nightbeam.tbos.network.payload.JournalQuestRequest;
 import com.nightbeam.tbos.network.payload.JournalQuestSnapshotPayload;
+import com.nightbeam.tbos.registry.ModItems;
 import com.nightbeam.tbos.run.ArchiveFloorPresentation;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 /** Server-synchronized Story and Archive Run pages for the Archivist's Journal. */
 public final class ArchivistQuestScreen extends Screen {
+    private static final int PANEL_WIDTH = 380;
+    private static final int PANEL_HEIGHT = 244;
+    private static final int TAB_WIDTH = 104;
+    private static final int TAB_HEIGHT = 20;
+    private static final int ROW_HEIGHT = 22;
+    private static final int GLYPH = 12;
+
+    private static final Identifier FRAME = sprite("frame");
+    private static final Identifier WELL = sprite("well");
+    private static final Identifier TAB_ACTIVE = sprite("tab_active");
+    private static final Identifier TAB_IDLE = sprite("tab_idle");
+    private static final Identifier BAR_TRACK = sprite("bar_track");
+    private static final Identifier BAR_FILL = sprite("bar_fill");
+    private static final Identifier STEP_DONE = sprite("step_done");
+    private static final Identifier STEP_ACTIVE = sprite("step_active");
+    private static final Identifier STEP_LOCKED = sprite("step_locked");
+
+    private static final int INK = 0xFF2E2216;
+    private static final int INK_SOFT = 0xFF5D442D;
+    private static final int INK_TEAL = 0xFF1E5E60;
+    private static final int INK_DONE = 0xFF2F6A57;
+    private static final int INK_LOCKED = 0xFF7C6B54;
+    private static final int RULE = 0xFF8A6033;
+    private static final int ROW_ACTIVE = 0x33236E70;
+    private static final int ROW_HOVER = 0x1A5D442D;
+    private static final int PLATE_FILL = 0x1A3A2716;
+    private static final int PLATE_RULE = 0x338A6033;
+
+    /**
+     * One entry per Story step, in order: the advancement bits that complete it
+     * and the item that stands for it in the list.
+     */
     private static final int[] STORY_MASKS = {
         ModAdvancements.DISCOVER_FRACTURE_SHRINE_BIT,
         ModAdvancements.OBTAIN_CRACKED_LENS_BIT,
@@ -24,6 +64,9 @@ public final class ArchivistQuestScreen extends Screen {
         ModAdvancements.LAST_CURATOR_BIT,
         ModAdvancements.ENTER_FRACTURED_ARCHIVE_BIT
     };
+    /** The four-part step is the only one that reports sub-progress. */
+    private static final int ROOMS_STEP = 4;
+
     private JournalQuestSnapshotPayload snapshot;
     private Tab tab = Tab.STORY;
     private int refreshTicks;
@@ -32,6 +75,22 @@ public final class ArchivistQuestScreen extends Screen {
     private ArchivistQuestScreen(JournalQuestSnapshotPayload snapshot) {
         super(Component.translatable("journal.tbos.quests.title"));
         this.snapshot = snapshot;
+    }
+
+    private static Identifier sprite(String name) {
+        return Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "journal/" + name);
+    }
+
+    private static ItemStack icon(int step) {
+        return switch (step) {
+            case 0 -> new ItemStack(ModItems.RIFT_THRESHOLD.get());
+            case 1 -> new ItemStack(ModItems.CRACKED_YESTERGLASS_LENS.get());
+            case 2 -> new ItemStack(ModItems.YESTERGLASS_LENS.get());
+            case 3 -> new ItemStack(ModItems.ARCHIVE_SURVEY_MAP.get());
+            case 4 -> new ItemStack(ModItems.ALIGNMENT_DIAL.get());
+            case 5 -> new ItemStack(ModItems.CURATOR_CORE.get());
+            default -> new ItemStack(ModItems.ARCHIVE_CORE.get());
+        };
     }
 
     public static void requestOpen() {
@@ -51,21 +110,36 @@ public final class ArchivistQuestScreen extends Screen {
         MinecraftHolder.instance().setScreen(new ArchivistQuestScreen(snapshot));
     }
 
-    @Override
-    protected void init() {
-        int panelWidth = Math.min(374, width - 18);
-        int left = (width - panelWidth) / 2;
-        int top = Math.max(8, (height - 238) / 2);
-        addRenderableWidget(Button.builder(
-                        Component.translatable("journal.tbos.quests.tab.story"),
-                        button -> tab = Tab.STORY)
-                .bounds(left + 16, top + 25, 104, 20)
-                .build());
-        addRenderableWidget(Button.builder(
-                        Component.translatable("journal.tbos.quests.tab.run"),
-                        button -> tab = Tab.RUN)
-                .bounds(left + 124, top + 25, 116, 20)
-                .build());
+    // Geometry is derived on demand rather than cached, so layout and hit-testing
+    // cannot disagree after a resize.
+    private int panelWidth() {
+        return Math.min(PANEL_WIDTH, width - 16);
+    }
+
+    private int panelHeight() {
+        return Math.min(PANEL_HEIGHT, height - 16);
+    }
+
+    private int left() {
+        return (width - panelWidth()) / 2;
+    }
+
+    private int top() {
+        return (height - panelHeight()) / 2;
+    }
+
+    private int tabX(Tab which) {
+        return left() + 14 + (which == Tab.STORY ? 0 : TAB_WIDTH + 4);
+    }
+
+    private int tabY() {
+        return top() + 24;
+    }
+
+    private boolean overTab(Tab which, double mouseX, double mouseY) {
+        int x = tabX(which);
+        return mouseX >= x && mouseX < x + TAB_WIDTH
+                && mouseY >= tabY() && mouseY < tabY() + TAB_HEIGHT;
     }
 
     @Override
@@ -77,112 +151,180 @@ public final class ArchivistQuestScreen extends Screen {
     }
 
     @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        for (Tab candidate : Tab.values()) {
+            if (overTab(candidate, event.x(), event.y())) {
+                if (candidate != tab) {
+                    tab = candidate;
+                    minecraft.getSoundManager().play(
+                            SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
+                }
+                return true;
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         extractTransparentBackground(graphics);
-        int panelWidth = Math.min(374, width - 18);
-        int panelHeight = Math.min(238, height - 16);
-        int left = (width - panelWidth) / 2;
-        int top = (height - panelHeight) / 2;
-        graphics.fill(left, top, left + panelWidth, top + panelHeight, 0xF2D9C89E);
-        graphics.outline(left, top, panelWidth, panelHeight, 0xFF6D4A29);
-        graphics.outline(left + 3, top + 3, panelWidth - 6, panelHeight - 6, 0xFF9A7040);
-        graphics.fill(left + 8, top + 50, left + panelWidth - 8, top + panelHeight - 10, 0x92776548);
-        graphics.centeredText(font, title, width / 2, top + 9, 0xFF38291C);
+        int panelWidth = panelWidth();
+        int panelHeight = panelHeight();
+        int panelLeft = left();
+        int panelTop = top();
+        graphics.blitSprite(
+                RenderPipelines.GUI_TEXTURED, FRAME, panelLeft, panelTop, panelWidth, panelHeight);
+        graphics.centeredText(font, title, width / 2, panelTop + 10, INK);
+
+        drawTabs(graphics, mouseX, mouseY);
+
+        int wellX = panelLeft + 12;
+        int wellY = tabY() + TAB_HEIGHT;
+        int wellWidth = panelWidth - 24;
+        int wellHeight = panelHeight - (wellY - panelTop) - 12;
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, WELL, wellX, wellY, wellWidth, wellHeight);
+
         if (tab == Tab.STORY) {
-            drawStory(graphics, left, top, panelWidth, panelHeight);
+            drawStory(graphics, mouseX, mouseY, wellX, wellY, wellWidth, wellHeight);
         } else {
-            drawRun(graphics, left, top, panelWidth, panelHeight);
+            drawRun(graphics, wellX, wellY, wellWidth, wellHeight);
         }
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }
 
-    private void drawStory(GuiGraphicsExtractor graphics, int left, int top, int panelWidth, int panelHeight) {
-        int completedSteps = 0;
+    private void drawTabs(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        for (Tab candidate : Tab.values()) {
+            boolean active = candidate == tab;
+            int x = tabX(candidate);
+            int y = tabY() + (active ? 0 : 2);
+            int tabHeight = TAB_HEIGHT - (active ? 0 : 2);
+            graphics.blitSprite(
+                    RenderPipelines.GUI_TEXTURED,
+                    active ? TAB_ACTIVE : TAB_IDLE,
+                    x,
+                    y,
+                    TAB_WIDTH,
+                    tabHeight);
+            boolean hovered = overTab(candidate, mouseX, mouseY);
+            graphics.centeredText(
+                    font,
+                    Component.translatable(candidate.key),
+                    x + TAB_WIDTH / 2,
+                    y + tabHeight / 2 - 4,
+                    active ? INK : (hovered ? INK_TEAL : INK_LOCKED));
+        }
+    }
+
+    private void drawStory(
+            GuiGraphicsExtractor graphics,
+            int mouseX,
+            int mouseY,
+            int wellX,
+            int wellY,
+            int wellWidth,
+            int wellHeight) {
+        int completed = 0;
         int current = -1;
         for (int index = 0; index < STORY_MASKS.length; index++) {
-            boolean complete = (snapshot.storyMask() & STORY_MASKS[index]) == STORY_MASKS[index];
-            if (complete) {
-                completedSteps++;
+            if (isComplete(index)) {
+                completed++;
             } else if (current < 0) {
                 current = index;
             }
         }
-        if (completedSteps == STORY_MASKS.length) {
+        if (completed == STORY_MASKS.length) {
             current = STORY_MASKS.length - 1;
         }
-        int listX = left + 16;
-        int listY = top + 60;
-        int listWidth = panelWidth / 2 - 24;
+
+        int listX = wellX + 8;
+        int listY = wellY + 10;
+        int listWidth = wellWidth / 2 - 18;
+        int hoveredStep = -1;
         for (int index = 0; index < STORY_MASKS.length; index++) {
-            boolean complete = (snapshot.storyMask() & STORY_MASKS[index]) == STORY_MASKS[index];
+            boolean complete = isComplete(index);
             boolean active = !complete && index == current;
-            int y = listY + index * 19;
-            if (active) {
-                graphics.fill(listX - 4, y - 3, listX + listWidth + 4, y + 14, 0x553D8383);
+            int y = listY + index * ROW_HEIGHT;
+            boolean hovered = mouseX >= listX - 4 && mouseX < listX + listWidth
+                    && mouseY >= y - 3 && mouseY < y + ROW_HEIGHT - 5;
+            if (hovered) {
+                hoveredStep = index;
             }
-            int color = complete ? 0xFF397A63 : active ? 0xFF6E3E80 : 0xFF574839;
-            Component marker = Component.literal(complete ? "✓" : active ? "◆" : "◇");
-            graphics.text(font, marker, listX, y, color, true);
+            if (active || hovered) {
+                graphics.fill(listX - 5, y - 3, listX + listWidth, y + GLYPH + 3,
+                        active ? ROW_ACTIVE : ROW_HOVER);
+            }
+            graphics.blitSprite(
+                    RenderPipelines.GUI_TEXTURED,
+                    complete ? STEP_DONE : active ? STEP_ACTIVE : STEP_LOCKED,
+                    listX,
+                    y,
+                    GLYPH,
+                    GLYPH);
+            graphics.item(icon(index), listX + GLYPH + 4, y - 2);
             graphics.text(
                     font,
                     Component.translatable("journal.tbos.quest." + (index + 1) + ".title", index + 1),
-                    listX + 13,
-                    y,
-                    color,
+                    listX + GLYPH + 24,
+                    y + 2,
+                    complete ? INK_DONE : active ? INK : INK_LOCKED,
                     false);
-            if (index == 4) {
-                int substeps = Integer.bitCount(snapshot.storyMask() & STORY_MASKS[index]);
-                graphics.text(font, Component.literal(substeps + "/4"), listX + listWidth - 24, y, color, false);
+            if (index == ROOMS_STEP && !complete) {
+                int parts = Integer.bitCount(snapshot.storyMask() & STORY_MASKS[index]);
+                graphics.text(font, Component.literal(parts + "/4"),
+                        listX + listWidth - 20, y + 2, INK_SOFT, false);
             }
         }
-        int detailX = left + panelWidth / 2 + 5;
-        graphics.verticalLine(detailX - 8, listY - 5, top + panelHeight - 30, 0xAA9A7040);
+
+        int detailX = wellX + wellWidth / 2 + 4;
+        int detailWidth = wellWidth / 2 - 16;
+        graphics.verticalLine(detailX - 10, listY - 4, wellY + wellHeight - 30, RULE);
+        int detail = hoveredStep >= 0 ? hoveredStep : current;
         graphics.text(
                 font,
-                Component.translatable("journal.tbos.quest." + (current + 1) + ".detail_title"),
+                Component.translatable("journal.tbos.quest." + (detail + 1) + ".detail_title"),
                 detailX,
                 listY,
-                0xFF356F70,
+                INK_TEAL,
                 true);
         graphics.textWithWordWrap(
                 font,
-                Component.translatable("journal.tbos.quest." + (current + 1) + ".description"),
+                Component.translatable("journal.tbos.quest." + (detail + 1) + ".description"),
                 detailX,
                 listY + 18,
-                panelWidth / 2 - 26,
-                0xFF493727);
-        int barX = left + 16;
-        int barY = top + panelHeight - 20;
-        int barWidth = panelWidth - 32;
-        int filled = Math.round(barWidth * completedSteps / (float) STORY_MASKS.length);
-        graphics.fill(barX, barY, barX + barWidth, barY + 5, 0xFF5A4A39);
-        graphics.fill(barX, barY, barX + filled, barY + 5, 0xFF397F80);
+                detailWidth,
+                INK);
+
+        int barX = wellX + 8;
+        int barY = wellY + wellHeight - 16;
+        int barWidth = wellWidth - 16;
         graphics.text(
                 font,
-                Component.translatable("journal.tbos.quests.progress", completedSteps, STORY_MASKS.length),
+                Component.translatable("journal.tbos.quests.progress", completed, STORY_MASKS.length),
                 barX,
-                barY - 11,
-                0xFF463526,
+                barY - 12,
+                INK_SOFT,
                 false);
+        progressBar(graphics, barX, barY, barWidth, completed / (float) STORY_MASKS.length);
     }
 
-    private void drawRun(GuiGraphicsExtractor graphics, int left, int top, int panelWidth, int panelHeight) {
-        int x = left + 18;
-        int y = top + 62;
+    private void drawRun(
+            GuiGraphicsExtractor graphics, int wellX, int wellY, int wellWidth, int wellHeight) {
+        int x = wellX + 12;
+        int y = wellY + 14;
         if (!snapshot.hasRun()) {
             graphics.centeredText(
                     font,
                     Component.translatable("journal.tbos.run.inactive"),
-                    left + panelWidth / 2,
-                    y + 24,
-                    0xFF6E3E80);
+                    wellX + wellWidth / 2,
+                    y + 26,
+                    INK_TEAL);
             graphics.textWithWordWrap(
                     font,
                     Component.translatable("journal.tbos.run.inactive.hint"),
-                    x + 16,
+                    x + 12,
                     y + 48,
-                    panelWidth - 68,
-                    0xFF493727);
+                    wellWidth - 48,
+                    INK);
             return;
         }
         graphics.text(
@@ -193,39 +335,59 @@ public final class ArchivistQuestScreen extends Screen {
                         ArchiveFloorPresentation.name(snapshot.floorIndex())),
                 x,
                 y,
-                0xFF356F70,
+                INK_TEAL,
                 true);
-        y += 25;
-        drawRunLine(graphics, x, y, "journal.tbos.run.state",
+
+        int plateWidth = wellWidth - 24;
+        int plateY = y + 22;
+        plateY = statPlate(graphics, x, plateY, plateWidth, "journal.tbos.run.state",
                 Component.translatable(snapshot.preparing()
                         ? "journal.tbos.run.preparing"
                         : "journal.tbos.run.active"));
-        drawRunLine(graphics, x, y + 21, "journal.tbos.run.revives", Component.literal(
-                Integer.toString(snapshot.sharedRevives())));
-        drawRunLine(graphics, x, y + 42, "journal.tbos.run.rooms", Component.literal(
-                snapshot.roomsCleared() + " / " + snapshot.roomsRequired()));
-        drawRunLine(graphics, x, y + 63, "journal.tbos.run.wardens", Component.literal(
-                snapshot.lesserBossesDefeated() + " / " + snapshot.lesserBossesTotal()));
-        drawRunLine(graphics, x, y + 84, "journal.tbos.run.gateway",
+        plateY = statPlate(graphics, x, plateY, plateWidth, "journal.tbos.run.revives",
+                Component.literal(Integer.toString(snapshot.sharedRevives())));
+        plateY = statPlate(graphics, x, plateY, plateWidth, "journal.tbos.run.rooms",
+                Component.literal(snapshot.roomsCleared() + " / " + snapshot.roomsRequired()));
+        plateY = statPlate(graphics, x, plateY, plateWidth, "journal.tbos.run.wardens",
+                Component.literal(
+                        snapshot.lesserBossesDefeated() + " / " + snapshot.lesserBossesTotal()));
+        statPlate(graphics, x, plateY, plateWidth, "journal.tbos.run.gateway",
                 Component.translatable(snapshot.gatewayReady()
                         ? "journal.tbos.run.gateway.ready"
                         : "journal.tbos.run.gateway.locked"));
-        int barWidth = panelWidth - 36;
-        int filled = snapshot.roomsRequired() == 0
-                ? 0
-                : Math.round(barWidth * snapshot.roomsCleared() / (float) snapshot.roomsRequired());
-        graphics.fill(x, top + panelHeight - 24, x + barWidth, top + panelHeight - 18, 0xFF5A4A39);
-        graphics.fill(x, top + panelHeight - 24, x + filled, top + panelHeight - 18, 0xFF397F80);
+
+        float fraction = snapshot.roomsRequired() == 0
+                ? 0.0F
+                : snapshot.roomsCleared() / (float) snapshot.roomsRequired();
+        progressBar(graphics, x, wellY + wellHeight - 16, plateWidth, fraction);
     }
 
-    private void drawRunLine(
-            GuiGraphicsExtractor graphics,
-            int x,
-            int y,
-            String key,
-            Component value) {
-        graphics.text(font, Component.translatable(key), x, y, 0xFF5D442D, false);
-        graphics.text(font, value, x + 118, y, 0xFF2E6F70, true);
+    /** Draws one ruled statistic row and returns the next row's baseline. */
+    private int statPlate(
+            GuiGraphicsExtractor graphics, int x, int y, int width, String key, Component value) {
+        graphics.fill(x - 4, y - 3, x + width, y + 12, PLATE_FILL);
+        graphics.horizontalLine(x - 4, x + width, y + 12, PLATE_RULE);
+        graphics.text(font, Component.translatable(key), x, y, INK_SOFT, false);
+        graphics.text(font, value, x + 132, y, INK_TEAL, true);
+        return y + 19;
+    }
+
+    /**
+     * Draws the track, then the fill clipped to its fraction. The fill sprite is
+     * nine-sliced, so a zero-width blit would smear its own borders; below one
+     * full sprite width the track is left bare instead.
+     */
+    private void progressBar(GuiGraphicsExtractor graphics, int x, int y, int width, float fraction) {
+        int height = 8;
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BAR_TRACK, x, y, width, height);
+        int filled = Math.round(width * Mth.clamp(fraction, 0.0F, 1.0F));
+        if (filled >= height) {
+            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BAR_FILL, x, y, filled, height);
+        }
+    }
+
+    private boolean isComplete(int index) {
+        return (snapshot.storyMask() & STORY_MASKS[index]) == STORY_MASKS[index];
     }
 
     @Override
@@ -240,8 +402,14 @@ public final class ArchivistQuestScreen extends Screen {
     }
 
     private enum Tab {
-        STORY,
-        RUN
+        STORY("journal.tbos.quests.tab.story"),
+        RUN("journal.tbos.quests.tab.run");
+
+        private final String key;
+
+        Tab(String key) {
+            this.key = key;
+        }
     }
 
     /** Keeps Minecraft client access in one tiny, test-friendly boundary. */

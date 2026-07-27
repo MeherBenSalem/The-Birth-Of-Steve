@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.2.0-alpha.4 - 2026-07-27
+
+### The Journal is one screen now
+
+- Right-clicking the Archivist's Journal opens the quest screen directly. The
+  nine-page vanilla book it used to open is gone, and the quest screen is no
+  longer hidden behind shift+right-click — there is one interface, reached the
+  obvious way.
+- Rebuilt that screen on real artwork instead of flat coloured rectangles: a
+  bronze frame over parchment, a recessed content well, tabs that read as joined
+  to the panel when active and sunk when not, and proper progress bars.
+- Each story step now shows a struck bronze seal for done, a lit seal for the step
+  you are on, and a sealed keyhole for the ones still ahead, replacing the tick
+  and diamond characters.
+- Every step also shows the item it is about — the cracked Lens, the repaired
+  Lens, the Survey Map, the Curator Core — so the list reads at a glance.
+- Hovering a step previews it in the detail pane, and the pane returns to your
+  current objective when you move away.
+- The Run tab's statistics are laid out as ruled plates rather than two loose
+  columns of text.
+
+### Creature textures rebuilt
+
+- All three creatures added last version were carrying first-pass art: flat
+  fields of random speckle with the same bevel on every face. They have been
+  repainted at double resolution against the Memory Leech's standard.
+- The Meridian Sentinel now reads as riveted bronze plate — panels bevelled
+  individually, rivets set in their corners, a specular sweep across the metal,
+  and verdigris creeping out of the seams. It previously read as wooden crates.
+- The Hour Cantor's robe now hangs in soft vertical folds with a stained hem, and
+  its twelve hour marks are struck ticks rather than full-height bars.
+- The Parallax Wraith's plates gained faceted fracture planes with a cyan seam
+  running through them, and its eye slit now has a glow under the highlight.
+- The emissive layers were nearly invisible before; cores now have a hot centre
+  with real falloff, and the Cantor's crown reads as a lit rim rather than a
+  solid block of light.
+
+### Fixes
+
+- Fixed the lighting on every creature. The texture generator had the cube's six
+  faces mislabelled against Minecraft's own unwrap order, so every highlight was
+  being painted onto an underside and every shadow onto a top face. Light now
+  falls from above and to the left, as the rest of the mod's art already did.
+- The texture generator now refuses to run if two boxes would share sheet space
+  or fall outside it, instead of silently producing corrupt art.
+
 ## 0.2.0-alpha.3 - 2026-07-26
 
 ### The last three zombies are gone

@@ -1,10 +1,13 @@
 package com.nightbeam.tbos.client.render;
 
+import static com.nightbeam.tbos.client.render.ArchiveEntityModels.TEX_SCALE;
+
 import com.nightbeam.tbos.Yesterglass;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
@@ -57,21 +60,28 @@ public final class MeridianSentinelModel extends EntityModel<MeridianSentinelRen
 
         CubeListBuilder leg = CubeListBuilder.create()
                 .texOffs(0, 0)
-                .addBox(-2.5F, 0.0F, -2.5F, 5.0F, 10.0F, 5.0F);
+                .addBox(-2.5F, 0.0F, -2.5F, 5.0F, 10.0F, 5.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE);
         root.addOrReplaceChild(
                 "left_leg", leg, PartPose.offsetAndRotation(3.5F, 14.0F, 0.0F, 0.0F, 0.0F, 0.09F));
         root.addOrReplaceChild(
                 "right_leg",
-                CubeListBuilder.create().texOffs(0, 0).mirror().addBox(-2.5F, 0.0F, -2.5F, 5.0F, 10.0F, 5.0F),
+                CubeListBuilder.create()
+                        .texOffs(0, 0)
+                        .mirror().addBox(-2.5F, 0.0F, -2.5F, 5.0F, 10.0F, 5.0F,
+                                CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offsetAndRotation(-3.5F, 14.0F, 0.0F, 0.0F, 0.0F, -0.09F));
 
         PartDefinition torso = root.addOrReplaceChild(
                 "torso",
-                CubeListBuilder.create().texOffs(22, 0).addBox(-6.0F, -12.0F, -4.0F, 12.0F, 12.0F, 8.0F),
+                CubeListBuilder.create()
+                        .texOffs(22, 0)
+                        .addBox(-6.0F, -12.0F, -4.0F, 12.0F, 12.0F, 8.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offset(0.0F, 13.0F, 0.0F));
         torso.addOrReplaceChild(
                 "gear_column",
-                CubeListBuilder.create().texOffs(0, 21).addBox(-3.0F, -4.0F, -0.5F, 6.0F, 8.0F, 1.0F),
+                CubeListBuilder.create()
+                        .texOffs(0, 21)
+                        .addBox(-3.0F, -4.0F, -0.5F, 6.0F, 8.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offset(0.0F, -6.0F, -4.5F));
 
         // The ring set clears the torso's top face rather than sinking into it.
@@ -81,49 +91,51 @@ public final class MeridianSentinelModel extends EntityModel<MeridianSentinelRen
                 "ring_outer",
                 CubeListBuilder.create()
                         .texOffs(30, 37)
-                        .addBox(-6.0F, -0.5F, -7.0F, 12.0F, 1.0F, 1.0F)
+                        .addBox(-6.0F, -0.5F, -7.0F, 12.0F, 1.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                         .texOffs(30, 37)
-                        .addBox(-6.0F, -0.5F, 6.0F, 12.0F, 1.0F, 1.0F)
+                        .addBox(-6.0F, -0.5F, 6.0F, 12.0F, 1.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                         .texOffs(30, 40)
-                        .addBox(-7.0F, -0.5F, -6.0F, 1.0F, 1.0F, 12.0F)
+                        .addBox(-7.0F, -0.5F, -6.0F, 1.0F, 1.0F, 12.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                         .texOffs(30, 40)
-                        .addBox(6.0F, -0.5F, -6.0F, 1.0F, 1.0F, 12.0F),
+                        .addBox(6.0F, -0.5F, -6.0F, 1.0F, 1.0F, 12.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.rotation(OUTER_TILT, 0.0F, 0.0F));
         ringMount.addOrReplaceChild(
                 "ring_inner",
                 CubeListBuilder.create()
                         .texOffs(0, 47)
-                        .addBox(-4.0F, -0.5F, -5.0F, 8.0F, 1.0F, 1.0F)
+                        .addBox(-4.0F, -0.5F, -5.0F, 8.0F, 1.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                         .texOffs(0, 47)
-                        .addBox(-4.0F, -0.5F, 4.0F, 8.0F, 1.0F, 1.0F)
+                        .addBox(-4.0F, -0.5F, 4.0F, 8.0F, 1.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                         .texOffs(0, 50)
-                        .addBox(-5.0F, -0.5F, -4.0F, 1.0F, 1.0F, 8.0F)
+                        .addBox(-5.0F, -0.5F, -4.0F, 1.0F, 1.0F, 8.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                         .texOffs(0, 50)
-                        .addBox(4.0F, -0.5F, -4.0F, 1.0F, 1.0F, 8.0F),
+                        .addBox(4.0F, -0.5F, -4.0F, 1.0F, 1.0F, 8.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.rotation(0.0F, 0.0F, INNER_TILT));
         ringMount.addOrReplaceChild(
                 "gnomon",
-                CubeListBuilder.create().texOffs(16, 21).addBox(-1.5F, -1.5F, -1.5F, 3.0F, 3.0F, 3.0F),
+                CubeListBuilder.create()
+                        .texOffs(16, 21)
+                        .addBox(-1.5F, -1.5F, -1.5F, 3.0F, 3.0F, 3.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.ZERO);
 
         // Maul heads are hung outboard on each shaft, clear of the torso and legs.
         CubeListBuilder leftMaul = CubeListBuilder.create()
                 .texOffs(30, 21)
-                .addBox(-2.0F, 0.0F, -2.0F, 4.0F, 10.0F, 4.0F)
+                .addBox(-2.0F, 0.0F, -2.0F, 4.0F, 10.0F, 4.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                 .texOffs(0, 32)
-                .addBox(-2.0F, 10.0F, -3.5F, 7.0F, 6.0F, 7.0F);
+                .addBox(-2.0F, 10.0F, -3.5F, 7.0F, 6.0F, 7.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE);
         CubeListBuilder rightMaul = CubeListBuilder.create()
                 .texOffs(30, 21)
                 .mirror()
-                .addBox(-2.0F, 0.0F, -2.0F, 4.0F, 10.0F, 4.0F)
+                .addBox(-2.0F, 0.0F, -2.0F, 4.0F, 10.0F, 4.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                 .texOffs(0, 32)
                 .mirror()
-                .addBox(-5.0F, 10.0F, -3.5F, 7.0F, 6.0F, 7.0F);
+                .addBox(-5.0F, 10.0F, -3.5F, 7.0F, 6.0F, 7.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE);
         torso.addOrReplaceChild(
                 "left_arm", leftMaul, PartPose.offsetAndRotation(8.0F, -10.0F, 0.0F, 0.0F, 0.0F, -0.08F));
         torso.addOrReplaceChild(
                 "right_arm", rightMaul, PartPose.offsetAndRotation(-8.0F, -10.0F, 0.0F, 0.0F, 0.0F, 0.08F));
-        return LayerDefinition.create(mesh, 64, 64);
+        return LayerDefinition.create(mesh, 128, 128);
     }
 
     @Override

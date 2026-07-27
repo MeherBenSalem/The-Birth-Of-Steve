@@ -1,11 +1,9 @@
 package com.nightbeam.tbos.client;
 
 import com.nightbeam.tbos.Yesterglass;
-import com.nightbeam.tbos.item.ArchivistJournalPages;
 import com.nightbeam.tbos.network.payload.LensUseRequest;
 import com.nightbeam.tbos.registry.ModItems;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.BookViewScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -37,12 +35,8 @@ public final class ClientEvents {
         }
         ItemStack held = player.getItemInHand(event.getHand());
         if (held.is(ModItems.ARCHIVISTS_JOURNAL.get())) {
-            if (player.isShiftKeyDown()) {
-                ArchivistQuestScreen.requestOpen();
-            } else {
-                minecraft.setScreen(new BookViewScreen(
-                        new BookViewScreen.BookAccess(ArchivistJournalPages.pages())));
-            }
+            // One interface: the server-backed quest screen, sneaking or not.
+            ArchivistQuestScreen.requestOpen();
             event.setCanceled(true);
             event.setSwingHand(false);
             return;

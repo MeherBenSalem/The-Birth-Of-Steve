@@ -1,11 +1,14 @@
 package com.nightbeam.tbos.client.render;
 
+import static com.nightbeam.tbos.client.render.ArchiveEntityModels.TEX_SCALE;
+
 import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.entity.ParallaxWraithEntity;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
@@ -66,21 +69,23 @@ public final class ParallaxWraithModel extends EntityModel<ParallaxWraithRenderS
 
         body.addOrReplaceChild(
                 "core",
-                CubeListBuilder.create().texOffs(0, 0).addBox(-2.0F, -2.0F, -2.0F, 4.0F, 4.0F, 4.0F),
+                CubeListBuilder.create()
+                        .texOffs(0, 0)
+                        .addBox(-2.0F, -2.0F, -2.0F, 4.0F, 4.0F, 4.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.ZERO);
         body.addOrReplaceChild(
                 "mask",
                 CubeListBuilder.create()
                         .texOffs(0, 10)
-                        .addBox(-3.0F, -4.0F, -7.0F, 6.0F, 4.0F, 7.0F)
+                        .addBox(-3.0F, -4.0F, -7.0F, 6.0F, 4.0F, 7.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                         .texOffs(48, 12)
-                        .addBox(-2.0F, -3.0F, -8.0F, 4.0F, 2.0F, 1.0F),
+                        .addBox(-2.0F, -3.0F, -8.0F, 4.0F, 2.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offset(0.0F, -5.0F, 0.0F));
 
         PartDefinition shell = body.addOrReplaceChild("shell", CubeListBuilder.create(), PartPose.ZERO);
         CubeListBuilder plate = CubeListBuilder.create()
                 .texOffs(28, 0)
-                .addBox(-4.0F, -5.0F, -0.5F, 8.0F, 10.0F, 1.0F);
+                .addBox(-4.0F, -5.0F, -0.5F, 8.0F, 10.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE);
         shell.addOrReplaceChild("shard_north", plate, PartPose.offset(0.0F, 0.0F, -4.5F));
         shell.addOrReplaceChild("shard_south", plate, PartPose.offset(0.0F, 0.0F, 4.5F));
         shell.addOrReplaceChild(
@@ -95,23 +100,25 @@ public final class ParallaxWraithModel extends EntityModel<ParallaxWraithRenderS
         // The arms hang from below the shard cage so nothing intersects it at rest.
         body.addOrReplaceChild(
                 "left_arm",
-                CubeListBuilder.create().texOffs(0, 24).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 12.0F, 2.0F),
+                CubeListBuilder.create()
+                        .texOffs(0, 24)
+                        .addBox(-1.0F, 0.0F, -1.0F, 2.0F, 12.0F, 2.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offsetAndRotation(3.5F, 5.5F, 0.0F, 0.1F, 0.0F, -0.12F));
         body.addOrReplaceChild(
                 "right_arm",
                 CubeListBuilder.create()
                         .texOffs(0, 24)
                         .mirror()
-                        .addBox(-1.0F, 0.0F, -1.0F, 2.0F, 12.0F, 2.0F),
+                        .addBox(-1.0F, 0.0F, -1.0F, 2.0F, 12.0F, 2.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offsetAndRotation(-3.5F, 5.5F, 0.0F, 0.1F, 0.0F, 0.12F));
 
         CubeListBuilder fin = CubeListBuilder.create()
                 .texOffs(0, 42)
-                .addBox(-3.0F, -1.0F, 0.0F, 6.0F, 2.0F, 9.0F);
+                .addBox(-3.0F, -1.0F, 0.0F, 6.0F, 2.0F, 9.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE);
         body.addOrReplaceChild("fin_upper", fin, PartPose.offsetAndRotation(0.0F, -3.5F, 5.5F, -0.22F, 0.0F, 0.0F));
         body.addOrReplaceChild("fin_middle", fin, PartPose.offsetAndRotation(0.0F, -0.5F, 5.5F, 0.0F, 0.0F, 0.0F));
         body.addOrReplaceChild("fin_lower", fin, PartPose.offsetAndRotation(0.0F, 2.5F, 5.5F, 0.22F, 0.0F, 0.0F));
-        return LayerDefinition.create(mesh, 64, 64);
+        return LayerDefinition.create(mesh, 128, 128);
     }
 
     @Override

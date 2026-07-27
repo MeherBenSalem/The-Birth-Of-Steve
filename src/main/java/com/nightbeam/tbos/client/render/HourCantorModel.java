@@ -1,10 +1,13 @@
 package com.nightbeam.tbos.client.render;
 
+import static com.nightbeam.tbos.client.render.ArchiveEntityModels.TEX_SCALE;
+
 import com.nightbeam.tbos.Yesterglass;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
@@ -66,33 +69,39 @@ public final class HourCantorModel extends EntityModel<HourCantorRenderState> {
                 "column",
                 CubeListBuilder.create()
                         .texOffs(0, 0)
-                        .addBox(-5.0F, -12.0F, -5.0F, 10.0F, 12.0F, 10.0F)
+                        .addBox(-5.0F, -12.0F, -5.0F, 10.0F, 12.0F, 10.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                         .texOffs(0, 23)
-                        .addBox(-4.0F, -20.0F, -4.0F, 8.0F, 8.0F, 8.0F),
+                        .addBox(-4.0F, -20.0F, -4.0F, 8.0F, 8.0F, 8.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offset(0.0F, -8.0F, 0.0F));
 
         PartDefinition head = column.addOrReplaceChild(
                 "head",
-                CubeListBuilder.create().texOffs(33, 23).addBox(-3.5F, -6.0F, -3.5F, 7.0F, 6.0F, 7.0F),
+                CubeListBuilder.create()
+                        .texOffs(33, 23)
+                        .addBox(-3.5F, -6.0F, -3.5F, 7.0F, 6.0F, 7.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offset(0.0F, -20.5F, 0.0F));
         head.addOrReplaceChild(
                 "crown",
-                CubeListBuilder.create().texOffs(0, 40).addBox(-4.5F, -1.0F, -4.5F, 9.0F, 1.0F, 9.0F),
+                CubeListBuilder.create()
+                        .texOffs(0, 40)
+                        .addBox(-4.5F, -1.0F, -4.5F, 9.0F, 1.0F, 9.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offset(0.0F, -6.0F, 0.0F));
 
         // The cage sits in the band between the hour rings and the lower robe, and
         // the pendulum hangs in front of it rather than through it.
         column.addOrReplaceChild(
                 "cage",
-                CubeListBuilder.create().texOffs(41, 10).addBox(-3.0F, -3.0F, -0.5F, 6.0F, 6.0F, 1.0F),
+                CubeListBuilder.create()
+                        .texOffs(41, 10)
+                        .addBox(-3.0F, -3.0F, -0.5F, 6.0F, 6.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offset(0.0F, -15.5F, -4.5F));
         column.addOrReplaceChild(
                 "pendulum",
                 CubeListBuilder.create()
                         .texOffs(48, 0)
-                        .addBox(-0.5F, 0.0F, -0.5F, 1.0F, 5.0F, 1.0F)
+                        .addBox(-0.5F, 0.0F, -0.5F, 1.0F, 5.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                         .texOffs(53, 0)
-                        .addBox(-1.0F, 5.0F, -1.0F, 2.0F, 2.0F, 2.0F),
+                        .addBox(-1.0F, 5.0F, -1.0F, 2.0F, 2.0F, 2.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE),
                 PartPose.offset(0.0F, -18.0F, -6.0F));
 
         column.addOrReplaceChild("ring_low", ringBars(), PartPose.offsetAndRotation(
@@ -102,9 +111,9 @@ public final class HourCantorModel extends EntityModel<HourCantorRenderState> {
 
         CubeListBuilder conductingArm = CubeListBuilder.create()
                 .texOffs(55, 40)
-                .addBox(-1.0F, 0.0F, -1.0F, 2.0F, 11.0F, 2.0F)
+                .addBox(-1.0F, 0.0F, -1.0F, 2.0F, 11.0F, 2.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                 .texOffs(37, 40)
-                .addBox(-0.5F, 11.0F, -1.5F, 1.0F, 7.0F, 3.0F);
+                .addBox(-0.5F, 11.0F, -1.5F, 1.0F, 7.0F, 3.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE);
         // Conducting arms sit outboard of the hour rings and behind the folded pair.
         column.addOrReplaceChild(
                 "left_arm", conductingArm, PartPose.offsetAndRotation(7.5F, -17.0F, 1.0F, 0.0F, 0.0F, -0.15F));
@@ -113,7 +122,7 @@ public final class HourCantorModel extends EntityModel<HourCantorRenderState> {
 
         CubeListBuilder foldedArm = CubeListBuilder.create()
                 .texOffs(0, 51)
-                .addBox(-1.5F, 0.0F, -1.5F, 3.0F, 7.0F, 3.0F);
+                .addBox(-1.5F, 0.0F, -1.5F, 3.0F, 7.0F, 3.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE);
         column.addOrReplaceChild(
                 "left_arm_lower",
                 foldedArm,
@@ -125,24 +134,24 @@ public final class HourCantorModel extends EntityModel<HourCantorRenderState> {
 
         CubeListBuilder streamer = CubeListBuilder.create()
                 .texOffs(41, 0)
-                .addBox(-1.0F, 0.0F, -0.5F, 2.0F, 7.0F, 1.0F);
+                .addBox(-1.0F, 0.0F, -0.5F, 2.0F, 7.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE);
         column.addOrReplaceChild("streamer_left", streamer, PartPose.offset(3.0F, 0.0F, -2.0F));
         column.addOrReplaceChild("streamer_right", streamer, PartPose.offset(-3.0F, 0.0F, -2.0F));
         column.addOrReplaceChild("streamer_back", streamer, PartPose.offset(0.0F, 0.0F, 3.5F));
-        return LayerDefinition.create(mesh, 64, 64);
+        return LayerDefinition.create(mesh, 128, 128);
     }
 
     /** A five-radius hoop; the two rings differ by tilt and spin, not size. */
     private static CubeListBuilder ringBars() {
         return CubeListBuilder.create()
                 .texOffs(37, 37)
-                .addBox(-5.0F, -0.5F, -6.0F, 10.0F, 1.0F, 1.0F)
+                .addBox(-5.0F, -0.5F, -6.0F, 10.0F, 1.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                 .texOffs(37, 37)
-                .addBox(-5.0F, -0.5F, 5.0F, 10.0F, 1.0F, 1.0F)
+                .addBox(-5.0F, -0.5F, 5.0F, 10.0F, 1.0F, 1.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                 .texOffs(13, 51)
-                .addBox(-6.0F, -0.5F, -5.0F, 1.0F, 1.0F, 10.0F)
+                .addBox(-6.0F, -0.5F, -5.0F, 1.0F, 1.0F, 10.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE)
                 .texOffs(13, 51)
-                .addBox(5.0F, -0.5F, -5.0F, 1.0F, 1.0F, 10.0F);
+                .addBox(5.0F, -0.5F, -5.0F, 1.0F, 1.0F, 10.0F, CubeDeformation.NONE, TEX_SCALE, TEX_SCALE);
     }
 
     @Override
