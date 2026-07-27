@@ -25,6 +25,7 @@ import com.nightbeam.tbos.entity.LenswardEntity;
 import com.nightbeam.tbos.entity.MemoryLeechEntity;
 import com.nightbeam.tbos.entity.MeridianSentinelEntity;
 import com.nightbeam.tbos.entity.ParallaxWraithEntity;
+import com.nightbeam.tbos.entity.ThemeExclusiveEntity;
 import com.nightbeam.tbos.registry.ModBlocks;
 import com.nightbeam.tbos.registry.ModEntities;
 import com.nightbeam.tbos.registry.ModItems;
@@ -58,6 +59,7 @@ import com.nightbeam.tbos.run.ArchiveRunProtection;
 import com.nightbeam.tbos.run.ArchiveRunSavedData;
 import com.nightbeam.tbos.run.ArchiveRunStatus;
 import com.nightbeam.tbos.run.ArchiveFloorPresentation;
+import com.nightbeam.tbos.run.ArchiveFloorTheme;
 import com.nightbeam.tbos.world.AdventureWorldManager;
 import com.nightbeam.tbos.world.FractureShrinePlacement;
 import com.nightbeam.tbos.world.FractureShrinePlan;
@@ -216,6 +218,8 @@ public final class ModGameTests {
             FUNCTIONS.register("meridian_sentinel_slam", () -> ModGameTests::meridianSentinelSlamStrikesInRadius);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> HOUR_CANTOR_REFRAIN =
             FUNCTIONS.register("hour_cantor_refrain", () -> ModGameTests::hourCantorRefrainSlowsAudience);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> THEME_EXCLUSIVE_ABILITY =
+            FUNCTIONS.register("theme_exclusive_ability", () -> ModGameTests::themeExclusiveAbilityTelegraphs);
 
     private ModGameTests() {
     }
@@ -282,6 +286,7 @@ public final class ModGameTests {
         registerTest(event, "parallax_wraith_displacement", environment, PARALLAX_WRAITH_DISPLACEMENT, 300);
         registerTest(event, "meridian_sentinel_slam", environment, MERIDIAN_SENTINEL_SLAM, 300);
         registerTest(event, "hour_cantor_refrain", environment, HOUR_CANTOR_REFRAIN, 300);
+        registerTest(event, "theme_exclusive_ability", environment, THEME_EXCLUSIVE_ABILITY, 300);
     }
 
     private static void registerTest(
@@ -1071,7 +1076,23 @@ public final class ModGameTests {
                 ArchiveEnemyKind.MERIDIAN_SENTINEL,
                 ArchiveEnemyKind.HOUR_CANTOR,
                 ArchiveEnemyKind.MEMORY_LEECH,
-                ArchiveEnemyKind.LENSWARD)) {
+                ArchiveEnemyKind.LENSWARD,
+                ArchiveEnemyKind.SHARD_DRIFTER,
+                ArchiveEnemyKind.WAKE_CUTTER,
+                ArchiveEnemyKind.NULL_PORTRAIT,
+                ArchiveEnemyKind.GALLERY_MOTH,
+                ArchiveEnemyKind.GNOMON_KNIGHT,
+                ArchiveEnemyKind.ARMILLARY_SCOUT,
+                ArchiveEnemyKind.DUST_CANTORILE,
+                ArchiveEnemyKind.ASH_CHORISTER,
+                ArchiveEnemyKind.PRISM_STALKER,
+                ArchiveEnemyKind.SHARDLING_SWARM,
+                ArchiveEnemyKind.INDEX_WIGHT,
+                ArchiveEnemyKind.SHELF_CRAWLER,
+                ArchiveEnemyKind.METRONOME_HOUND,
+                ArchiveEnemyKind.LABYRINTH_USHER,
+                ArchiveEnemyKind.BLANK_CHRONIST,
+                ArchiveEnemyKind.HOUR_HAND_WRAITH)) {
             helper.assertTrue(
                     ArchiveEncounterManager.ownsNativeAbility(native_)
                             && java.util.stream.LongStream.range(0L, 64L)
@@ -1079,6 +1100,35 @@ public final class ModGameTests {
                                             .abilitiesFor(native_, seed, false)
                                             .contains(ArchiveEnemyAbility.PARALLAX_BLINK)),
                     "A creature that telegraphs its own move received a blink mutation: " + native_);
+        }
+        for (long floor = 0L; floor < ArchiveFloorPresentation.NAME_COUNT; floor++) {
+            ArchiveFloorTheme theme = ArchiveFloorPresentation.theme(floor);
+            helper.assertTrue(
+                    theme.exclusiveWeights().size() == 2,
+                    "Floor theme " + theme + " did not expose two exclusive enemy weights");
+            Set<ArchiveEnemyKind> exclusives = theme.exclusiveWeights().stream()
+                    .map(ArchiveDungeonRules.EnemyWeight::kind)
+                    .collect(java.util.stream.Collectors.toSet());
+            boolean sawExclusive = java.util.stream.LongStream.range(0L, 512L)
+                    .mapToObj(seed -> ArchiveDungeonRules.DEFAULT.chooseEnemy(
+                            ArchiveDungeonRules.FORGOTTEN_LEGION,
+                            net.minecraft.util.RandomSource.create(seed),
+                            theme,
+                            1L))
+                    .anyMatch(exclusives::contains);
+            helper.assertTrue(sawExclusive, "Theme exclusives never appeared in merged pools for " + theme);
+            for (long other = 0L; other < ArchiveFloorPresentation.NAME_COUNT; other++) {
+                if (other == floor) {
+                    continue;
+                }
+                ArchiveFloorTheme otherTheme = ArchiveFloorPresentation.theme(other);
+                Set<ArchiveEnemyKind> otherExclusives = otherTheme.exclusiveWeights().stream()
+                        .map(ArchiveDungeonRules.EnemyWeight::kind)
+                        .collect(java.util.stream.Collectors.toSet());
+                helper.assertTrue(
+                        exclusives.stream().noneMatch(otherExclusives::contains),
+                        "Theme exclusive sets overlapped between " + theme + " and " + otherTheme);
+            }
         }
         helper.assertTrue(
                 ArchiveEncounterManager.abilitiesFor(ArchiveEnemyKind.HOUR_CANTOR, 14L, false)
@@ -1583,6 +1633,32 @@ public final class ModGameTests {
                             cantor.isEscalated(),
                             "A Cantor below half health did not tighten its cadence");
                 })
+                .thenSucceed();
+    }
+
+    private static void themeExclusiveAbilityTelegraphs(GameTestHelper helper) {
+        combatFloor(helper, 15);
+        combatObserver(helper);
+
+        var victim = helper.spawn(EntityType.SHEEP, new Vec3(8.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        victim.setNoAi(true);
+
+        ThemeExclusiveEntity exclusive = helper.spawn(
+                ModEntities.GNOMON_KNIGHT.get(), new Vec3(2.5D, 1.0D, 4.5D), EntitySpawnReason.EVENT);
+        exclusive.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0D);
+        exclusive.setTarget(victim);
+
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(
+                        exclusive.getAbilityPhase() != ThemeExclusiveEntity.AbilityPhase.IDLE,
+                        "Theme exclusive never began a signature ability"
+                                + " [phase=" + exclusive.getAbilityPhase()
+                                + ", cooldown=" + exclusive.getAbilityCooldown()
+                                + ", ticks=" + exclusive.tickCount + "]"))
+                .thenWaitUntil(() -> helper.assertTrue(
+                        exclusive.getAbilityPhase() == ThemeExclusiveEntity.AbilityPhase.IDLE
+                                && exclusive.getAbilityCooldown() > 0,
+                        "Theme exclusive never returned to cooldown after its signature"))
                 .thenSucceed();
     }
 

@@ -160,6 +160,12 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> ARCHIVE_MIXED_STACK_3 =
             ITEMS.registerSimpleBlockItem("archive_mixed_stack_3", ModBlocks.ARCHIVE_MIXED_STACK_3);
 
+    static {
+        for (DeferredBlock<?> block : ModBlocks.THEME_PALETTE_BLOCKS) {
+            ITEMS.registerSimpleBlockItem(block.getId().getPath(), block);
+        }
+    }
+
     public static final List<DeferredItem<BlockItem>> GRAVEYARD_PROP_ITEMS = registerGraveyardPropItems();
 
     private ModItems() {

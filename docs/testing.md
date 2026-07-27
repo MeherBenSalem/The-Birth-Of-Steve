@@ -133,10 +133,10 @@ Unverified until run and dated below.
   the Curator Core, and using another block must not enter the dimension.
 - Carry the Curator Core, hold the repaired Lens, and right-click the gateway.
   Confirm the run is constructed, the nearby party is teleported into
-  `tbos:fractured_archive`. Clear floors 0, 1, and 2; confirm each produces a
-  different layout and teleports the party directly to the next Archive floor.
-  Confirm only failure or abandonment returns members to their captured
-  Overworld positions.
+  `tbos:fractured_archive`. Clear floors 0–7 once each and confirm the eight
+  themes read differently in palette, hazard telegraph, and exclusive enemy
+  silhouettes; Echo II should reuse theme identity. Confirm only failure or
+  abandonment returns members to their captured Overworld positions.
 - Generate a fresh run after this overhaul. Existing generated instances retain
   their old placed geometry and cannot prove the new roofs, corridors, stair
   tunnels, or final-room palette.

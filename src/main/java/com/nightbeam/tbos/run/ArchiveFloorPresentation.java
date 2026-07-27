@@ -22,6 +22,10 @@ public final class ArchiveFloorPresentation {
         return (int) (floorIndex % NAME_COUNT);
     }
 
+    public static ArchiveFloorTheme theme(long floorIndex) {
+        return ArchiveFloorTheme.of(floorIndex);
+    }
+
     public static long echoCycle(long floorIndex) {
         requireFloor(floorIndex);
         return floorIndex / NAME_COUNT + 1L;

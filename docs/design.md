@@ -151,6 +151,11 @@ because in a dark procedural room shape is all that arrives first:
   tightens as the refrain approaches and tightens again below half health, so a
   player who watches the chest knows what a player who watches the health bar knows.
 
+Sixteen floor-theme exclusives (two per cycling floor name) share a common
+`ThemeExclusiveModel` silhouette set and the same Archive palette with theme accent
+bias. `tools/textures/archive_theme_variety.py` authors their sheets and the theme
+block family.
+
 Animation is procedural trigonometry inside `setupAnim`, not keyframe tables. The
 vanilla `AnimationDefinition`/`KeyframeAnimation` API is available and was
 considered; it was rejected because its definitions are Blockbench exports running

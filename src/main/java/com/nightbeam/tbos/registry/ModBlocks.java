@@ -13,6 +13,7 @@ import com.nightbeam.tbos.block.MemoryLanternBlock;
 import com.nightbeam.tbos.block.MeridianRelayBlock;
 import com.nightbeam.tbos.block.ResonantBellBlock;
 import com.nightbeam.tbos.block.RiftThresholdBlock;
+import com.nightbeam.tbos.block.ThemeHazardBlock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -185,6 +186,68 @@ public final class ModBlocks {
             ARCHIVE_MIXED_STACK_2,
             ARCHIVE_MIXED_STACK_3);
 
+    public static final DeferredBlock<Block> WAKE_FLOOR = themeSolid("wake_floor", MapColor.COLOR_PURPLE);
+    public static final DeferredBlock<Block> WAKE_WALL = themeSolid("wake_wall", MapColor.COLOR_PURPLE);
+    public static final DeferredBlock<Block> WAKE_ROOF = themeSolid("wake_roof", MapColor.COLOR_PURPLE);
+    public static final DeferredBlock<Block> WAKE_TRIM = themeSolid("wake_trim", MapColor.COLOR_LIGHT_BLUE);
+    public static final DeferredBlock<Block> GALLERY_FLOOR = themeSolid("gallery_floor", MapColor.STONE);
+    public static final DeferredBlock<Block> GALLERY_WALL = themeSolid("gallery_wall", MapColor.STONE);
+    public static final DeferredBlock<Block> GALLERY_ROOF = themeSolid("gallery_roof", MapColor.STONE);
+    public static final DeferredBlock<Block> GALLERY_TRIM = themeSolid("gallery_trim", MapColor.SAND);
+    public static final DeferredBlock<Block> DESCENT_FLOOR = themeSolid("descent_floor", MapColor.COLOR_ORANGE);
+    public static final DeferredBlock<Block> DESCENT_WALL = themeSolid("descent_wall", MapColor.COLOR_ORANGE);
+    public static final DeferredBlock<Block> DESCENT_ROOF = themeSolid("descent_roof", MapColor.COLOR_ORANGE);
+    public static final DeferredBlock<Block> DESCENT_TRIM = themeSolid("descent_trim", MapColor.COLOR_GREEN);
+    public static final DeferredBlock<Block> CHOIR_FLOOR = themeSolid("choir_floor", MapColor.SAND);
+    public static final DeferredBlock<Block> CHOIR_WALL = themeSolid("choir_wall", MapColor.SAND);
+    public static final DeferredBlock<Block> CHOIR_ROOF = themeSolid("choir_roof", MapColor.SAND);
+    public static final DeferredBlock<Block> CHOIR_TRIM = themeSolid("choir_trim", MapColor.COLOR_ORANGE);
+    public static final DeferredBlock<Block> VAULT_FLOOR = themeSolid("vault_floor", MapColor.COLOR_CYAN);
+    public static final DeferredBlock<Block> VAULT_WALL = themeSolid("vault_wall", MapColor.COLOR_CYAN);
+    public static final DeferredBlock<Block> VAULT_ROOF = themeSolid("vault_roof", MapColor.COLOR_CYAN);
+    public static final DeferredBlock<Block> VAULT_TRIM = themeSolid("vault_trim", MapColor.COLOR_LIGHT_BLUE);
+    public static final DeferredBlock<Block> CATALOGUE_FLOOR = themeSolid("catalogue_floor", MapColor.WOOD);
+    public static final DeferredBlock<Block> CATALOGUE_WALL = themeSolid("catalogue_wall", MapColor.WOOD);
+    public static final DeferredBlock<Block> CATALOGUE_ROOF = themeSolid("catalogue_roof", MapColor.WOOD);
+    public static final DeferredBlock<Block> CATALOGUE_TRIM = themeSolid("catalogue_trim", MapColor.GOLD);
+    public static final DeferredBlock<Block> LABYRINTH_FLOOR = themeSolid("labyrinth_floor", MapColor.COLOR_PURPLE);
+    public static final DeferredBlock<Block> LABYRINTH_WALL = themeSolid("labyrinth_wall", MapColor.COLOR_PURPLE);
+    public static final DeferredBlock<Block> LABYRINTH_ROOF = themeSolid("labyrinth_roof", MapColor.COLOR_PURPLE);
+    public static final DeferredBlock<Block> LABYRINTH_TRIM = themeSolid("labyrinth_trim", MapColor.GOLD);
+    public static final DeferredBlock<Block> UNWRITTEN_FLOOR = themeSolid("unwritten_floor", MapColor.COLOR_BLACK);
+    public static final DeferredBlock<Block> UNWRITTEN_WALL = themeSolid("unwritten_wall", MapColor.COLOR_BLACK);
+    public static final DeferredBlock<Block> UNWRITTEN_ROOF = themeSolid("unwritten_roof", MapColor.COLOR_BLACK);
+    public static final DeferredBlock<Block> UNWRITTEN_TRIM = themeSolid("unwritten_trim", MapColor.GOLD);
+
+    public static final DeferredBlock<ThemeHazardBlock> PARALLAX_PANEL = themeHazard(
+            "parallax_panel", ThemeHazardBlock.Mode.PARALLAX_PANEL, MapColor.COLOR_PURPLE, false);
+    public static final DeferredBlock<ThemeHazardBlock> LIGHT_DUST = themeHazard(
+            "light_dust", ThemeHazardBlock.Mode.LIGHT_DUST, MapColor.SAND, true);
+    public static final DeferredBlock<ThemeHazardBlock> COLLAPSING_MERIDIAN = themeHazard(
+            "collapsing_meridian", ThemeHazardBlock.Mode.COLLAPSING_TILE, MapColor.COLOR_ORANGE, false);
+    public static final DeferredBlock<ThemeHazardBlock> BRITTLE_ASH = themeHazard(
+            "brittle_ash", ThemeHazardBlock.Mode.BRITTLE_ASH, MapColor.SAND, false);
+    public static final DeferredBlock<ThemeHazardBlock> SHATTER_PANE = themeHazard(
+            "shatter_pane", ThemeHazardBlock.Mode.SHATTER_PANE, MapColor.COLOR_LIGHT_BLUE, true);
+    public static final DeferredBlock<ThemeHazardBlock> FALSE_SHELF = themeHazard(
+            "false_shelf", ThemeHazardBlock.Mode.FALSE_SHELF, MapColor.WOOD, true);
+    public static final DeferredBlock<ThemeHazardBlock> RESONANT_PLATE = themeHazard(
+            "resonant_plate", ThemeHazardBlock.Mode.RESONANT_PLATE, MapColor.GOLD, false);
+    public static final DeferredBlock<ThemeHazardBlock> INK_POOL = themeHazard(
+            "ink_pool", ThemeHazardBlock.Mode.INK_POOL, MapColor.COLOR_BLACK, true);
+
+    public static final List<DeferredBlock<?>> THEME_PALETTE_BLOCKS = List.of(
+            WAKE_FLOOR, WAKE_WALL, WAKE_ROOF, WAKE_TRIM,
+            GALLERY_FLOOR, GALLERY_WALL, GALLERY_ROOF, GALLERY_TRIM,
+            DESCENT_FLOOR, DESCENT_WALL, DESCENT_ROOF, DESCENT_TRIM,
+            CHOIR_FLOOR, CHOIR_WALL, CHOIR_ROOF, CHOIR_TRIM,
+            VAULT_FLOOR, VAULT_WALL, VAULT_ROOF, VAULT_TRIM,
+            CATALOGUE_FLOOR, CATALOGUE_WALL, CATALOGUE_ROOF, CATALOGUE_TRIM,
+            LABYRINTH_FLOOR, LABYRINTH_WALL, LABYRINTH_ROOF, LABYRINTH_TRIM,
+            UNWRITTEN_FLOOR, UNWRITTEN_WALL, UNWRITTEN_ROOF, UNWRITTEN_TRIM,
+            PARALLAX_PANEL, LIGHT_DUST, COLLAPSING_MERIDIAN, BRITTLE_ASH,
+            SHATTER_PANE, FALSE_SHELF, RESONANT_PLATE, INK_POOL);
+
     private static final Set<String> GRAVEYARD_FLOOR_FLUFF = Set.of(
             "grave_flowers",
             "dead_grave_flowers",
@@ -292,5 +355,29 @@ public final class ModBlocks {
             return MapColor.STONE;
         }
         return MapColor.WOOD;
+    }
+
+    private static DeferredBlock<Block> themeSolid(String name, MapColor color) {
+        return BLOCKS.registerSimpleBlock(name, properties -> properties.mapColor(color).strength(2.1F, 6.5F));
+    }
+
+    private static DeferredBlock<ThemeHazardBlock> themeHazard(
+            String name, ThemeHazardBlock.Mode mode, MapColor color, boolean noOcclusion) {
+        return BLOCKS.registerBlock(
+                name,
+                properties -> new ThemeHazardBlock(mode, properties),
+                properties -> {
+                    BlockBehaviour.Properties configured = properties.mapColor(color).strength(1.4F, 4.0F);
+                    if (noOcclusion) {
+                        configured = configured.noOcclusion();
+                    }
+                    if (mode == ThemeHazardBlock.Mode.LIGHT_DUST || mode == ThemeHazardBlock.Mode.INK_POOL) {
+                        configured = configured.noCollision().lightLevel(state -> mode == ThemeHazardBlock.Mode.LIGHT_DUST ? 2 : 1);
+                    }
+                    if (mode == ThemeHazardBlock.Mode.SHATTER_PANE) {
+                        configured = configured.strength(0.4F).noOcclusion();
+                    }
+                    return configured;
+                });
     }
 }

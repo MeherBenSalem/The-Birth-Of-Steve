@@ -1,0 +1,6 @@
+﻿{
+  "variants": {
+    "active=false": { "model": "tbos:block/parallax_panel" },
+    "active=true": { "model": "tbos:block/parallax_panel" }
+  }
+}

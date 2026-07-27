@@ -95,15 +95,24 @@ Encounter composition is drawn from configurable weighted groups containing the
 original Parallax Wraith, Meridian Sentinel, Memory Leech, Lensward, and Hour
 Cantor plus selected vanilla monsters: husks, skeletons, strays, cave spiders,
 silverfish, vindicators, evokers, and ravagers. Selection uses the room's
-historical group, seed, wave, size, difficulty, and number of active players in
-that room. Health, damage, and enemy count have separate depth/player scaling.
-Spawn markers must be in-room, air-filled, floor-supported, and at least five
-blocks from every party member.
+historical group, seed, wave, size, difficulty, active players, and the run's
+floor theme (`ArchiveFloorTheme`, keyed by the eight cycling floor names). Each
+theme merges two exclusive custom creatures into combat pools; exclusives never
+appear off-theme. Health, damage, and enemy count have separate depth/player
+scaling. Spawn markers must be in-room, air-filled, floor-supported, and at least
+five blocks from every party member.
+
+Room geometry also follows the active floor theme: distinct floor/wall/roof/trim
+blocks and a signature hazard family (panels, dust, collapsing tiles, brittle ash,
+shatter panes, false shelves, resonant plates, or ink pools). Hazards leave a
+solid underlayer wherever a floor can break. Final Cantor and mini-boss category
+accents still override inside those rooms.
 
 The five original creatures each own a telegraphed signature move implemented on
 the entity itself, as a server-synched phase machine the client only reads. None
 of them are zombie-derived; all five are bespoke `Monster` subclasses with their
-own models, procedural animation, and sounds.
+own models, procedural animation, and sounds. Theme exclusives share the same
+phase-machine rule through `ThemeExclusiveEntity`.
 
 - **Parallax Wraith** — Displacement, on a 125-tick cooldown, at ranges above
   three and up to twenty blocks. It fractures for ten ticks, hangs displaced for

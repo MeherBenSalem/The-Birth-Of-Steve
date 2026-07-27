@@ -485,7 +485,7 @@ public final class ArchiveRoomPlacer {
 
     private static void placeRoom(Map<BlockPos, BlockState> placements, ArchiveRun run, ArchiveRoomNode room) {
         BoundingBox bounds = roomBounds(run, room.index());
-        RoomPalette palette = paletteFor(room);
+        RoomPalette palette = paletteFor(run, room);
         BlockState floor = palette.floor();
         for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
             for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
@@ -555,9 +555,61 @@ public final class ArchiveRoomPlacer {
             }
         }
         placeTemplateMarkers(placements, run, room, template);
+        placeThemeHazards(placements, run, room, bounds, palette);
     }
 
-    private static RoomPalette paletteFor(ArchiveRoomNode room) {
+    private static void placeThemeHazards(
+            Map<BlockPos, BlockState> placements,
+            ArchiveRun run,
+            ArchiveRoomNode room,
+            BoundingBox bounds,
+            RoomPalette palette) {
+        if (room.category() == ArchiveRoomCategory.FINAL_BOSS
+                || room.category() == ArchiveRoomCategory.EXIT_REWARD
+                || room.category() == ArchiveRoomCategory.STARTING) {
+            return;
+        }
+        ArchiveFloorTheme theme = ArchiveFloorPresentation.theme(run.floor());
+        BlockState hazard = hazardBlock(theme);
+        BlockState underlayer = palette.floor();
+        int hash = room.index() * 31 + room.graphDepth();
+        int count = 3 + Math.floorMod(hash, 3);
+        for (int i = 0; i < count; i++) {
+            int x = bounds.minX() + 2 + Math.floorMod(hash + i * 17, Math.max(1, bounds.maxX() - bounds.minX() - 3));
+            int z = bounds.minZ() + 2 + Math.floorMod(hash + i * 29, Math.max(1, bounds.maxZ() - bounds.minZ() - 3));
+            BlockPos floorPos = new BlockPos(x, bounds.minY(), z);
+            switch (theme.hazard()) {
+                case COLLAPSING_TILE, BRITTLE_ASH -> {
+                    put(placements, floorPos.below(), underlayer);
+                    put(placements, floorPos, hazard);
+                }
+                case SHATTER_PANE, FALSE_SHELF -> {
+                    put(placements, floorPos.above(), hazard);
+                }
+                case PARALLAX_PANEL -> {
+                    put(placements, new BlockPos(x, bounds.minY() + 1 + (i % 2), z), hazard);
+                }
+                case LIGHT_DUST, INK_POOL, RESONANT_PLATE -> put(placements, floorPos, hazard);
+            }
+        }
+    }
+
+    private static BlockState hazardBlock(ArchiveFloorTheme theme) {
+        return switch (theme.hazard()) {
+            case PARALLAX_PANEL -> ModBlocks.PARALLAX_PANEL.get().defaultBlockState();
+            case LIGHT_DUST -> ModBlocks.LIGHT_DUST.get().defaultBlockState();
+            case COLLAPSING_TILE -> ModBlocks.COLLAPSING_MERIDIAN.get().defaultBlockState();
+            case BRITTLE_ASH -> ModBlocks.BRITTLE_ASH.get().defaultBlockState();
+            case SHATTER_PANE -> ModBlocks.SHATTER_PANE.get().defaultBlockState();
+            case FALSE_SHELF -> ModBlocks.FALSE_SHELF.get().defaultBlockState();
+            case RESONANT_PLATE -> ModBlocks.RESONANT_PLATE.get().defaultBlockState();
+            case INK_POOL -> ModBlocks.INK_POOL.get().defaultBlockState();
+        };
+    }
+
+    private static RoomPalette paletteFor(ArchiveRun run, ArchiveRoomNode room) {
+        ArchiveFloorTheme theme = ArchiveFloorPresentation.theme(run.floor());
+        RoomPalette themed = themeDefaultPalette(theme, room);
         return switch (room.category()) {
             case FINAL_BOSS -> new RoomPalette(
                     ModBlocks.CANTOR_FLOOR.get().defaultBlockState(),
@@ -570,34 +622,63 @@ public final class ArchiveRoomPlacer {
                     ModBlocks.ARCHIVE_BRICKS.get().defaultBlockState(),
                     ModBlocks.CHRONICLE_BRONZE.get().defaultBlockState());
             case ANCIENT_LIBRARY, LORE, PUZZLE -> new RoomPalette(
-                    ModBlocks.CHRONICLE_TILE.get().defaultBlockState(),
-                    ModBlocks.ARCHIVE_BRICKS.get().defaultBlockState(),
+                    themed.floor(),
+                    themed.wall(),
                     ModBlocks.WEATHERED_ARCHIVE_BRICKS.get().defaultBlockState(),
-                    ModBlocks.CHISELED_ARCHIVE_STONE.get().defaultBlockState());
+                    themed.trim());
             case SECRET, CURSED, TRAP -> new RoomPalette(
-                    ModBlocks.WEATHERED_ARCHIVE_BRICKS.get().defaultBlockState(),
+                    themed.floor(),
                     room.index() % 2 == 0
                             ? ModBlocks.MOSSY_ARCHIVE_STONE.get().defaultBlockState()
                             : ModBlocks.CRACKED_ARCHIVE_STONE.get().defaultBlockState(),
-                    ModBlocks.WEATHERED_ARCHIVE_BRICKS.get().defaultBlockState(),
-                    ModBlocks.CHISELED_ARCHIVE_STONE.get().defaultBlockState());
-            default -> switch (Math.floorMod(room.index() + room.graphDepth(), 3)) {
-                case 0 -> new RoomPalette(
-                        ModBlocks.ARCHIVE_STONE.get().defaultBlockState(),
-                        ModBlocks.ARCHIVE_BRICKS.get().defaultBlockState(),
-                        ModBlocks.WEATHERED_ARCHIVE_BRICKS.get().defaultBlockState(),
-                        ModBlocks.CHISELED_ARCHIVE_STONE.get().defaultBlockState());
-                case 1 -> new RoomPalette(
-                        ModBlocks.CHRONICLE_TILE.get().defaultBlockState(),
-                        ModBlocks.WEATHERED_ARCHIVE_BRICKS.get().defaultBlockState(),
-                        ModBlocks.ARCHIVE_BRICKS.get().defaultBlockState(),
-                        ModBlocks.MERIDIAN_TILE.get().defaultBlockState());
-                default -> new RoomPalette(
-                        ModBlocks.MERIDIAN_TILE.get().defaultBlockState(),
-                        ModBlocks.MOSSY_ARCHIVE_STONE.get().defaultBlockState(),
-                        ModBlocks.ARCHIVE_BRICKS.get().defaultBlockState(),
-                        ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState());
-            };
+                    themed.roof(),
+                    themed.trim());
+            default -> themed;
+        };
+    }
+
+    private static RoomPalette themeDefaultPalette(ArchiveFloorTheme theme, ArchiveRoomNode room) {
+        return switch (theme) {
+            case PARALLAX_WAKE -> new RoomPalette(
+                    ModBlocks.WAKE_FLOOR.get().defaultBlockState(),
+                    ModBlocks.WAKE_WALL.get().defaultBlockState(),
+                    ModBlocks.WAKE_ROOF.get().defaultBlockState(),
+                    ModBlocks.WAKE_TRIM.get().defaultBlockState());
+            case STARLESS_GALLERY -> new RoomPalette(
+                    ModBlocks.GALLERY_FLOOR.get().defaultBlockState(),
+                    ModBlocks.GALLERY_WALL.get().defaultBlockState(),
+                    ModBlocks.GALLERY_ROOF.get().defaultBlockState(),
+                    ModBlocks.GALLERY_TRIM.get().defaultBlockState());
+            case MERIDIAN_DESCENT -> new RoomPalette(
+                    ModBlocks.DESCENT_FLOOR.get().defaultBlockState(),
+                    ModBlocks.DESCENT_WALL.get().defaultBlockState(),
+                    ModBlocks.DESCENT_ROOF.get().defaultBlockState(),
+                    ModBlocks.DESCENT_TRIM.get().defaultBlockState());
+            case CHOIR_OF_DUST -> new RoomPalette(
+                    ModBlocks.CHOIR_FLOOR.get().defaultBlockState(),
+                    ModBlocks.CHOIR_WALL.get().defaultBlockState(),
+                    ModBlocks.CHOIR_ROOF.get().defaultBlockState(),
+                    ModBlocks.CHOIR_TRIM.get().defaultBlockState());
+            case GLASSBOUND_VAULT -> new RoomPalette(
+                    ModBlocks.VAULT_FLOOR.get().defaultBlockState(),
+                    ModBlocks.VAULT_WALL.get().defaultBlockState(),
+                    ModBlocks.VAULT_ROOF.get().defaultBlockState(),
+                    ModBlocks.VAULT_TRIM.get().defaultBlockState());
+            case HOLLOW_CATALOGUE -> new RoomPalette(
+                    ModBlocks.CATALOGUE_FLOOR.get().defaultBlockState(),
+                    ModBlocks.CATALOGUE_WALL.get().defaultBlockState(),
+                    ModBlocks.CATALOGUE_ROOF.get().defaultBlockState(),
+                    ModBlocks.CATALOGUE_TRIM.get().defaultBlockState());
+            case CANTORS_LABYRINTH -> new RoomPalette(
+                    ModBlocks.LABYRINTH_FLOOR.get().defaultBlockState(),
+                    ModBlocks.LABYRINTH_WALL.get().defaultBlockState(),
+                    ModBlocks.LABYRINTH_ROOF.get().defaultBlockState(),
+                    ModBlocks.LABYRINTH_TRIM.get().defaultBlockState());
+            case UNWRITTEN_HOUR -> new RoomPalette(
+                    ModBlocks.UNWRITTEN_FLOOR.get().defaultBlockState(),
+                    ModBlocks.UNWRITTEN_WALL.get().defaultBlockState(),
+                    ModBlocks.UNWRITTEN_ROOF.get().defaultBlockState(),
+                    ModBlocks.UNWRITTEN_TRIM.get().defaultBlockState());
         };
     }
 

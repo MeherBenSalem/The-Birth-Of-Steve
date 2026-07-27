@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "tbos:block/gallery_trim"
+    }
+  }
+}

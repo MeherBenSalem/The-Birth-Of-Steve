@@ -15,6 +15,8 @@ import com.nightbeam.tbos.client.render.MeridianSentinelModel;
 import com.nightbeam.tbos.client.render.MeridianSentinelRenderer;
 import com.nightbeam.tbos.client.render.ParallaxWraithModel;
 import com.nightbeam.tbos.client.render.ParallaxWraithRenderer;
+import com.nightbeam.tbos.client.render.ThemeExclusiveModel;
+import com.nightbeam.tbos.client.render.ThemeExclusiveRenderer;
 import com.nightbeam.tbos.registry.ModBlockEntities;
 import com.nightbeam.tbos.registry.ModEntities;
 import net.neoforged.api.distmarker.Dist;
@@ -65,6 +67,22 @@ public final class YesterglassClient {
         event.registerEntityRenderer(ModEntities.PARALLAX_WRAITH.get(), ParallaxWraithRenderer::new);
         event.registerEntityRenderer(ModEntities.MERIDIAN_SENTINEL.get(), MeridianSentinelRenderer::new);
         event.registerEntityRenderer(ModEntities.HOUR_CANTOR.get(), HourCantorRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHARD_DRIFTER.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.WAKE_CUTTER.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.NULL_PORTRAIT.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.GALLERY_MOTH.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.GNOMON_KNIGHT.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.ARMILLARY_SCOUT.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.DUST_CANTORILE.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.ASH_CHORISTER.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.PRISM_STALKER.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHARDLING_SWARM.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.INDEX_WIGHT.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHELF_CRAWLER.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.METRONOME_HOUND.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.LABYRINTH_USHER.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.BLANK_CHRONIST.get(), ThemeExclusiveRenderer::new);
+        event.registerEntityRenderer(ModEntities.HOUR_HAND_WRAITH.get(), ThemeExclusiveRenderer::new);
     }
 
     private static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
@@ -74,5 +92,6 @@ public final class YesterglassClient {
         event.registerLayerDefinition(
                 MeridianSentinelModel.MODEL_LAYER, MeridianSentinelModel::createBodyLayer);
         event.registerLayerDefinition(HourCantorModel.MODEL_LAYER, HourCantorModel::createBodyLayer);
+        event.registerLayerDefinition(ThemeExclusiveModel.MODEL_LAYER, ThemeExclusiveModel::createBodyLayer);
     }
 }

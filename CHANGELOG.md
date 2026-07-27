@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0 - 2026-07-27
+
+### Archive floor themes
+
+- Each of the eight cycling floor names now has its own visual identity: themed
+  floor/wall/roof/trim blocks, a signature hazard family, and two exclusive
+  custom creatures with unique models and telegraphing abilities.
+- Shared Archive creatures (Memory Leech, Lensward, Parallax Wraith, Meridian
+  Sentinel) and the Hour Cantor climax remain on every floor. Echo cycles reuse
+  theme identity under the existing difficulty caps.
+- Theme hazards are placer props only (flickering panels, dust, collapsing
+  tiles, brittle ash, shatter panes, false shelves, resonant plates, ink pools)
+  and always leave a solid underlayer where floors can break.
+
 ## 0.2.0-alpha.4 - 2026-07-27
 
 ### The Journal is one screen now

@@ -1,0 +1,6 @@
+﻿{
+  "variants": {
+    "active=false": { "model": "tbos:block/resonant_plate" },
+    "active=true": { "model": "tbos:block/resonant_plate" }
+  }
+}

@@ -1,0 +1,6 @@
+﻿{
+  "variants": {
+    "active=false": { "model": "tbos:block/brittle_ash" },
+    "active=true": { "model": "tbos:block/brittle_ash" }
+  }
+}

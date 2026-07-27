@@ -142,6 +142,29 @@ public record ArchiveDungeonRules(
         return pool.getLast().kind();
     }
 
+    public ArchiveEnemyKind chooseEnemy(
+            Identifier group, RandomSource random, ArchiveFloorTheme theme, long echoCycle) {
+        List<EnemyWeight> pool = mergedPool(group, theme, echoCycle);
+        int total = pool.stream().mapToInt(EnemyWeight::weight).sum();
+        int choice = random.nextInt(total);
+        for (EnemyWeight entry : pool) {
+            choice -= entry.weight();
+            if (choice < 0) {
+                return entry.kind();
+            }
+        }
+        return pool.getLast().kind();
+    }
+
+    public List<EnemyWeight> mergedPool(Identifier group, ArchiveFloorTheme theme, long echoCycle) {
+        java.util.ArrayList<EnemyWeight> merged = new java.util.ArrayList<>(enemyPool(group));
+        int boost = echoCycle >= 2L ? 2 : 1;
+        for (EnemyWeight exclusive : theme.exclusiveWeights()) {
+            merged.add(new EnemyWeight(exclusive.kind(), exclusive.weight() * boost));
+        }
+        return List.copyOf(merged);
+    }
+
     private static void validateProbability(String label, double value) {
         if (!Double.isFinite(value) || value < 0.0D || value > 1.0D) {
             throw new IllegalArgumentException("Archive " + label + " probability must be between zero and one");
