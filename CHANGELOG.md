@@ -1,18 +1,93 @@
 # Changelog
 
-## 0.3.0 - 2026-07-27
+## 0.3.0 - 2026-07-28
 
-### Archive floor themes
+### Theme bosses and Ominous runs
 
-- Each of the eight cycling floor names now has its own visual identity: themed
-  floor/wall/roof/trim blocks, a signature hazard family, and two exclusive
-  custom creatures with unique models and telegraphing abilities.
-- Shared Archive creatures (Memory Leech, Lensward, Parallax Wraith, Meridian
-  Sentinel) and the Hour Cantor climax remain on every floor. Echo cycles reuse
-  theme identity under the existing difficulty caps.
-- Theme hazards are placer props only (flickering panels, dust, collapsing
-  tiles, brittle ash, shatter panes, false shelves, resonant plates, ink pools)
-  and always leave a solid underlayer where floors can break.
+- Every floor now chooses its own final boss. Seven theme creatures have been
+  promoted to boss-only encounters with visible boss bars, escalated second
+  phases, stronger telegraphs and theme-specific follow-up attacks. Cantor's
+  Labyrinth retains the original Hour Cantor unchanged.
+- Entering through the threshold with Bad Omen consumes the effect after the run
+  is safely queued and creates a persistent **OMINOUS ×10** run. Ordinary combat
+  uses ten capped batches; final bosses bring nine themed reinforcements without
+  spawning duplicate bosses.
+- The Journal and floor introduction identify Ominous runs, and procedural boss
+  messages name the boss chosen for the current floor.
+
+### Floors are built properly again
+
+- **Abandoning a run no longer leaves a wrecked floor behind.** If a run stopped
+  preparing part-way through — abandoned, failed, or removed — the build was
+  dropped in silence with however much had been written left in the world.
+  Corridors are the *last* thing a floor places, so what survived was a set of
+  sealed rooms with nothing joining them, and the slot could be handed out again
+  with the wreck still in it. The partial floor is now taken back out.
+- **Stairwells no longer trail loose blocks through the air.** The tunnel between
+  two levels laid its ceiling one block at a time along a diagonal, so the blocks
+  only ever met at a corner and read as a line of debris. It also had no floor
+  under it and put ceiling inside the rooms at either end.
+- **Corridors are no longer open to the void down both sides.** They cleared a
+  four-wide channel and floored two of it.
+- Cobwebs stop hanging unsupported in mid-air, and breakable floor hazards no
+  longer leave their catch block behind on every regeneration.
+
+### Creatures stand properly
+
+- Five of the sixteen floor-theme creatures were stuck holding the middle of an
+  attack while idle — the Blank Chronist with both arms out sideways, the Hour
+  Hand Wraith with its arm jutting out, the Gnomon Knight's shield permanently
+  raised, and the Index Wight and Labyrinth Usher mid-swing.
+
+### Boss doors read as boss doors
+
+- A locked door into a boss room is now an **Archive Boss Gate** rather than the same
+  Archive Seal used everywhere else, so it can be told apart before it is opened.
+
+### Art
+
+- The eight floor themes' walls, floors, roofs and trims were rebuilt to match
+  the mod's hand-authored blocks instead of looking generated beside them:
+  mottled faces, clean tiling edges, centred devices, coursed masonry and banded
+  trims. Full-tile black outlines no longer form a grid between blocks.
+- Cantor's Labyrinth and the Unwritten Hour get a fret cut into their floors.
+
+### Under the hood
+
+- The 1,000-seed simulation never touched the block pipeline — it only ever
+  exercised graph generation, which is why floors this broken shipped with it
+  reporting zero failures. A new multi-seed gate now runs real blueprints and
+  checks that a floor is one connected solid, that nothing escapes its cell, and
+  that every open corridor is walkable end to end.
+
+### The floor themes look like themselves now
+
+- **Every theme-exclusive creature has its own silhouette.** The sixteen of them
+  shipped sharing one box-and-two-legs model, so a Metronome Hound and a Gallery
+  Moth were the same shape in different colours. They are now sixteen distinct
+  builds — a quadruped with a pendulum tail, a moth with four wings, an empty
+  picture frame, a crystal that opens when it is vulnerable — each with its own
+  animation, telegraph particles and voice.
+- **Their textures land on them.** The old sheets were painted at coordinates
+  that had nothing to do with the models, so most of each creature rendered
+  blank. Every creature is now painted against its own geometry, in real
+  materials — riveted plate, faceted stone, folded cloth, lit glass.
+- **Their glowing cores actually glow.** Sixteen emissive textures existed and
+  were never rendered.
+- **Theme blocks are finished art.** All 32 palette blocks were rebuilt on the
+  same craft standard as the rest of the Archive: cut tread tiles and flagstone,
+  staggered ashlar, bookcase panelling, coffered ceilings and moulding profiles,
+  instead of flat fills with dotted accents. Floors and roofs now have a proper
+  slab edge and trims run as a course, so a floor no longer wears the same
+  picture on all six faces.
+- **Hazards are the shape they claim to be.** Ink pools and light dust rendered
+  as solid opaque cubes you could walk through; false shelves and shatter panes
+  rendered a full block around a smaller one. Each now matches its own collision.
+- **Traps tell you they are armed.** Collapsing tiles fracture, brittle ash
+  crumbles, resonant plates ring and parallax panels phase out visibly, instead
+  of every state looking identical.
+- The Prism Stalker's vulnerability window is now visible and audible rather than
+  being an invisible damage check.
 
 ## 0.2.0-alpha.4 - 2026-07-27
 

@@ -1,6 +1,42 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/block",
   "textures": {
-    "all": "tbos:block/false_shelf"
-  }
+    "all": "tbos:block/false_shelf",
+    "particle": "tbos:block/false_shelf"
+  },
+  "elements": [
+    {
+      "from": [
+        0.8,
+        0,
+        0.8
+      ],
+      "to": [
+        15.2,
+        14.4,
+        15.2
+      ],
+      "faces": {
+        "down": {
+          "texture": "#all",
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#all"
+        },
+        "north": {
+          "texture": "#all"
+        },
+        "south": {
+          "texture": "#all"
+        },
+        "west": {
+          "texture": "#all"
+        },
+        "east": {
+          "texture": "#all"
+        }
+      }
+    }
+  ]
 }

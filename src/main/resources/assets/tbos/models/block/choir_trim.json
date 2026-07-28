@@ -1,6 +1,7 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_column",
   "textures": {
-    "all": "tbos:block/choir_trim"
+    "side": "tbos:block/choir_trim",
+    "end": "tbos:block/choir_trim_end"
   }
 }

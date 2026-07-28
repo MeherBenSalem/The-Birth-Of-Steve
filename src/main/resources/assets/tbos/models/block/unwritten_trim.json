@@ -1,6 +1,7 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_column",
   "textures": {
-    "all": "tbos:block/unwritten_trim"
+    "side": "tbos:block/unwritten_trim",
+    "end": "tbos:block/unwritten_trim_end"
   }
 }

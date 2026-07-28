@@ -285,7 +285,7 @@ public final class ArchivistQuestScreen extends Screen {
                 detailX,
                 listY,
                 INK_TEAL,
-                true);
+                false);
         graphics.textWithWordWrap(
                 font,
                 Component.translatable("journal.tbos.quest." + (detail + 1) + ".description"),
@@ -312,6 +312,8 @@ public final class ArchivistQuestScreen extends Screen {
         int x = wellX + 12;
         int y = wellY + 14;
         if (!snapshot.hasRun()) {
+            graphics.fill(x, y + 16, wellX + wellWidth - 12, y + 88, 0x26F4E5BC);
+            graphics.horizontalLine(x, wellX + wellWidth - 12, y + 88, PLATE_RULE);
             graphics.centeredText(
                     font,
                     Component.translatable("journal.tbos.run.inactive"),
@@ -336,7 +338,7 @@ public final class ArchivistQuestScreen extends Screen {
                 x,
                 y,
                 INK_TEAL,
-                true);
+                false);
 
         int plateWidth = wellWidth - 24;
         int plateY = y + 22;
@@ -344,6 +346,10 @@ public final class ArchivistQuestScreen extends Screen {
                 Component.translatable(snapshot.preparing()
                         ? "journal.tbos.run.preparing"
                         : "journal.tbos.run.active"));
+        plateY = statPlate(graphics, x, plateY, plateWidth, "journal.tbos.run.mode",
+                Component.translatable(snapshot.ominous()
+                        ? "journal.tbos.run.mode.ominous"
+                        : "journal.tbos.run.mode.normal"));
         plateY = statPlate(graphics, x, plateY, plateWidth, "journal.tbos.run.revives",
                 Component.literal(Integer.toString(snapshot.sharedRevives())));
         plateY = statPlate(graphics, x, plateY, plateWidth, "journal.tbos.run.rooms",
@@ -368,7 +374,7 @@ public final class ArchivistQuestScreen extends Screen {
         graphics.fill(x - 4, y - 3, x + width, y + 12, PLATE_FILL);
         graphics.horizontalLine(x - 4, x + width, y + 12, PLATE_RULE);
         graphics.text(font, Component.translatable(key), x, y, INK_SOFT, false);
-        graphics.text(font, value, x + 132, y, INK_TEAL, true);
+        graphics.text(font, value, x + 132, y, INK_TEAL, false);
         return y + 19;
     }
 

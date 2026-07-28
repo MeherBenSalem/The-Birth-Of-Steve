@@ -1,6 +1,10 @@
-﻿{
+{
   "variants": {
-    "active=false": { "model": "tbos:block/ink_pool" },
-    "active=true": { "model": "tbos:block/ink_pool" }
+    "active=false": {
+      "model": "tbos:block/ink_pool"
+    },
+    "active=true": {
+      "model": "tbos:block/ink_pool"
+    }
   }
 }

@@ -54,6 +54,7 @@ import com.nightbeam.tbos.run.ArchiveRoomPlan;
 import com.nightbeam.tbos.run.ArchiveRun;
 import com.nightbeam.tbos.run.ArchiveRunGenerator;
 import com.nightbeam.tbos.run.ArchiveRunManager;
+import com.nightbeam.tbos.run.ArchiveRunMode;
 import com.nightbeam.tbos.run.ArchiveRunMember;
 import com.nightbeam.tbos.run.ArchiveRunProtection;
 import com.nightbeam.tbos.run.ArchiveRunSavedData;
@@ -187,6 +188,8 @@ public final class ModGameTests {
             FUNCTIONS.register("archive_run_generator", () -> ModGameTests::archiveRunGeneratorIsDeterministicAndVaried);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_ROOM_BLUEPRINT =
             FUNCTIONS.register("archive_room_blueprint", () -> ModGameTests::archiveRoomBlueprintIsBoundedAndWalkable);
+    private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_BLUEPRINT_SWEEP =
+            FUNCTIONS.register("archive_blueprint_sweep", () -> ModGameTests::archiveBlueprintHoldsAcrossSeeds);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_RUN_ENTRY =
             FUNCTIONS.register("archive_run_entry", () -> ModGameTests::archiveRunEntryValidatesBeforeMutation);
     private static final DeferredHolder<Consumer<GameTestHelper>, Consumer<GameTestHelper>> ARCHIVE_SHARED_REVIVES =
@@ -256,7 +259,10 @@ public final class ModGameTests {
         registerTest(event, "meridian_rotation", environment, MERIDIAN_ROTATION);
         registerTest(event, "curator_progress", environment, CURATOR_PROGRESS);
         registerTest(event, "orrery_geometry", environment, ORRERY_GEOMETRY, 80);
-        registerTest(event, "orrery_interaction", environment, ORRERY_INTERACTION, 80);
+        // Polls for the reconstruction (transitionTicks, 40 by default) to settle
+        // and then for the reversal to take, so the budget covers both plus room
+        // for a retry rather than the single fixed 45-tick wait it replaced.
+        registerTest(event, "orrery_interaction", environment, ORRERY_INTERACTION, 160);
         registerTest(event, "curator_runtime", environment, CURATOR_RUNTIME, 80);
         registerTest(event, "memory_plate_variants", environment, MEMORY_PLATE_VARIANTS);
         registerTest(event, "memory_lantern_persistence", environment, MEMORY_LANTERN_PERSISTENCE);
@@ -271,6 +277,11 @@ public final class ModGameTests {
         registerTest(event, "archive_run_storage", environment, ARCHIVE_RUN_STORAGE);
         registerTest(event, "archive_run_generator", environment, ARCHIVE_RUN_GENERATOR);
         registerTest(event, "archive_room_blueprint", environment, ARCHIVE_ROOM_BLUEPRINT);
+        // Sweeps many seeds through the block pipeline. The standalone 1,000-seed
+        // simulation cannot do this: it never calls blueprint() because that needs
+        // populated block registries, which is exactly why floating geometry and
+        // missing corridors shipped with the simulation reporting zero failures.
+        registerTest(event, "archive_blueprint_sweep", environment, ARCHIVE_BLUEPRINT_SWEEP, 200);
         registerTest(event, "archive_run_entry", environment, ARCHIVE_RUN_ENTRY);
         registerTest(event, "archive_shared_revives", environment, ARCHIVE_SHARED_REVIVES);
         registerTest(event, "archive_floor_progression", environment, ARCHIVE_FLOOR_PROGRESSION);
@@ -645,12 +656,28 @@ public final class ModGameTests {
                                 state != null && state.is(ModBlocks.CRACKED_ARCHIVE_STONE.get()),
                                 "Hidden archive door omitted its cracked secret wall at " + door);
                     } else if (connection.locked()) {
+                        // A door into a boss room carries the Cantor Gate so the
+                        // player can tell it apart before opening it; every other
+                        // locked door stays an Archive Seal.
+                        ArchiveRoomCategory sourceCategory =
+                                run.dungeonGraph().room(roomIndex).category();
+                        ArchiveRoomCategory targetCategory =
+                                run.dungeonGraph().room(connection.targetRoom()).category();
+                        boolean boss = sourceCategory == ArchiveRoomCategory.FINAL_BOSS
+                                || sourceCategory == ArchiveRoomCategory.MINI_BOSS
+                                || targetCategory == ArchiveRoomCategory.FINAL_BOSS
+                                || targetCategory == ArchiveRoomCategory.MINI_BOSS;
                         helper.assertTrue(
-                                state != null && state.is(ModBlocks.ARCHIVE_SEAL.get()),
-                                "Persistently locked archive door omitted its visible seal at " + door);
+                                state != null && state.is(boss
+                                        ? ModBlocks.CANTOR_GATE.get()
+                                        : ModBlocks.ARCHIVE_SEAL.get()),
+                                (boss ? "Locked boss door is not an Archive Boss Gate at "
+                                        : "Persistently locked archive door omitted its visible seal at ")
+                                        + door);
                     } else {
                         helper.assertTrue(
-                                state == null || !state.is(ModBlocks.ARCHIVE_SEAL.get()),
+                                state == null || (!state.is(ModBlocks.ARCHIVE_SEAL.get())
+                                        && !state.is(ModBlocks.CANTOR_GATE.get())),
                                 "Unlocked archive door generated as a sealed wall at " + door);
                     }
                 }
@@ -1103,12 +1130,18 @@ public final class ModGameTests {
         }
         for (long floor = 0L; floor < ArchiveFloorPresentation.NAME_COUNT; floor++) {
             ArchiveFloorTheme theme = ArchiveFloorPresentation.theme(floor);
+            int expectedNormalExclusives =
+                    theme == ArchiveFloorTheme.CANTORS_LABYRINTH ? 2 : 1;
             helper.assertTrue(
-                    theme.exclusiveWeights().size() == 2,
-                    "Floor theme " + theme + " did not expose two exclusive enemy weights");
+                    theme.exclusiveWeights().size() == expectedNormalExclusives,
+                    "Floor theme " + theme + " exposed the wrong normal-exclusive enemy count");
             Set<ArchiveEnemyKind> exclusives = theme.exclusiveWeights().stream()
                     .map(ArchiveDungeonRules.EnemyWeight::kind)
                     .collect(java.util.stream.Collectors.toSet());
+            helper.assertTrue(
+                    !exclusives.contains(theme.bossKind())
+                            && ArchiveEncounterManager.finalBossKind(floor) == theme.bossKind(),
+                    "Theme boss leaked into the normal pool for " + theme);
             boolean sawExclusive = java.util.stream.LongStream.range(0L, 512L)
                     .mapToObj(seed -> ArchiveDungeonRules.DEFAULT.chooseEnemy(
                             ArchiveDungeonRules.FORGOTTEN_LEGION,
@@ -1687,10 +1720,15 @@ public final class ModGameTests {
                         == ArchiveRunManager.EntryResult.NO_CURATOR_CORE,
                 "Archive entry accepted a player who had not recovered the Curator Core");
         player.getInventory().add(new net.minecraft.world.item.ItemStack(ModItems.CURATOR_CORE.get()));
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                net.minecraft.world.effect.MobEffects.BAD_OMEN, 1200, 2));
         helper.assertTrue(
                 ArchiveRunManager.enterFromThreshold(player, threshold)
                         == ArchiveRunManager.EntryResult.ARCHIVE_UNAVAILABLE,
                 "GameTest entry did not fail safely when its archive dimension was absent");
+        helper.assertTrue(
+                player.hasEffect(net.minecraft.world.effect.MobEffects.BAD_OMEN),
+                "A failed Archive entry consumed Bad Omen");
 
         ArchiveRunSavedData storage = ArchiveRunSavedData.get(helper.getLevel().getServer());
         ArchiveRun existing = testArchiveRun(UUID.randomUUID(), storage.nextFreeSlot(), player.getUUID());
@@ -1758,6 +1796,21 @@ public final class ModGameTests {
                 .markGeometryPlaced()
                 .activate()
                 .consumeRevive();
+        ArchiveRun ominous = ArchiveRun.create(
+                UUID.fromString("20000000-0000-0000-0000-000000000051"),
+                active.seed(),
+                5,
+                active.members(),
+                active.dungeonGraph(),
+                ArchiveRunMode.OMINOUS);
+        com.google.gson.JsonElement encodedRun = ArchiveRun.CODEC
+                .encodeStart(JsonOps.INSTANCE, ominous)
+                .getOrThrow();
+        ArchiveRun decodedRun = ArchiveRun.CODEC.parse(JsonOps.INSTANCE, encodedRun).getOrThrow();
+        helper.assertTrue(
+                decodedRun.mode() == ArchiveRunMode.OMINOUS
+                        && decodedRun.schemaRevision() == ArchiveRun.SCHEMA_REVISION,
+                "Ominous Archive mode did not survive run persistence");
         storage.register(active);
         helper.assertTrue(
                 active.floor() == 0L,
@@ -1853,6 +1906,18 @@ public final class ModGameTests {
         helper.assertTrue(
                 ArchiveEncounterState.CODEC.parse(JsonOps.INSTANCE, encoded).getOrThrow().equals(phaseTwo),
                 "Archive encounter codec changed puzzle progress");
+        ArchiveEncounterState ominousBatch = wave.nextReinforcementBatch();
+        helper.assertTrue(
+                ominousBatch.reinforcementBatch() == 1
+                        && ArchiveEncounterState.CODEC
+                                .parse(
+                                        JsonOps.INSTANCE,
+                                        ArchiveEncounterState.CODEC
+                                                .encodeStart(JsonOps.INSTANCE, ominousBatch)
+                                                .getOrThrow())
+                                .getOrThrow()
+                                .equals(ominousBatch),
+                "Ominous reinforcement progress was not durable");
 
         UUID memberId = UUID.fromString("00000000-0000-0000-0000-000000000051");
         ArchiveRun active = testArchiveRun(
@@ -2469,6 +2534,13 @@ public final class ModGameTests {
     private static void orreryCoreAndAnchorsControlEncounter(GameTestHelper helper) {
         BlockPos origin = helper.absolutePos(new BlockPos(2, 1, 2));
         TemporalSite site = TemporalSiteManager.placeGrandOrrery(helper.getLevel(), origin, Rotation.NONE);
+        // A transition refuses to start unless all four corners of the site are
+        // loaded. In play the player standing at the Orrery holds those chunks
+        // resident; the mock player below is placed at the level's shared spawn
+        // instead, so nothing keeps the far corners of a 32-block site loaded and
+        // one of them gets released partway through the reconstruction. That is
+        // what made this test fail roughly one run in six.
+        setSiteChunksForced(helper, site, true);
         net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
         helper.assertTrue(
                 TemporalSiteManager.startCuratorEncounter(
@@ -2480,21 +2552,183 @@ public final class ModGameTests {
                 "Archive Core did not persist the encounter start");
         helper.assertTrue(started.isTransitioning(), "Ruin start did not begin reconstruction");
 
-        helper.runAfterDelay(45L, () -> {
-            TemporalSite remembered = TemporalSiteManager.data(helper.getLevel()).find(site.siteId()).orElseThrow();
-            helper.assertTrue(remembered.state() == TemporalState.REMEMBERED, "Encounter did not settle in Remembered");
+        BlockPos anchor = TemporalSiteManager.orreryAnchorPositions(site).getFirst();
+        // Polled rather than timed. The reconstruction runs for a configured
+        // number of ticks, so any fixed delay here is a guess about a value the
+        // test does not own; and because activateCuratorAnchor reports only that
+        // the interaction was *handled* — it returns true even when the
+        // underlying beginTransition refuses — the site's own state is the only
+        // honest signal that the anchor did anything.
+        helper.succeedWhen(() -> {
+            TemporalSite current =
+                    TemporalSiteManager.data(helper.getLevel()).find(site.siteId()).orElseThrow();
             helper.assertTrue(
-                    TemporalSiteManager.activateCuratorAnchor(
-                            player, TemporalSiteManager.orreryAnchorPositions(remembered).getFirst()),
-                    "Orrery Memory Anchor interaction was rejected");
-            TemporalSite shifting = TemporalSiteManager.data(helper.getLevel()).find(site.siteId()).orElseThrow();
+                    current.state().isStable(), "Reconstruction has not settled yet");
+            if (current.state() == TemporalState.REMEMBERED) {
+                helper.assertTrue(
+                        TemporalSiteManager.activateCuratorAnchor(player, anchor),
+                        "Orrery Memory Anchor did not resolve to the Grand Orrery");
+                current = TemporalSiteManager.data(helper.getLevel()).find(site.siteId()).orElseThrow();
+            }
             helper.assertTrue(
-                    shifting.state() == TemporalState.TRANSITION_TO_RUIN
-                            || shifting.state() == TemporalState.RUIN,
+                    current.state() == TemporalState.TRANSITION_TO_RUIN
+                            || current.state() == TemporalState.RUIN,
                     "Orrery Memory Anchor did not reverse the arena toward Ruin");
-            LastCuratorEncounterTracker.stop(helper.getLevel(), shifting, true);
-            helper.succeed();
+            LastCuratorEncounterTracker.stop(helper.getLevel(), current, true);
+            setSiteChunksForced(helper, site, false);
         });
+    }
+
+    /**
+     * Hold (or release) every chunk covering an authored site.
+     *
+     * <p>{@code TemporalSiteManager.beginTransition} checks that the site's four
+     * corners are loaded and silently refuses otherwise, which makes any test
+     * that transitions a site after a delay depend on chunk residency it never
+     * asked for.
+     */
+    private static void setSiteChunksForced(GameTestHelper helper, TemporalSite site, boolean forced) {
+        TemporalSiteDefinition definition = BuiltInTemporalSites.require(site.definitionId());
+        BlockPos origin = site.origin();
+        List<BlockPos> corners = List.of(
+                definition.worldPosition(origin, BlockPos.ZERO, site.rotation()),
+                definition.worldPosition(
+                        origin, new BlockPos(definition.sizeX() - 1, 0, 0), site.rotation()),
+                definition.worldPosition(
+                        origin, new BlockPos(0, 0, definition.sizeZ() - 1), site.rotation()),
+                definition.worldPosition(
+                        origin,
+                        new BlockPos(definition.sizeX() - 1, 0, definition.sizeZ() - 1),
+                        site.rotation()));
+        int minChunkX = Integer.MAX_VALUE;
+        int maxChunkX = Integer.MIN_VALUE;
+        int minChunkZ = Integer.MAX_VALUE;
+        int maxChunkZ = Integer.MIN_VALUE;
+        for (BlockPos corner : corners) {
+            int chunkX = net.minecraft.core.SectionPos.blockToSectionCoord(corner.getX());
+            int chunkZ = net.minecraft.core.SectionPos.blockToSectionCoord(corner.getZ());
+            minChunkX = Math.min(minChunkX, chunkX);
+            maxChunkX = Math.max(maxChunkX, chunkX);
+            minChunkZ = Math.min(minChunkZ, chunkZ);
+            maxChunkZ = Math.max(maxChunkZ, chunkZ);
+        }
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                helper.getLevel().setChunkForced(chunkX, chunkZ, forced);
+            }
+        }
+    }
+
+    /**
+     * Block-level invariants across many seeds.
+     *
+     * <p>A play session produced floors whose rooms were sealed boxes floating in
+     * a void with no corridors between them, and diagonal lines of blocks hanging
+     * in mid-air, while {@code runDungeonSimulation} reported zero failures across
+     * a thousand seeds. It could not have caught any of it: it exercises
+     * {@link ArchiveRunGenerator} only and never reaches the block pipeline. This
+     * test is the gate that covers that gap.
+     */
+    private static void archiveBlueprintHoldsAcrossSeeds(GameTestHelper helper) {
+        UUID memberId = UUID.fromString("10000000-0000-0000-0000-0000000000aa");
+        ArchiveReturnPoint returnPoint = new ArchiveReturnPoint(
+                Identifier.withDefaultNamespace("overworld"), new BlockPos(4, 80, 4), 0.0F, 0.0F);
+        for (long seed = 0L; seed < 32L; seed++) {
+            ArchiveDungeonGraph graph =
+                    ArchiveRunGenerator.generateDungeon(seed, ArchiveDungeonSettings.DEFAULT);
+            ArchiveRun run = ArchiveRun.create(
+                    new UUID(0x2000000000000000L, seed),
+                    seed,
+                    0,
+                    List.of(new ArchiveRunMember(memberId, returnPoint)),
+                    graph);
+            ArchiveRoomPlacer.Blueprint blueprint = ArchiveRoomPlacer.blueprint(run);
+            java.util.Set<BlockPos> solid = new java.util.HashSet<>(blueprint.placements().size() * 2);
+            for (ArchiveRoomPlacer.Placement placement : blueprint.placements()) {
+                solid.add(placement.position());
+            }
+
+            for (ArchiveRoomPlacer.Placement placement : blueprint.placements()) {
+                helper.assertTrue(
+                        blueprint.bounds().isInside(placement.position()),
+                        "seed " + seed + ": blueprint escaped its instance cell at " + placement.position());
+            }
+
+            // A finished floor is one connected solid. Anything that is not
+            // face-reachable from the rest of it is hanging in the air.
+            //
+            // Counting each block's own neighbours is not enough and was tried
+            // first: the stairwell emitted its ceiling two blocks at a time, so
+            // every floating block had a floating partner and a per-block test
+            // saw nothing wrong. Only whole-component analysis catches a clump.
+            java.util.Set<BlockPos> unvisited = new java.util.HashSet<>(solid);
+            java.util.List<java.util.List<BlockPos>> components = new java.util.ArrayList<>();
+            while (!unvisited.isEmpty()) {
+                BlockPos root = unvisited.iterator().next();
+                java.util.List<BlockPos> component = new java.util.ArrayList<>();
+                java.util.ArrayDeque<BlockPos> frontier = new java.util.ArrayDeque<>();
+                unvisited.remove(root);
+                frontier.add(root);
+                while (!frontier.isEmpty()) {
+                    BlockPos current = frontier.removeFirst();
+                    component.add(current);
+                    for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
+                        BlockPos neighbour = current.relative(direction);
+                        if (unvisited.remove(neighbour)) {
+                            frontier.add(neighbour);
+                        }
+                    }
+                }
+                components.add(component);
+            }
+            if (components.size() > 1) {
+                components.sort(java.util.Comparator.comparingInt(java.util.List::size));
+                java.util.List<BlockPos> smallest = components.getFirst();
+                helper.fail("seed " + seed + ": floor is not one connected solid - "
+                        + components.size() + " separate pieces, smallest is "
+                        + smallest.size() + " block(s) adrift at " + smallest.getFirst());
+            }
+
+            // Every open connection must leave a walkable channel between its two
+            // rooms: floor underfoot and two blocks of headroom, the whole way.
+            for (ArchiveRoomNode room : graph.rooms()) {
+                for (var connection : room.connections()) {
+                    if (room.index() >= connection.targetRoom()
+                            || connection.direction().vertical()
+                            || connection.locked()
+                            || connection.hidden()) {
+                        continue;
+                    }
+                    var first = ArchiveRoomPlacer.roomBounds(run, room.index());
+                    var second = ArchiveRoomPlacer.roomBounds(run, connection.targetRoom());
+                    int floorY = first.minY();
+                    boolean alongZ = connection.direction() == com.nightbeam.tbos.run.ArchiveDirection.NORTH
+                            || connection.direction() == com.nightbeam.tbos.run.ArchiveDirection.SOUTH;
+                    int centerX = (first.minX() + first.maxX() + 1) / 2;
+                    int centerZ = (first.minZ() + first.maxZ() + 1) / 2;
+                    int from = alongZ
+                            ? Math.min(first.maxZ(), second.maxZ())
+                            : Math.min(first.maxX(), second.maxX());
+                    int to = alongZ
+                            ? Math.max(first.minZ(), second.minZ())
+                            : Math.max(first.minX(), second.minX());
+                    // Strictly between the two shells, so the rooms' own door
+                    // openings are not mistaken for a gap in the corridor.
+                    for (int step = from + 1; step <= to - 1; step++) {
+                        BlockPos floor = alongZ
+                                ? new BlockPos(centerX, floorY, step)
+                                : new BlockPos(step, floorY, centerZ);
+                        helper.assertTrue(
+                                solid.contains(floor),
+                                "seed " + seed + ": corridor has no floor at " + floor);
+                        helper.assertTrue(
+                                !solid.contains(floor.above()) && !solid.contains(floor.above(2)),
+                                "seed " + seed + ": corridor is blocked at " + floor.above());
+                    }
+                }
+            }
+        }
+        helper.succeed();
     }
 
     private static void curatorRuntimePersistsHealthAndReward(GameTestHelper helper) {

@@ -1,6 +1,10 @@
-﻿{
+{
   "variants": {
-    "active=false": { "model": "tbos:block/shatter_pane" },
-    "active=true": { "model": "tbos:block/shatter_pane" }
+    "active=false": {
+      "model": "tbos:block/shatter_pane"
+    },
+    "active=true": {
+      "model": "tbos:block/shatter_pane"
+    }
   }
 }

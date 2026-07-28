@@ -17,6 +17,7 @@ public record JournalQuestSnapshotPayload(
         int storyMask,
         boolean hasRun,
         boolean preparing,
+        boolean ominous,
         long floorIndex,
         int sharedRevives,
         int roomsCleared,
@@ -38,7 +39,7 @@ public record JournalQuestSnapshotPayload(
                 || roomsCleared < 0 || roomsRequired < 0 || roomsCleared > roomsRequired
                 || lesserBossesDefeated < 0 || lesserBossesTotal < 0
                 || lesserBossesDefeated > lesserBossesTotal
-                || (!hasRun && (preparing || floorIndex != -1L || gatewayReady))) {
+                || (!hasRun && (preparing || ominous || floorIndex != -1L || gatewayReady))) {
             throw new IllegalArgumentException("Invalid Archivist Journal quest snapshot");
         }
     }
@@ -50,6 +51,7 @@ public record JournalQuestSnapshotPayload(
         if (run == null) {
             return new JournalQuestSnapshotPayload(
                     ModAdvancements.journalStoryMask(player),
+                    false,
                     false,
                     false,
                     -1L,
@@ -68,6 +70,7 @@ public record JournalQuestSnapshotPayload(
                 ModAdvancements.journalStoryMask(player),
                 true,
                 run.status() == ArchiveRunStatus.PREPARING,
+                run.mode().ominous(),
                 run.floor(),
                 run.sharedRevives(),
                 Math.min(progress.roomsCleared(), progress.roomsRequired()),
@@ -82,6 +85,7 @@ public record JournalQuestSnapshotPayload(
         buffer.writeVarInt(payload.storyMask);
         buffer.writeBoolean(payload.hasRun);
         buffer.writeBoolean(payload.preparing);
+        buffer.writeBoolean(payload.ominous);
         buffer.writeVarLong(payload.floorIndex + 1L);
         buffer.writeVarInt(payload.sharedRevives);
         buffer.writeVarInt(payload.roomsCleared);
@@ -95,6 +99,7 @@ public record JournalQuestSnapshotPayload(
     private static JournalQuestSnapshotPayload read(RegistryFriendlyByteBuf buffer) {
         return new JournalQuestSnapshotPayload(
                 buffer.readVarInt(),
+                buffer.readBoolean(),
                 buffer.readBoolean(),
                 buffer.readBoolean(),
                 buffer.readVarLong() - 1L,

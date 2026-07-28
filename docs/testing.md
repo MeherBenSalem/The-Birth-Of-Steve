@@ -12,6 +12,19 @@ gradlew.bat runDungeonSimulation
 `clean build` also runs the 1,000-seed dungeon simulation through Gradle's
 `check` lifecycle.
 
+Before a release build, regenerate and validate the v0.3.0-owned assets:
+
+```text
+python tools/textures/archive_exclusives.py
+python tools/textures/archive_theme_variety.py
+python tools/textures/archive_gate.py
+python tools/textures/archive_gui.py
+python tools/textures/check_assets.py
+```
+
+The asset check rejects missing references, non-tiling theme edges and the
+continuous near-black perimeters that previously drew a grid around every cube.
+
 `runGameTestServer` covers the Archive creatures through `memory_leech_pounce`,
 `lensward_contract`, `lensward_beam`, `lensward_line_of_sight`, `lensward_tether`,
 `parallax_wraith_displacement`, `meridian_sentinel_slam`, and `hour_cantor_refrain`.
@@ -33,13 +46,28 @@ helper, which force-loads first. Measured on 2026-07-26: it failed 6 of 9
 `runGameTestServer` runs before the change and 0 of 5 after, including runs at
 20.3 s and 25.7 s that had previously failed.
 
-`tbos:orrery_interaction` — **still flaky, not a regression.** It fails at tick 45
-with "did not reverse the arena toward Ruin". `TemporalSiteManager.hasLoadedChunks`
-returns false, so `beginTransition` bails out, but `activateCuratorAnchor` returns
-`true` regardless, so the test's earlier "interaction was rejected" assertion passes
-while the site silently never leaves `REMEMBERED`. Reproduced on an unmodified
-`main` at `d2e99e4` on 2026-07-26 — 1 of 8 consecutive runs there. Re-run the suite
-before treating a failure in it as real.
+`tbos:orrery_interaction` — **fixed in 0.3.0.** The diagnosis recorded here on
+2026-07-26 was correct and was confirmed by direct measurement on 2026-07-27:
+instrumenting the failing assertion printed `state=REMEMBERED transitioning=false
+started=true defeated=false chunksLoaded=false blockers=none`. One of the site's
+four corner chunks is released between the encounter starting at tick 0 and the
+assertion at tick 45, so `TemporalSiteManager.hasLoadedChunks` returns false and
+`beginTransition` bails; `activateCuratorAnchor` reports only that the interaction
+was *handled*, so it returns `true` anyway and the test's own assertion could not
+see the refusal.
+
+Fixed the same way `memory_leech_pounce` was — force-load first. The test now calls
+`setSiteChunksForced` over the site's bounding chunks before starting the
+encounter, because in play the player standing at the Orrery is what keeps those
+chunks resident and `makeMockServerPlayerInLevel` places its player at the level's
+shared spawn instead. The fixed 45-tick wait was also replaced with
+`succeedWhen` polling, so the test no longer assumes a configured transition
+duration it does not own, and re-fires the anchor if an attempt was refused.
+
+Note the production behaviour is correct and unchanged: `activateCuratorAnchor`
+returns "interaction consumed", which is what its only caller,
+`MemoryAnchorBlock`, needs. The defect was the test reading that as "the anchor
+worked".
 
 Every other test in the namespace is stable, including all eight Archive creature
 tests.
@@ -58,7 +86,11 @@ tests.
   the current step when the pointer leaves the list.
 - Complete a story step and confirm its seal changes from keyhole to tick and the
   progress bar advances. Start a run and confirm the Run tab fills in its floor,
-  revives, rooms, wardens and gateway state, refreshing about once a second.
+  mode, revives, rooms, wardens and gateway state, refreshing about once a second.
+- Enter once without Bad Omen and once with it. The first run must stay normal.
+  The second must consume Bad Omen only after it queues successfully, display
+  `OMINOUS ×10`, repeat normal waves in capped batches, and spawn one final boss
+  plus three reinforcement groups rather than ten bosses.
 - Resize the window small and confirm the panel clamps without the frame corners
   stretching or the tabs overlapping.
 - Disconnect and rejoin, die and respawn, and travel to the Fractured Archive and
@@ -216,6 +248,41 @@ procedure.
   overworld, Nether, and End, and `runClient` ended with `BUILD SUCCESSFUL`.
 - This confirmation does not yet cover the dedicated two-client, interrupted
   save/reload, or repeated ten-transition profiling cases.
+
+## Automated results — 2026-07-27 (theme art and silhouette pass)
+
+- `gradlew.bat build --console=plain`: PASS. The 1,000-seed simulation ran through
+  `check` with zero failed generations, zero unreachable rooms, zero overlaps,
+  zero lesser-boss mismatches and zero quest-gate violations.
+- `gradlew.bat runGameTestServer --console=plain`: **55 required tests**, run six
+  times. Four clean at 55/55; two hit the then-known `orrery_interaction` flake.
+  That flake was re-confirmed as pre-existing by running the same suite six times
+  in a detached worktree at unmodified `9debb35`, where it also failed once in six
+  on the same assertion. It lives in the `site` package, which the art change does
+  not touch.
+- `orrery_interaction` was then **fixed** (see "Flaky tests and their shared cause"
+  above). Failure rate before the fix on this branch: 4 in 25 runs. After:
+  **25 consecutive runs, 55/55 every time.** The root cause was measured, not
+  inferred — a diagnostic build printed `chunksLoaded=false` at the moment of
+  failure, ruling out the entity-safety and encounter-state branches that produce
+  the same symptom.
+- `python tools/textures/archive_entities.py`: PASS, and the six existing sheets
+  regenerate **byte-identical** after the material vocabulary moved to
+  `_material.py` — `git status` on `textures/entity/` reports no change for them.
+  This is the check that the refactor altered no shipped art.
+- `python tools/textures/archive_exclusives.py`: PASS, 16 base + 16 emissive
+  sheets. UV `validate()` clean; it caught three real box collisions in the new
+  meshes (`ringed`, `usher`, `longArm`) which were fixed at the mesh rather than
+  worked around in the paint.
+- `python tools/textures/archive_theme_variety.py`: PASS, 56 palette textures
+  (32 blocks + 24 face textures) and 12 hazard textures (8 base + 4 armed).
+- `python tools/textures/check_assets.py`: PASS, 214 models, every blockstate,
+  model, parent and texture reference resolves, and no non-cube model belongs to a
+  block registered without `noOcclusion`.
+- **Unverified, needs a person at the keyboard:** how the sixteen silhouettes and
+  the rebuilt theme rooms actually look in world. Nothing above renders a frame.
+  The Archive creature matrix is the checklist; a mis-posed limb or a texture on
+  the wrong face logs nothing at all.
 
 ## Automated results — 2026-07-27
 

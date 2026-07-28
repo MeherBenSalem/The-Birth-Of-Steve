@@ -1,6 +1,10 @@
-﻿{
+{
   "variants": {
-    "active=false": { "model": "tbos:block/false_shelf" },
-    "active=true": { "model": "tbos:block/false_shelf" }
+    "active=false": {
+      "model": "tbos:block/false_shelf"
+    },
+    "active=true": {
+      "model": "tbos:block/false_shelf"
+    }
   }
 }

@@ -1,6 +1,7 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_column",
   "textures": {
-    "all": "tbos:block/descent_trim"
+    "side": "tbos:block/descent_trim",
+    "end": "tbos:block/descent_trim_end"
   }
 }

@@ -115,9 +115,11 @@ public final class ArchiveFloorIntroHud {
         graphics.centeredText(minecraft.font, name, width / 2, centerY + 8, nameColor);
         graphics.centeredText(
                 minecraft.font,
-                Component.translatable("floor.tbos.intro.subtitle"),
+                Component.translatable(intro.ominous()
+                        ? "floor.tbos.intro.subtitle.ominous"
+                        : "floor.tbos.intro.subtitle"),
                 width / 2,
                 centerY + 23,
-                (textAlpha << 24) | 0xB8A98B);
+                (textAlpha << 24) | (intro.ominous() ? 0xFF6655 : 0xB8A98B));
     }
 }

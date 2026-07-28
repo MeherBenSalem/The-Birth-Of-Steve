@@ -8,6 +8,8 @@ import com.nightbeam.tbos.entity.MeridianSentinelEntity;
 import com.nightbeam.tbos.entity.ParallaxWraithEntity;
 import com.nightbeam.tbos.entity.ThemeExclusiveEntity;
 import com.nightbeam.tbos.entity.ThemeExclusiveKind;
+import java.util.EnumMap;
+import java.util.Map;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -19,6 +21,13 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class ModEntities {
     private static final DeferredRegister.Entities ENTITIES = DeferredRegister.createEntities(Yesterglass.MOD_ID);
+
+    // Declared before the constants below because static fields initialise in
+    // order and each registration puts itself in here. Lets callers iterate the
+    // sixteen kinds instead of restating the list — the client registers both a
+    // renderer and a model layer per kind and would otherwise repeat it twice.
+    private static final Map<ThemeExclusiveKind, DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>>>
+            THEME_EXCLUSIVES = new EnumMap<>(ThemeExclusiveKind.class);
 
     public static final DeferredHolder<EntityType<?>, EntityType<ParallaxWraithEntity>> PARALLAX_WRAITH =
             ENTITIES.registerEntityType(
@@ -66,44 +75,54 @@ public final class ModEntities {
                             .noLootTable());
 
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> SHARD_DRIFTER =
-            themeExclusive(ThemeExclusiveKind.SHARD_DRIFTER);
+            registerKind(ThemeExclusiveKind.SHARD_DRIFTER);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> WAKE_CUTTER =
-            themeExclusive(ThemeExclusiveKind.WAKE_CUTTER);
+            registerKind(ThemeExclusiveKind.WAKE_CUTTER);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> NULL_PORTRAIT =
-            themeExclusive(ThemeExclusiveKind.NULL_PORTRAIT);
+            registerKind(ThemeExclusiveKind.NULL_PORTRAIT);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> GALLERY_MOTH =
-            themeExclusive(ThemeExclusiveKind.GALLERY_MOTH);
+            registerKind(ThemeExclusiveKind.GALLERY_MOTH);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> GNOMON_KNIGHT =
-            themeExclusive(ThemeExclusiveKind.GNOMON_KNIGHT);
+            registerKind(ThemeExclusiveKind.GNOMON_KNIGHT);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> ARMILLARY_SCOUT =
-            themeExclusive(ThemeExclusiveKind.ARMILLARY_SCOUT);
+            registerKind(ThemeExclusiveKind.ARMILLARY_SCOUT);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> DUST_CANTORILE =
-            themeExclusive(ThemeExclusiveKind.DUST_CANTORILE);
+            registerKind(ThemeExclusiveKind.DUST_CANTORILE);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> ASH_CHORISTER =
-            themeExclusive(ThemeExclusiveKind.ASH_CHORISTER);
+            registerKind(ThemeExclusiveKind.ASH_CHORISTER);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> PRISM_STALKER =
-            themeExclusive(ThemeExclusiveKind.PRISM_STALKER);
+            registerKind(ThemeExclusiveKind.PRISM_STALKER);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> SHARDLING_SWARM =
-            themeExclusive(ThemeExclusiveKind.SHARDLING_SWARM);
+            registerKind(ThemeExclusiveKind.SHARDLING_SWARM);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> INDEX_WIGHT =
-            themeExclusive(ThemeExclusiveKind.INDEX_WIGHT);
+            registerKind(ThemeExclusiveKind.INDEX_WIGHT);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> SHELF_CRAWLER =
-            themeExclusive(ThemeExclusiveKind.SHELF_CRAWLER);
+            registerKind(ThemeExclusiveKind.SHELF_CRAWLER);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> METRONOME_HOUND =
-            themeExclusive(ThemeExclusiveKind.METRONOME_HOUND);
+            registerKind(ThemeExclusiveKind.METRONOME_HOUND);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> LABYRINTH_USHER =
-            themeExclusive(ThemeExclusiveKind.LABYRINTH_USHER);
+            registerKind(ThemeExclusiveKind.LABYRINTH_USHER);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> BLANK_CHRONIST =
-            themeExclusive(ThemeExclusiveKind.BLANK_CHRONIST);
+            registerKind(ThemeExclusiveKind.BLANK_CHRONIST);
     public static final DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> HOUR_HAND_WRAITH =
-            themeExclusive(ThemeExclusiveKind.HOUR_HAND_WRAITH);
+            registerKind(ThemeExclusiveKind.HOUR_HAND_WRAITH);
 
     private ModEntities() {
     }
 
-    private static DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> themeExclusive(
+    public static DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> themeExclusive(
             ThemeExclusiveKind kind) {
-        return ENTITIES.registerEntityType(
+        DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> holder =
+                THEME_EXCLUSIVES.get(kind);
+        if (holder == null) {
+            throw new IllegalStateException("Theme exclusive not registered: " + kind);
+        }
+        return holder;
+    }
+
+    private static DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> registerKind(
+            ThemeExclusiveKind kind) {
+        DeferredHolder<EntityType<?>, EntityType<ThemeExclusiveEntity>> holder = ENTITIES.registerEntityType(
                 kind.texturePath(),
                 ThemeExclusiveEntity::new,
                 MobCategory.MONSTER,
@@ -112,6 +131,8 @@ public final class ModEntities {
                         .clientTrackingRange(10)
                         .updateInterval(2)
                         .noLootTable());
+        THEME_EXCLUSIVES.put(kind, holder);
+        return holder;
     }
 
     public static void register(IEventBus modBus) {

@@ -77,12 +77,28 @@ public final class ArchiveGenerationQueue {
         Iterator<Map.Entry<UUID, Task>> iterator = TASKS.entrySet().iterator();
         while (iterator.hasNext() && generationBudget > 0) {
             Map.Entry<UUID, Task> entry = iterator.next();
+            Task task = entry.getValue();
             ArchiveRun latest = storage.find(entry.getKey()).orElse(null);
             if (latest == null || latest.status() != ArchiveRunStatus.PREPARING) {
                 iterator.remove();
+                // A run leaving PREPARING mid-build - abandoned, failed, or gone
+                // from storage - used to drop the task here in silence, stranding
+                // however much of the floor had already been written. Corridors
+                // are the last thing a blueprint places, so what got left behind
+                // was a set of sealed rooms with nothing joining them, and the
+                // slot could later be reused with the wreck still in it. Hand the
+                // same blueprint to the cleanup queue instead.
+                if (!task.complete()) {
+                    CLEANUP_TASKS.putIfAbsent(entry.getKey(), task.asCleanup());
+                    Yesterglass.LOGGER.warn(
+                            "Archive run {} left PREPARING after {} of {} blocks; "
+                                    + "queued the partial floor for cleanup",
+                            entry.getKey(),
+                            task.placedBlocks(),
+                            task.totalBlocks());
+                }
                 continue;
             }
-            Task task = entry.getValue();
             int allowance = Math.max(1, generationBudget / remainingGenerationTasks--);
             int consumed = task.apply(level, allowance);
             budget -= consumed;
@@ -246,9 +262,23 @@ public final class ArchiveGenerationQueue {
         private long loadedChunk = Long.MIN_VALUE;
 
         private Task(ArchiveRun run, ArchiveRoomPlacer.Blueprint blueprint, boolean placeGeometry) {
+            this(blueprint, placeGeometry, run.instanceSlot(), run.runId(), run.rooms().size());
+        }
+
+        /** Same floor, run backwards: clears the volumes and places nothing. */
+        private Task asCleanup() {
+            return new Task(blueprint, false, instanceSlot, null, 0);
+        }
+
+        private Task(
+                ArchiveRoomPlacer.Blueprint blueprint,
+                boolean placeGeometry,
+                int instanceSlot,
+                UUID debugRunId,
+                int debugRoomCount) {
             this.blueprint = blueprint;
             this.placeGeometry = placeGeometry;
-            this.instanceSlot = run.instanceSlot();
+            this.instanceSlot = instanceSlot;
             this.totalClearBlocks = blueprint.clearVolumes().stream().mapToLong(volume ->
                     (long) (volume.maxX() - volume.minX() + 1)
                             * (volume.maxY() - volume.minY() + 1)
@@ -256,14 +286,23 @@ public final class ArchiveGenerationQueue {
             if (!blueprint.clearVolumes().isEmpty()) {
                 resetClearCursor(blueprint.clearVolumes().getFirst());
             }
-            if (debugEnabled()) {
+            if (debugRunId != null && debugEnabled()) {
                 Yesterglass.LOGGER.info(
                         "Queued archive dungeon {}: {} rooms, {} clear volumes, {} placed blocks",
-                        run.runId(),
-                        run.rooms().size(),
+                        debugRunId,
+                        debugRoomCount,
                         blueprint.clearVolumes().size(),
                         blueprint.placements().size());
             }
+        }
+
+        /** How far the placement cursor got, for abandonment reporting. */
+        private int placedBlocks() {
+            return placementIndex;
+        }
+
+        private int totalBlocks() {
+            return blueprint.placements().size();
         }
 
         private int apply(ServerLevel level, int budget) {

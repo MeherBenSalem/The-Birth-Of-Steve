@@ -19,6 +19,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
@@ -78,13 +79,19 @@ public final class ArchiveRunManager {
         List<ArchiveRunMember> members = party.stream()
                 .map(member -> new ArchiveRunMember(member.getUUID(), captureReturnPoint(member)))
                 .toList();
+        ArchiveRunMode mode = activator.hasEffect(MobEffects.BAD_OMEN)
+                ? ArchiveRunMode.OMINOUS
+                : ArchiveRunMode.NORMAL;
         ArchiveRun preparing;
         try {
             ArchiveRunGenerator.GenerationResult generated = ArchiveRunGenerator.generateDetailed(
                     seed, 0L, settings);
-            preparing = ArchiveRun.create(runId, seed, instanceSlot, members, generated.graph());
+            preparing = ArchiveRun.create(runId, seed, instanceSlot, members, generated.graph(), mode);
             storage.register(preparing);
             ArchiveGenerationQueue.enqueue(preparing);
+            if (mode.ominous()) {
+                activator.removeEffect(MobEffects.BAD_OMEN);
+            }
             if (debugEnabled()) {
                 ArchiveRunGenerator.GenerationMetrics metrics = generated.metrics();
                 Yesterglass.LOGGER.info(
@@ -154,12 +161,16 @@ public final class ArchiveRunManager {
             player.resetFallDistance();
             player.clearFire();
             ModAdvancements.awardEnterFracturedArchive(player);
-            PacketDistributor.sendToPlayer(player, new ArchiveFloorIntroPayload(active.floor()));
+            PacketDistributor.sendToPlayer(
+                    player, new ArchiveFloorIntroPayload(active.floor(), active.mode().ominous()));
             player.sendOverlayMessage(Component.translatable(
                     "message.tbos.archive.entered",
                     ArchiveFloorPresentation.displayFloor(active.floor()),
                     ArchiveFloorPresentation.name(active.floor()),
                     active.sharedRevives()));
+            if (active.mode().ominous()) {
+                player.sendOverlayMessage(Component.translatable("message.tbos.archive.ominous_started"));
+            }
         }
     }
 

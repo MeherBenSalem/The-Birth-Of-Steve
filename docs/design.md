@@ -53,6 +53,14 @@ Two rendering rules fall out of that geometry and are easy to regress:
   share an edge but never a volume.
 - **Non-cube models need `.noOcclusion()`.** Without it neighbouring blocks cull
   their faces against the block and it reads as an x-ray hole through the floor.
+  `noOcclusion` is a per-*block* property, not per-state, so a block that is solid
+  in one state and thin or transparent in another — the Parallax Panel phasing out
+  — needs it declared regardless of which state you are looking at.
+- **A model must match its `getCollisionShape`.** The theme hazards shipped as
+  `cube_all` while their shapes said otherwise, which put a solid-looking cube
+  around an ink pool you walk straight through. `tools/textures/check_assets.py`
+  now walks blockstates to models to textures and flags both this and any
+  reference that does not resolve.
 
 ### Archive art direction
 
@@ -72,6 +80,41 @@ project** — not placeholder. It is authored to a fixed standard:
 stdlib-only and deterministic, so the art can be revised and regenerated rather
 than hand-patched pixel by pixel; it also emits contact sheets for review. Editing
 that script and re-running it is the supported way to change these textures.
+
+#### The hand-authored set is authoritative — do not regenerate it
+
+Eighteen blocks are **finished hand-authored art with no generator behind them**:
+
+> `archive_stone`, `archive_bricks`, `weathered_archive_bricks`,
+> `cracked_archive_stone`, `mossy_archive_stone`, `chiseled_archive_stone`,
+> `chronicle_tile`, `chronicle_bronze`, `cantor_wall`, `cantor_floor`,
+> `cantor_rune`, `meridian_tile`, `phase_platform`, `archive_seal`,
+> `memory_anchor`, `memory_anchor_side`, `archive_cache`, `lenswork_crystal`
+
+They define how an Archive block looks and **everything else answers to them**. A
+generator was once written to "bring them up to match" the procedural family and
+promptly overwrote art that was already finished; that generator was deleted.
+Nothing in `tools/` writes to these files, and nothing should.
+
+`tools/textures/_archive_style.py` is that look written down, so the generated
+floor-theme family can sit beside them without giving itself away. Four moves
+account for nearly all of it:
+
+- **A mottled face.** Visible lighter and darker clusters *inside* every block
+  face. A smooth fill with a bevel on it is the clearest tell of a generated
+  texture and the mistake that had to be undone to arrive here.
+- **A clean material edge.** Each block tiles into its neighbour without a
+  near-black perimeter; dark pixels are reserved for internal grout rather than
+  fading out at its boundary.
+- **A centred device.** Concentric rings around a lit core, on anything that
+  carries meaning.
+- **Corner braces.** Short accent arms at the corners, as on the Memory Anchor.
+
+Accent colour is structural and sparing — it lands on a device, a band or a
+joint, never scattered across the face. `tools/textures/_theme_recipes.py` maps
+each theme role onto those moves: walls are coursed masonry like
+`archive_bricks`, floors carry a centred mark like `chronicle_tile`, roofs stay
+quiet like `meridian_tile`, trims band like `chronicle_bronze`.
 
 Entity art is held to the same standard on the same palette, from
 `tools/textures/archive_entities.py`. Each creature has a base sheet and a
@@ -151,10 +194,37 @@ because in a dark procedural room shape is all that arrives first:
   tightens as the refrain approaches and tightens again below half health, so a
   player who watches the chest knows what a player who watches the health bar knows.
 
-Sixteen floor-theme exclusives (two per cycling floor name) share a common
-`ThemeExclusiveModel` silhouette set and the same Archive palette with theme accent
-bias. `tools/textures/archive_theme_variety.py` authors their sheets and the theme
-block family.
+Sixteen floor-theme exclusives (two per cycling floor name) each have **their own
+silhouette**, on the same palette with a theme accent bias. They briefly shared one
+box-and-two-legs mesh, and the result was that every theme's pair read as the same
+creature — the exact failure the five hand-built creatures above are designed to
+avoid. `ThemeExclusiveMeshes` holds the geometry, `ThemeExclusivePosers` the
+motion, and `ThemeExclusiveSilhouettes` the table binding each kind to a model
+layer, a poser and a shadow radius. Shape telegraphs the signature move: the Wake
+Cutter's overlong blade, the Metronome Hound's pendulum tail keeping time whether
+or not it is moving, the Ash Chorister's seam already open before it splits.
+
+Meshes are authored at **true size**, 16 units to the block, so a half-block Shelf
+Crawler and a 2.2-block Hour Hand Wraith match their declared hitboxes without
+render-time scaling.
+
+Two generators feed this family:
+
+- `tools/textures/archive_exclusives.py` — the sixteen creature sheets. It reads
+  its UV rectangles **out of the Java mesh** through `_meshsource.py` rather than
+  restating them. The previous pass chose rectangles independently of the model and
+  shipped sixteen creatures whose textures missed their own geometry almost
+  entirely; reading the mesh makes that unrepresentable, and the generator also
+  refuses to run if any box lacks a material recipe.
+- `tools/textures/archive_theme_variety.py` — the theme block family. Palette
+  blocks use material recipes on the same craft standard as `archive_blocks.py`
+  (beveled tiles, ashlar, coffered soffits, moulding profiles), not dotted fills.
+  Floors and roofs are `cube_bottom_top` with their own edge texture and trims are
+  `cube_column`, so a floor slab reads as something laid rather than as a cube
+  wearing the same picture on all six faces.
+
+`tools/textures/_material.py` holds the materials all three generators share, so a
+fix to `stone` or `metal` lands everywhere at once instead of in one family.
 
 Animation is procedural trigonometry inside `setupAnim`, not keyframe tables. The
 vanilla `AnimationDefinition`/`KeyframeAnimation` API is available and was

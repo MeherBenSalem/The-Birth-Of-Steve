@@ -27,7 +27,7 @@ public record ArchiveRun(
         ArchiveDungeonGraph dungeonGraph,
         List<ArchiveEncounterState> roomEncounterStates,
         ArchiveFloorState floorState) {
-    public static final int SCHEMA_REVISION = 5;
+    public static final int SCHEMA_REVISION = 6;
     public static final int MAX_PARTY_SIZE = 4;
     public static final int MAX_SHARED_REVIVES = 3;
     public static final int MAX_PARTY_CONTAINER_KEYS = 48 * 64;
@@ -144,6 +144,16 @@ public record ArchiveRun(
             int instanceSlot,
             List<ArchiveRunMember> members,
             ArchiveDungeonGraph dungeonGraph) {
+        return create(runId, seed, instanceSlot, members, dungeonGraph, ArchiveRunMode.NORMAL);
+    }
+
+    public static ArchiveRun create(
+            UUID runId,
+            long seed,
+            int instanceSlot,
+            List<ArchiveRunMember> members,
+            ArchiveDungeonGraph dungeonGraph,
+            ArchiveRunMode runMode) {
         List<ArchiveRoomPlan> plans = dungeonGraph.roomPlans();
         return new ArchiveRun(
                 SCHEMA_REVISION,
@@ -161,7 +171,7 @@ public record ArchiveRun(
                 ArchiveEncounterState.IDLE,
                 dungeonGraph,
                 idleEncounters(plans.size()),
-                ArchiveFloorState.FIRST);
+                new ArchiveFloorState(0L, List.of(), runMode));
     }
 
     public ArchiveRun {
@@ -173,9 +183,12 @@ public record ArchiveRun(
         dungeonGraph = Objects.requireNonNull(dungeonGraph, "dungeonGraph");
         roomEncounterStates = List.copyOf(Objects.requireNonNull(roomEncounterStates, "roomEncounterStates"));
         floorState = Objects.requireNonNull(floorState, "floorState");
-        if (schemaRevision < 1) {
-            throw new IllegalArgumentException("Archive run schema revision must be positive");
+        if (schemaRevision < 1 || schemaRevision > SCHEMA_REVISION) {
+            throw new IllegalArgumentException(
+                    "Archive run schema revision must be between 1 and " + SCHEMA_REVISION);
         }
+        // Optional codec fields make older saves self-migrating on read.
+        schemaRevision = SCHEMA_REVISION;
         if (instanceSlot < 0) {
             throw new IllegalArgumentException("Archive run instance slot must not be negative");
         }
@@ -225,6 +238,10 @@ public record ArchiveRun(
             }
         }
         encounterState = roomEncounterStates.get(currentRoom);
+    }
+
+    public ArchiveRunMode mode() {
+        return floorState.runMode();
     }
 
     public Optional<ArchiveRunMember> member(UUID playerId) {

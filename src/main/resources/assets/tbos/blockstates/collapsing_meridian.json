@@ -1,6 +1,10 @@
-﻿{
+{
   "variants": {
-    "active=false": { "model": "tbos:block/collapsing_meridian" },
-    "active=true": { "model": "tbos:block/collapsing_meridian" }
+    "active=false": {
+      "model": "tbos:block/collapsing_meridian"
+    },
+    "active=true": {
+      "model": "tbos:block/collapsing_meridian_active"
+    }
   }
 }

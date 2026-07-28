@@ -112,7 +112,36 @@ The five original creatures each own a telegraphed signature move implemented on
 the entity itself, as a server-synched phase machine the client only reads. None
 of them are zombie-derived; all five are bespoke `Monster` subclasses with their
 own models, procedural animation, and sounds. Theme exclusives share the same
-phase-machine rule through `ThemeExclusiveEntity`.
+phase-machine rule through `ThemeExclusiveEntity`, and each of the sixteen has its
+own silhouette, animation, telegraph particle and voice.
+
+#### Reading a theme exclusive
+
+Shape arrives before anything else in a dark room, so each exclusive's outline is
+chosen to give away what it is about to do:
+
+| Creature | Silhouette | What the shape tells you |
+| --- | --- | --- |
+| Shard Drifter | hollow core, three plates in orbit, no legs | the orbit spins up before it blinks behind you |
+| Wake Cutter | thin body, one overlong blade | it winds the blade back, then is untouchable through the dash |
+| Null Portrait | an empty gilt frame | it rests edge-on; turning face-on *is* the wind-up |
+| Gallery Moth | small body, four broad wings | wings widen as it drags the light out of the room |
+| Gnomon Knight | heavy plate, sundial crest, tower shield | the shield goes up before the ground pulse |
+| Armillary Scout | a lens inside two counter-rotating rings | the rings spin up before it dives |
+| Dust Cantorile | robed, hovering, no legs | the censer keeps swinging while the slowing aura is live |
+| Ash Chorister | a body with the seam already open | the seam gapes wider as the split at 45% health approaches |
+| Prism Stalker | faceted crystal on four thin legs | shut it shrugs off damage; the shells part only while it is vulnerable |
+| Shardling Swarm | five splinters around a shared hub | the cloud tightens before it bursts |
+| Index Wight | fanned pages for a back, a quill hand | the quill leads the mark |
+| Shelf Crawler | wide and flat, six hooked limbs | limbs tuck before it drops on you |
+| Metronome Hound | quadruped with a pendulum tail | the tail keeps its own time; the bite lands on the beat |
+| Labyrinth Usher | tall, faceless, a lantern arm | the lantern rises before a way is sealed |
+| Blank Chronist | a blank slab where a face belongs | the slab tips away as it erases |
+| Hour Hand Wraith | one arm far too long, dragging | it cocks across the body, then sweeps level rather than chopping |
+
+The Prism Stalker's vulnerability window used to be enforced only by a silent
+damage check, with nothing on screen to mark it. It now opens its shells, throws
+sparks and rings audibly for exactly that window.
 
 - **Parallax Wraith** — Displacement, on a 125-tick cooldown, at ranges above
   three and up to twenty blocks. It fractures for ten ticks, hangs displaced for

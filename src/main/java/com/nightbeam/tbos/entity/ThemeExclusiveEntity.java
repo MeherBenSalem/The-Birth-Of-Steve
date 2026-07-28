@@ -9,13 +9,20 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerBossEvent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -29,6 +36,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.BossEvent;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -42,8 +51,13 @@ public final class ThemeExclusiveEntity extends Monster {
             SynchedEntityData.defineId(ThemeExclusiveEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> ABILITY_PHASE_TICKS =
             SynchedEntityData.defineId(ThemeExclusiveEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> FINAL_BOSS =
+            SynchedEntityData.defineId(ThemeExclusiveEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Byte> BOSS_PHASE =
+            SynchedEntityData.defineId(ThemeExclusiveEntity.class, EntityDataSerializers.BYTE);
 
     private final ThemeExclusiveKind kind;
+    private final ServerBossEvent bossEvent;
     private int abilityCooldown = 40;
     private boolean ashSplitDone;
     private BlockPos sealPos;
@@ -52,6 +66,12 @@ public final class ThemeExclusiveEntity extends Monster {
     public ThemeExclusiveEntity(EntityType<? extends ThemeExclusiveEntity> entityType, Level level) {
         super(entityType, level);
         kind = ThemeExclusiveKind.of(entityType);
+        bossEvent = new ServerBossEvent(
+                getUUID(),
+                Component.translatable(entityType.getDescriptionId()),
+                BossEvent.BossBarColor.PURPLE,
+                BossEvent.BossBarOverlay.NOTCHED_10);
+        bossEvent.setVisible(false);
         this.xpReward = 7;
     }
 
@@ -76,11 +96,20 @@ public final class ThemeExclusiveEntity extends Monster {
         super.defineSynchedData(entityData);
         entityData.define(ABILITY_PHASE, (byte) AbilityPhase.IDLE.ordinal());
         entityData.define(ABILITY_PHASE_TICKS, 0);
+        entityData.define(FINAL_BOSS, false);
+        entityData.define(BOSS_PHASE, (byte) 0);
     }
 
     @Override
     protected void customServerAiStep(ServerLevel level) {
         super.customServerAiStep(level);
+        if (isFinalBoss()) {
+            int phase = getHealth() <= getMaxHealth() * 0.5F ? 2 : 1;
+            entityData.set(BOSS_PHASE, (byte) phase);
+            bossEvent.setProgress(getHealth() / getMaxHealth());
+            bossEvent.setName(getDisplayName());
+            bossEvent.setVisible(true);
+        }
         if (getAbilityPhase() == AbilityPhase.IDLE && abilityCooldown > 0) {
             abilityCooldown--;
         }
@@ -104,8 +133,63 @@ public final class ThemeExclusiveEntity extends Monster {
         setAbilityPhase(AbilityPhase.IDLE);
         abilityCooldown = 40;
         ashSplitDone = false;
-        sealPos = null;
-        sealTicks = 0;
+        sealPos = input.read("temporary_seal", BlockPos.CODEC).orElse(null);
+        sealTicks = sealPos == null ? 0 : Mth.clamp(input.getIntOr("temporary_seal_ticks", 0), 0, 60);
+        setFinalBoss(input.getBooleanOr("archive_final_boss", false));
+        entityData.set(BOSS_PHASE, input.getByteOr("archive_boss_phase", (byte) 0));
+    }
+
+    @Override
+    protected void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.putBoolean("archive_final_boss", isFinalBoss());
+        output.putByte("archive_boss_phase", entityData.get(BOSS_PHASE));
+        if (sealPos != null && sealTicks > 0) {
+            output.store("temporary_seal", BlockPos.CODEC, sealPos);
+            output.putInt("temporary_seal_ticks", sealTicks);
+        }
+    }
+
+    public boolean isFinalBoss() {
+        return entityData.get(FINAL_BOSS);
+    }
+
+    public int bossPhase() {
+        return entityData.get(BOSS_PHASE);
+    }
+
+    public void setFinalBoss(boolean finalBoss) {
+        if (finalBoss && !kind.bossEligible()) {
+            throw new IllegalStateException(kind + " cannot be promoted to an Archive boss");
+        }
+        entityData.set(FINAL_BOSS, finalBoss);
+        refreshDimensions();
+        bossEvent.setVisible(finalBoss);
+        if (finalBoss) {
+            xpReward = 50;
+        }
+    }
+
+    @Override
+    protected EntityDimensions getDefaultDimensions(Pose pose) {
+        EntityDimensions dimensions = super.getDefaultDimensions(pose);
+        // LivingEntity asks for dimensions from its constructor, before this
+        // subclass has resolved its kind or defined synchronized boss data.
+        return kind != null && isFinalBoss() ? dimensions.scale(1.18F) : dimensions;
+    }
+
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+        if (isFinalBoss()) {
+            bossEvent.addPlayer(player);
+        }
+    }
+
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        bossEvent.removePlayer(player);
     }
 
     @Override
@@ -131,10 +215,21 @@ public final class ThemeExclusiveEntity extends Monster {
 
     @Override
     public void die(DamageSource damageSource) {
-        if (level() instanceof ServerLevel serverLevel && kind == ThemeExclusiveKind.SHARDLING_SWARM) {
-            ThemeHazardBlock.shatterNearby(serverLevel, blockPosition(), 2);
+        if (level() instanceof ServerLevel serverLevel) {
+            if (kind == ThemeExclusiveKind.SHARDLING_SWARM) {
+                ThemeHazardBlock.shatterNearby(serverLevel, blockPosition(), 2);
+            }
+            clearTemporarySeal(serverLevel);
         }
         super.die(damageSource);
+    }
+
+    private void clearTemporarySeal(ServerLevel level) {
+        if (sealPos != null && level.getBlockState(sealPos).is(ModBlocks.ARCHIVE_SEAL.get())) {
+            level.removeBlock(sealPos, false);
+        }
+        sealPos = null;
+        sealTicks = 0;
     }
 
     public AbilityPhase getAbilityPhase() {
@@ -175,6 +270,26 @@ public final class ThemeExclusiveEntity extends Monster {
         child.ashSplitDone = true;
         child.setTarget(getTarget());
         level.addFreshEntity(child);
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return kind.ambientSound();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return kind.hurtSound();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return kind.deathSound();
+    }
+
+    @Override
+    public SoundSource getSoundSource() {
+        return SoundSource.HOSTILE;
     }
 
     public enum AbilityPhase {
@@ -276,7 +391,7 @@ public final class ThemeExclusiveEntity extends Monster {
             if (ticks < duration) {
                 if (phase == AbilityPhase.WINDUP) {
                     level.sendParticles(
-                            ParticleTypes.ENCHANT,
+                            mob.kind.telegraph(),
                             mob.getX(),
                             mob.getY() + mob.getBbHeight() * 0.6D,
                             mob.getZ(),
@@ -304,12 +419,13 @@ public final class ThemeExclusiveEntity extends Monster {
         }
 
         private int cooldownFor(ThemeExclusiveKind kind) {
-            return switch (kind) {
+            int base = switch (kind) {
                 case METRONOME_HOUND -> 50;
                 case GALLERY_MOTH, SHARDLING_SWARM -> 70;
                 case LABYRINTH_USHER -> 100;
                 default -> 80;
             };
+            return mob.isFinalBoss() && mob.bossPhase() >= 2 ? Math.max(35, base / 2) : base;
         }
 
         private void resolveActive(ServerLevel level) {
@@ -322,9 +438,7 @@ public final class ThemeExclusiveEntity extends Monster {
                 case ARMILLARY_SCOUT -> dive(level);
                 case DUST_CANTORILE -> pulseSlow(level);
                 case ASH_CHORISTER -> pulse(level, 3.0D, 2.0F);
-                case PRISM_STALKER -> {
-                    // Vulnerability window opens during ACTIVE; damage taken normally then.
-                }
+                case PRISM_STALKER -> openPrism(level);
                 case SHARDLING_SWARM -> pulse(level, 2.0D, 2.5F);
                 case INDEX_WIGHT -> markTarget(level);
                 case SHELF_CRAWLER -> dropOnTarget(level);
@@ -333,6 +447,84 @@ public final class ThemeExclusiveEntity extends Monster {
                 case BLANK_CHRONIST -> weaken(level);
                 case HOUR_HAND_WRAITH -> sweep(level);
             }
+            if (mob.isFinalBoss()) {
+                resolveBossFollowup(level);
+            }
+        }
+
+        private void resolveBossFollowup(ServerLevel level) {
+            double radius = mob.bossPhase() >= 2 ? 6.0D : 4.5D;
+            switch (mob.kind) {
+                case WAKE_CUTTER -> {
+                    Vec3 trail = target.position().subtract(mob.position());
+                    int steps = Math.max(4, (int) trail.length() * 2);
+                    for (int step = 0; step <= steps; step++) {
+                        Vec3 point = mob.position().add(trail.scale((double) step / steps));
+                        level.sendParticles(ParticleTypes.CRIT, point.x, point.y + 0.2D, point.z,
+                                2, 0.1D, 0.1D, 0.1D, 0.01D);
+                    }
+                }
+                case NULL_PORTRAIT -> {
+                    target.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 45, 0, false, true, true));
+                    level.sendParticles(ParticleTypes.SMOKE, mob.getX(), mob.getY() + 1.0D, mob.getZ(),
+                            mob.bossPhase() >= 2 ? 30 : 18, 2.5D, 0.8D, 2.5D, 0.02D);
+                }
+                case GNOMON_KNIGHT -> radialBossPulse(level, radius, 5.0F, ParticleTypes.ELECTRIC_SPARK);
+                case DUST_CANTORILE ->
+                        radialBossPulse(level, radius, 3.5F, ParticleTypes.WHITE_ASH);
+                case PRISM_STALKER -> {
+                    radialBossPulse(level, radius, 4.0F, ParticleTypes.END_ROD);
+                    mob.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 30, 1, false, true, true));
+                }
+                case INDEX_WIGHT -> {
+                    target.addEffect(new MobEffectInstance(MobEffects.GLOWING, 100, 0, false, true, true));
+                    target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 50, 0, false, true, true));
+                    level.sendParticles(ParticleTypes.WITCH, target.getX(), target.getY() + 1.0D, target.getZ(),
+                            20, 0.6D, 0.8D, 0.6D, 0.02D);
+                }
+                case HOUR_HAND_WRAITH -> {
+                    radialBossPulse(level, radius, 5.5F, ParticleTypes.SOUL_FIRE_FLAME);
+                    target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 60, 1, false, true, true));
+                }
+                default -> {
+                }
+            }
+        }
+
+        private void radialBossPulse(
+                ServerLevel level,
+                double radius,
+                float damage,
+                net.minecraft.core.particles.ParticleOptions particle) {
+            AABB box = mob.getBoundingBox().inflate(radius, 1.5D, radius);
+            for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box, candidate ->
+                    candidate.isAlive() && !(candidate instanceof Monster))) {
+                entity.hurtServer(level, mob.damageSources().mobAttack(mob), damage);
+                entity.knockback(0.55D, mob.getX() - entity.getX(), mob.getZ() - entity.getZ());
+            }
+            level.sendParticles(particle, mob.getX(), mob.getY() + 0.2D, mob.getZ(),
+                    mob.bossPhase() >= 2 ? 32 : 20, radius * 0.45D, 0.2D, radius * 0.45D, 0.04D);
+        }
+
+        /**
+         * The Prism Stalker's shells part and it takes full damage until they
+         * close again. The window was previously enforced only by a silent
+         * check in {@link ThemeExclusiveEntity#hurtServer}, so a player had no
+         * way to know when hitting it stopped being a waste of a swing. The
+         * model opens on the same phase; this is the audible half of that tell.
+         */
+        private void openPrism(ServerLevel level) {
+            level.sendParticles(
+                    ParticleTypes.END_ROD,
+                    mob.getX(),
+                    mob.getY() + mob.getBbHeight() * 0.5D,
+                    mob.getZ(),
+                    14,
+                    0.35D,
+                    0.45D,
+                    0.35D,
+                    0.03D);
+            mob.playSound(SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9F, 0.7F);
         }
 
         private void blinkBehind(ServerLevel level) {

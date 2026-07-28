@@ -1,6 +1,8 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "all": "tbos:block/unwritten_roof"
+    "top": "tbos:block/unwritten_roof",
+    "bottom": "tbos:block/unwritten_roof",
+    "side": "tbos:block/unwritten_roof_side"
   }
 }

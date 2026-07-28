@@ -4,6 +4,7 @@ import com.nightbeam.tbos.Yesterglass;
 import com.nightbeam.tbos.block.AlignmentDialBlock;
 import com.nightbeam.tbos.config.YesterglassConfig;
 import com.nightbeam.tbos.entity.LenswardEntity;
+import com.nightbeam.tbos.entity.ThemeExclusiveEntity;
 import com.nightbeam.tbos.network.payload.ArchivePuzzlePayload;
 import com.nightbeam.tbos.registry.ModBlocks;
 import com.nightbeam.tbos.registry.ModEntities;
@@ -51,6 +52,8 @@ public final class ArchiveEncounterManager {
     private static final String KIND_TAG_PREFIX = "tbos.kind.";
     private static final String LESSER_BOSS_TAG = "tbos.lesser_boss";
     private static final String SPLIT_CHILD_TAG = "tbos.split_child";
+    private static final String FINAL_BOSS_TAG = "tbos.final_boss";
+    public static final int OMINOUS_BATCHES = 10;
 
     private ArchiveEncounterManager() {
     }
@@ -101,6 +104,11 @@ public final class ArchiveEncounterManager {
                 }
                 storage.replace(locked);
                 startEncounter(server, level, storage, locked, roomIndex);
+                return;
+            }
+            if (run.mode().ominous()
+                    && room.encounterKind() == ArchiveEncounterKind.BOSS
+                    && tickOminousBossReinforcements(level, storage, run, roomIndex, state)) {
                 return;
             }
             if (state.waveActive() && activeEnemyCount(level, run, roomIndex) == 0) {
@@ -332,14 +340,15 @@ public final class ArchiveEncounterManager {
         if (position.equals(ArchiveRoomPlacer.rewardCachePosition(run))) {
             ArchiveRunMember member = run.member(player.getUUID()).orElse(null);
             if (member != null && member.rewardClaimed()) {
-                player.sendOverlayMessage(Component.literal("CANTOR CACHE - Your recollection was already released")
+                player.sendOverlayMessage(Component.literal("ARCHIVE CACHE - Your recollection was already released")
                         .withStyle(ChatFormatting.GRAY));
             } else if (run.status() == ArchiveRunStatus.RETURNING_VICTORY
                     || run.status() == ArchiveRunStatus.COMPLETED) {
-                player.sendOverlayMessage(Component.literal("CANTOR CACHE - Break the seal to release its recollection")
+                player.sendOverlayMessage(Component.literal("ARCHIVE CACHE - Break the seal to release its recollection")
                         .withStyle(ChatFormatting.GOLD));
             } else {
-                player.sendOverlayMessage(Component.literal("CANTOR CACHE - The Hour Cantor still binds this seal")
+                player.sendOverlayMessage(Component.literal(
+                                "ARCHIVE CACHE - " + bossDisplayName(run.floor()) + " still binds this seal")
                         .withStyle(ChatFormatting.RED));
             }
             return true;
@@ -512,7 +521,7 @@ public final class ArchiveEncounterManager {
         }
         ArchiveRunMember member = run.member(player.getUUID()).orElse(null);
         if (member == null || member.rewardClaimed()) {
-            player.sendOverlayMessage(Component.literal("CANTOR CACHE - Your recollection was already released")
+            player.sendOverlayMessage(Component.literal("ARCHIVE CACHE - Your recollection was already released")
                     .withStyle(ChatFormatting.GRAY));
             return false;
         }
@@ -554,7 +563,7 @@ public final class ArchiveEncounterManager {
                 0.04D);
         level.playSound(null, position, SoundEvents.CHEST_OPEN, SoundSource.BLOCKS, 1.0F, 0.65F);
         level.playSound(null, position, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 1.1F, 0.82F);
-        player.sendOverlayMessage(Component.literal("CANTOR CACHE - Recollection released")
+        player.sendOverlayMessage(Component.literal("ARCHIVE CACHE - Recollection released")
                 .withStyle(ChatFormatting.AQUA));
         return true;
     }
@@ -621,7 +630,7 @@ public final class ArchiveEncounterManager {
                                 ArchiveFloorPresentation.displayFloor(complete.floor()))
                         .withStyle(ChatFormatting.AQUA));
             } else {
-                announce(server, complete, Component.literal(encounterTitle(kind) + " - Path recorded")
+                announce(server, complete, Component.literal(encounterTitle(kind, complete.floor()) + " - Path recorded")
                         .withStyle(ChatFormatting.AQUA));
             }
             return;
@@ -639,7 +648,8 @@ public final class ArchiveEncounterManager {
         ArchiveRun started = run.withRoomEncounterState(roomIndex, current.startWave(1));
         storage.replace(started);
         spawnWave(level, started, roomIndex, 1);
-        announce(server, started, Component.literal(encounterTitle(kind) + " - Wave 1/" + totalWaves(kind))
+        announce(server, started, Component.literal(encounterTitle(kind, started.floor())
+                        + " - Wave 1/" + totalWaves(kind))
                 .withStyle(kind == ArchiveEncounterKind.BOSS ? ChatFormatting.DARK_PURPLE : ChatFormatting.GOLD));
     }
 
@@ -651,6 +661,21 @@ public final class ArchiveEncounterManager {
             int roomIndex) {
         ArchiveEncounterKind kind = run.rooms().get(roomIndex).encounterKind();
         ArchiveEncounterState state = run.roomEncounterStates().get(roomIndex);
+        if (run.mode().ominous()
+                && kind != ArchiveEncounterKind.BOSS
+                && state.reinforcementBatch() < OMINOUS_BATCHES - 1) {
+            ArchiveEncounterState nextBatch = state.nextReinforcementBatch();
+            ArchiveRun updated = run.withRoomEncounterState(roomIndex, nextBatch);
+            storage.replace(updated);
+            spawnWave(level, updated, roomIndex, state.wave());
+            announce(server, updated, Component.literal(
+                            "OMINOUS \u00d710 - Reinforcement "
+                                    + (nextBatch.reinforcementBatch() + 1)
+                                    + "/"
+                                    + OMINOUS_BATCHES)
+                    .withStyle(ChatFormatting.DARK_RED));
+            return;
+        }
         if (kind == ArchiveEncounterKind.CHOIR) {
             ArchiveEncounterState next = state.finishPuzzleWave();
             ArchiveRun updated = run.withRoomEncounterState(roomIndex, next);
@@ -676,7 +701,8 @@ public final class ArchiveEncounterManager {
             spawnWave(level, updated, roomIndex, nextWave);
             if (kind != ArchiveEncounterKind.HALL) {
                 announce(server, updated, Component.literal(
-                                encounterTitle(kind) + " - Wave " + nextWave + "/" + totalWaves)
+                                encounterTitle(kind, updated.floor())
+                                        + " - Wave " + nextWave + "/" + totalWaves)
                         .withStyle(ChatFormatting.GOLD));
             }
             return;
@@ -692,8 +718,9 @@ public final class ArchiveEncounterManager {
         playRoomClearCue(level, complete, roomIndex, kind);
         if (kind != ArchiveEncounterKind.HALL) {
             announce(server, complete, Component.literal(kind == ArchiveEncounterKind.BOSS
-                            ? "HOUR CANTOR DEFEATED - The Last Recollection is open"
-                            : encounterTitle(kind) + " - Cleared; path opened")
+                            ? bossDisplayName(complete.floor()).toUpperCase(java.util.Locale.ROOT)
+                                    + " DEFEATED - The Last Recollection is open"
+                            : encounterTitle(kind, complete.floor()) + " - Cleared; path opened")
                     .withStyle(ChatFormatting.AQUA));
         }
     }
@@ -741,6 +768,11 @@ public final class ArchiveEncounterManager {
         playWaveStartCue(level, run, roomIndex, wave);
         for (int ordinal = 0; ordinal < composition.size(); ordinal++) {
             spawn(level, run, roomIndex, composition.get(ordinal), ordinal, wave, party, rules);
+        }
+        if (run.mode().ominous()
+                && run.rooms().get(roomIndex).encounterKind() == ArchiveEncounterKind.BOSS
+                && wave == 1) {
+            spawnOminousBossMinions(level, run, roomIndex, 0, party, rules);
         }
         if (debugEnabled()) {
             Yesterglass.LOGGER.info(
@@ -834,8 +866,95 @@ public final class ArchiveEncounterManager {
         announce(
                 level.getServer(),
                 after,
-                Component.literal("CANTOR SEAL RECONSTRUCTED - Final boss room open")
+                Component.literal("ARCHIVE BOSS GATE RECONSTRUCTED - Final boss room open")
                         .withStyle(ChatFormatting.GOLD));
+    }
+
+    private static boolean tickOminousBossReinforcements(
+            ServerLevel level,
+            ArchiveRunSavedData storage,
+            ArchiveRun run,
+            int roomIndex,
+            ArchiveEncounterState state) {
+        if (!state.waveActive() || state.reinforcementBatch() >= 2) {
+            return false;
+        }
+        String runTag = runTag(run.runId());
+        String roomTag = roomTag(roomIndex);
+        List<Monster> enemies = level.getEntitiesOfClass(
+                Monster.class,
+                ArchiveRoomPlacer.roomAabb(run, roomIndex),
+                mob -> mob.isAlive()
+                        && mob.entityTags().contains(runTag)
+                        && mob.entityTags().contains(roomTag));
+        Monster boss = enemies.stream()
+                .filter(mob -> mob.entityTags().contains(FINAL_BOSS_TAG))
+                .findFirst()
+                .orElse(null);
+        if (boss == null) {
+            if (!enemies.isEmpty()) {
+                return false;
+            }
+            ArchiveEncounterState next = state.nextReinforcementBatch();
+            ArchiveRun updated = run.withRoomEncounterState(roomIndex, next);
+            storage.replace(updated);
+            int party = Math.max(1, activePartyInRoom(level.getServer(), updated, roomIndex));
+            spawnOminousBossMinions(
+                    level, updated, roomIndex, next.reinforcementBatch(), party, dungeonRules());
+            return true;
+        }
+        if (enemies.stream().anyMatch(mob -> mob != boss)) {
+            return false;
+        }
+        float threshold = state.reinforcementBatch() == 0 ? 0.66F : 0.33F;
+        if (boss.getHealth() > boss.getMaxHealth() * threshold) {
+            return false;
+        }
+        ArchiveEncounterState next = state.nextReinforcementBatch();
+        ArchiveRun updated = run.withRoomEncounterState(roomIndex, next);
+        storage.replace(updated);
+        int party = Math.max(1, activePartyInRoom(level.getServer(), updated, roomIndex));
+        spawnOminousBossMinions(
+                level, updated, roomIndex, next.reinforcementBatch(), party, dungeonRules());
+        announce(
+                level.getServer(),
+                updated,
+                Component.literal("OMINOUS \u00d710 - The Archive sends another guard")
+                        .withStyle(ChatFormatting.DARK_RED));
+        return true;
+    }
+
+    private static void spawnOminousBossMinions(
+            ServerLevel level,
+            ArchiveRun run,
+            int roomIndex,
+            int group,
+            int party,
+            ArchiveDungeonRules rules) {
+        List<ArchiveDungeonRules.EnemyWeight> pool =
+                ArchiveFloorPresentation.theme(run.floor()).exclusiveWeights();
+        for (int index = 0; index < 3; index++) {
+            ArchiveEnemyKind kind = pool.get(Math.floorMod(group * 3 + index, pool.size())).kind();
+            spawn(level, run, roomIndex, kind, 4 + group * 3 + index, 1, party, rules);
+        }
+    }
+
+    public static ArchiveEnemyKind finalBossKind(long floorIndex) {
+        return ArchiveFloorPresentation.theme(floorIndex).bossKind();
+    }
+
+    public static String bossDisplayName(long floorIndex) {
+        return switch (finalBossKind(floorIndex)) {
+            case WAKE_CUTTER -> "Wake Cutter";
+            case NULL_PORTRAIT -> "Null Portrait";
+            case GNOMON_KNIGHT -> "Gnomon Knight";
+            case DUST_CANTORILE -> "Dust Cantorile";
+            case PRISM_STALKER -> "Prism Stalker";
+            case INDEX_WIGHT -> "Index Wight";
+            case HOUR_CANTOR -> "Hour Cantor";
+            case HOUR_HAND_WRAITH -> "Hour-Hand Wraith";
+            default -> throw new IllegalStateException("Archive theme selected a non-boss enemy");
+        };
     }
 
     public static List<ArchiveEnemyKind> planWave(
@@ -856,7 +975,7 @@ public final class ArchiveEncounterManager {
             ArchiveDungeonRules rules) {
         ArchiveEncounterKind kind = room.encounterKind();
         if (kind == ArchiveEncounterKind.BOSS) {
-            return List.of(ArchiveEnemyKind.HOUR_CANTOR);
+            return List.of(ArchiveFloorPresentation.theme(floorIndex).bossKind());
         }
         int base = switch (kind) {
             case EXPLORATION, REWARD -> 0;
@@ -931,12 +1050,20 @@ public final class ArchiveEncounterManager {
         boolean lesserBoss = run.dungeonGraph().room(roomIndex).category() == ArchiveRoomCategory.MINI_BOSS
                 && wave >= 2
                 && ordinal == 0;
+        boolean finalBoss = run.dungeonGraph().room(roomIndex).category() == ArchiveRoomCategory.FINAL_BOSS
+                && kind == ArchiveFloorPresentation.theme(run.floor()).bossKind();
         double reinforcement = modifiers.contains(ArchiveRoomModifier.REINFORCED_ENEMIES) ? 1.35D : 1.0D;
         double lesserBossHealth = lesserBoss ? 1.75D : 1.0D;
+        double finalBossHealth = finalBoss && kind != ArchiveEnemyKind.HOUR_CANTOR ? 4.5D : 1.0D;
         var health = mob.getAttribute(Attributes.MAX_HEALTH);
         if (health != null) {
             health.setBaseValue(
-                    health.getBaseValue() * partyScale * difficultyScale * reinforcement * lesserBossHealth);
+                    health.getBaseValue()
+                            * partyScale
+                            * difficultyScale
+                            * reinforcement
+                            * lesserBossHealth
+                            * finalBossHealth);
             mob.setHealth(mob.getMaxHealth());
         }
         var damage = mob.getAttribute(Attributes.ATTACK_DAMAGE);
@@ -946,7 +1073,8 @@ public final class ArchiveEncounterManager {
                     * (1.0D + difficulty * rules.damagePerDifficulty())
                     * reinforcement
                     * curse
-                    * (lesserBoss ? 1.20D : 1.0D));
+                    * (lesserBoss ? 1.20D : 1.0D)
+                    * (finalBoss && kind != ArchiveEnemyKind.HOUR_CANTOR ? 1.25D : 1.0D));
         }
         var movement = mob.getAttribute(Attributes.MOVEMENT_SPEED);
         if (movement != null && modifiers.contains(ArchiveRoomModifier.TIME_DISTORTION)) {
@@ -959,6 +1087,9 @@ public final class ArchiveEncounterManager {
         if (mob instanceof LenswardEntity lensward) {
             lensward.setAnchor(position);
         }
+        if (mob instanceof ThemeExclusiveEntity exclusive && finalBoss) {
+            exclusive.setFinalBoss(true);
+        }
         mob.setPersistenceRequired();
         mob.setCustomName(lesserBoss
                 ? Component.translatable("entity.tbos.lesser_boss." + kind.name().toLowerCase(java.util.Locale.ROOT))
@@ -968,6 +1099,9 @@ public final class ArchiveEncounterManager {
         mob.addTag(KIND_TAG_PREFIX + kind.name().toLowerCase(java.util.Locale.ROOT));
         if (lesserBoss) {
             mob.addTag(LESSER_BOSS_TAG);
+        }
+        if (finalBoss) {
+            mob.addTag(FINAL_BOSS_TAG);
         }
         abilitiesFor(kind, spawnSeed, lesserBoss).forEach(ability -> mob.addTag(ability.entityTag()));
         level.addFreshEntity(mob);
@@ -1602,7 +1736,7 @@ public final class ArchiveEncounterManager {
                 .withStyle(ChatFormatting.AQUA);
     }
 
-    private static String encounterTitle(ArchiveEncounterKind kind) {
+    private static String encounterTitle(ArchiveEncounterKind kind, long floorIndex) {
         return switch (kind) {
             case EXPLORATION -> "ECHO CHAMBER";
             case REWARD -> "RECOLLECTION";
@@ -1612,7 +1746,7 @@ public final class ArchiveEncounterManager {
             case GUARDIAN -> "MERIDIAN GUARDIAN";
             case HALL -> "HALL ALIGNMENT";
             case CHOIR -> "CHOIR";
-            case BOSS -> "HOUR CANTOR";
+            case BOSS -> bossDisplayName(floorIndex).toUpperCase(java.util.Locale.ROOT);
         };
     }
 

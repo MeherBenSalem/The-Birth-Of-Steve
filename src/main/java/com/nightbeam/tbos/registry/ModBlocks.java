@@ -94,6 +94,22 @@ public final class ModBlocks {
                     .strength(-1.0F, 3_600_000.0F)
                     .lightLevel(state -> 7)
                     .noOcclusion());
+    /**
+     * The Seal's louder sibling, used only on the way into a boss room.
+     *
+     * <p>Every locked door in the Archive looked identical, so a player had no
+     * way to tell an ordinary held door from the one with a boss behind it until
+     * they were already through. Same silhouette and same unbreakable strength;
+     * cyan instead of gold, and brighter, so the difference carries across a
+     * dark room.
+     */
+    public static final DeferredBlock<Block> CANTOR_GATE = BLOCKS.registerSimpleBlock(
+            "cantor_gate",
+            properties -> properties
+                    .mapColor(MapColor.COLOR_CYAN)
+                    .strength(-1.0F, 3_600_000.0F)
+                    .lightLevel(state -> 10)
+                    .noOcclusion());
     public static final DeferredBlock<ArchiveCacheBlock> ARCHIVE_CACHE = BLOCKS.registerBlock(
             "archive_cache",
             ArchiveCacheBlock::new,
@@ -219,8 +235,11 @@ public final class ModBlocks {
     public static final DeferredBlock<Block> UNWRITTEN_ROOF = themeSolid("unwritten_roof", MapColor.COLOR_BLACK);
     public static final DeferredBlock<Block> UNWRITTEN_TRIM = themeSolid("unwritten_trim", MapColor.GOLD);
 
+    // Phases to a walk-through ghost on a timer, and noOcclusion is per-block
+    // rather than per-state: without it neighbours cull against the solid state
+    // and the phased state reads as a hole through the room.
     public static final DeferredBlock<ThemeHazardBlock> PARALLAX_PANEL = themeHazard(
-            "parallax_panel", ThemeHazardBlock.Mode.PARALLAX_PANEL, MapColor.COLOR_PURPLE, false);
+            "parallax_panel", ThemeHazardBlock.Mode.PARALLAX_PANEL, MapColor.COLOR_PURPLE, true);
     public static final DeferredBlock<ThemeHazardBlock> LIGHT_DUST = themeHazard(
             "light_dust", ThemeHazardBlock.Mode.LIGHT_DUST, MapColor.SAND, true);
     public static final DeferredBlock<ThemeHazardBlock> COLLAPSING_MERIDIAN = themeHazard(

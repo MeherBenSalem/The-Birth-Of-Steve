@@ -269,7 +269,8 @@ public final class ArchiveRunEvents {
                     || !ArchiveInstanceLayout.boundsForSlot(run.instanceSlot()).isInside(player.blockPosition());
             if ((reconnecting || outsideCurrentFloor) && ArchiveRunManager.teleportToCheckpoint(player)) {
                 ModAdvancements.awardEnterFracturedArchive(player);
-                PacketDistributor.sendToPlayer(player, new ArchiveFloorIntroPayload(run.floor()));
+                PacketDistributor.sendToPlayer(
+                        player, new ArchiveFloorIntroPayload(run.floor(), run.mode().ominous()));
             }
         }
     }

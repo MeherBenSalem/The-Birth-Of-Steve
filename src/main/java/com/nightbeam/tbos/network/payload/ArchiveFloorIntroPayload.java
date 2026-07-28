@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
 /** Starts the client-side cinematic for a newly activated Archive floor. */
-public record ArchiveFloorIntroPayload(long floorIndex) implements CustomPacketPayload {
+public record ArchiveFloorIntroPayload(long floorIndex, boolean ominous) implements CustomPacketPayload {
     public static final Type<ArchiveFloorIntroPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "archive_floor_intro"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ArchiveFloorIntroPayload> STREAM_CODEC =
@@ -21,10 +21,11 @@ public record ArchiveFloorIntroPayload(long floorIndex) implements CustomPacketP
 
     private static void write(RegistryFriendlyByteBuf buffer, ArchiveFloorIntroPayload payload) {
         buffer.writeVarLong(payload.floorIndex);
+        buffer.writeBoolean(payload.ominous);
     }
 
     private static ArchiveFloorIntroPayload read(RegistryFriendlyByteBuf buffer) {
-        return new ArchiveFloorIntroPayload(buffer.readVarLong());
+        return new ArchiveFloorIntroPayload(buffer.readVarLong(), buffer.readBoolean());
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.nightbeam.tbos.run;
 
-/** Derived, restart-safe progress for the final Cantor Seal gate. */
+/** Derived, restart-safe progress for the final Archive Boss Gate. */
 public record ArchiveQuestProgress(
         int roomsCleared,
         int roomsRequired,
@@ -8,7 +8,7 @@ public record ArchiveQuestProgress(
         int lesserBossesDefeated,
         int lesserBossesTotal,
         boolean complete) {
-    public static final String QUEST_TITLE = "Reconstruct the Cantor Seal";
+    public static final String QUEST_TITLE = "Reconstruct the Archive Boss Gate";
 
     public ArchiveQuestProgress {
         if (roomsCleared < 0 || roomsRequired < 0 || eligibleRooms < 0

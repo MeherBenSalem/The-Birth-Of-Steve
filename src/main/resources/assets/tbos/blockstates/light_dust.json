@@ -1,6 +1,10 @@
-﻿{
+{
   "variants": {
-    "active=false": { "model": "tbos:block/light_dust" },
-    "active=true": { "model": "tbos:block/light_dust" }
+    "active=false": {
+      "model": "tbos:block/light_dust"
+    },
+    "active=true": {
+      "model": "tbos:block/light_dust"
+    }
   }
 }

@@ -1,6 +1,7 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_column",
   "textures": {
-    "all": "tbos:block/wake_trim"
+    "side": "tbos:block/wake_trim",
+    "end": "tbos:block/wake_trim_end"
   }
 }

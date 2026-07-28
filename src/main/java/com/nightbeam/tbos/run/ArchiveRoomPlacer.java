@@ -238,18 +238,22 @@ public final class ArchiveRoomPlacer {
         if (!doorwayClear(run, roomIndex, memberBoxes)) {
             return false;
         }
-        for (BlockPos position : doorPositions(run, roomIndex)) {
-            level.setBlock(position, ModBlocks.ARCHIVE_SEAL.get().defaultBlockState(), UPDATE_FLAGS);
-            level.sendParticles(
-                    net.minecraft.core.particles.ParticleTypes.REVERSE_PORTAL,
-                    position.getX() + 0.5D,
-                    position.getY() + 0.5D,
-                    position.getZ() + 0.5D,
-                    3,
-                    0.20D,
-                    0.30D,
-                    0.20D,
-                    0.01D);
+        ArchiveRoomNode room = run.dungeonGraph().room(roomIndex);
+        for (ArchiveConnection connection : room.connections()) {
+            BlockState seal = doorSeal(room, run.dungeonGraph().room(connection.targetRoom()));
+            for (BlockPos position : doorPositions(run, roomIndex, connection.direction())) {
+                level.setBlock(position, seal, UPDATE_FLAGS);
+                level.sendParticles(
+                        net.minecraft.core.particles.ParticleTypes.REVERSE_PORTAL,
+                        position.getX() + 0.5D,
+                        position.getY() + 0.5D,
+                        position.getZ() + 0.5D,
+                        3,
+                        0.20D,
+                        0.30D,
+                        0.20D,
+                        0.01D);
+            }
         }
         BlockPos soundOrigin = doorPositions(run, roomIndex).stream()
                 .findFirst()
@@ -587,7 +591,10 @@ public final class ArchiveRoomPlacer {
                     put(placements, floorPos.above(), hazard);
                 }
                 case PARALLAX_PANEL -> {
-                    put(placements, new BlockPos(x, bounds.minY() + 1 + (i % 2), z), hazard);
+                    // Sits on the floor. The old alternating offset put half of
+                    // them a second block up with nothing underneath, which is
+                    // a panel hanging in mid-air rather than a hazard.
+                    put(placements, floorPos.above(), hazard);
                 }
                 case LIGHT_DUST, INK_POOL, RESONANT_PLATE -> put(placements, floorPos, hazard);
             }
@@ -1333,10 +1340,13 @@ public final class ArchiveRoomPlacer {
                 new BlockPos(bounds.maxX() - 1, high, bounds.minZ() + 1),
                 new BlockPos(bounds.minX() + 1, high, bounds.maxZ() - 1),
                 new BlockPos(bounds.maxX() - 1, high, bounds.maxZ() - 1),
-                new BlockPos(bounds.minX() + 2, low, bounds.minZ() + 2),
-                new BlockPos(bounds.maxX() - 2, low, bounds.minZ() + 2),
-                new BlockPos(bounds.minX() + 2, low, bounds.maxZ() - 2),
-                new BlockPos(bounds.maxX() - 2, low, bounds.maxZ() - 2),
+                // Hard against the side wall. Two blocks in from every surface
+                // leaves the web strung between nothing at all, which reads as a
+                // block hanging in the air rather than as cobweb.
+                new BlockPos(bounds.minX() + 1, low, bounds.minZ() + 2),
+                new BlockPos(bounds.maxX() - 1, low, bounds.minZ() + 2),
+                new BlockPos(bounds.minX() + 1, low, bounds.maxZ() - 2),
+                new BlockPos(bounds.maxX() - 1, low, bounds.maxZ() - 2),
                 new BlockPos(bounds.minX() + 1, high - 2, bounds.minZ() + 7),
                 new BlockPos(bounds.maxX() - 1, high - 2, bounds.minZ() + 7),
                 new BlockPos(bounds.minX() + 1, high - 2, bounds.maxZ() - 7),
@@ -1478,8 +1488,14 @@ public final class ArchiveRoomPlacer {
             int minZ = Math.min(first.maxZ(), second.maxZ());
             int maxZ = Math.max(first.minZ(), second.minZ());
             for (int z = minZ; z <= maxZ; z++) {
-                put(placements, new BlockPos(centerX - 1, floorY, z), floor);
-                put(placements, new BlockPos(centerX, floorY, z), floor);
+                // The floor runs the full cleared width, including under the two
+                // wall columns. Flooring only the walkway leaves the cleared
+                // columns at centerX-2 and centerX+1 open to the void for the
+                // whole length of every corridor, because the walls start a
+                // block higher.
+                for (int x = centerX - 2; x <= centerX + 1; x++) {
+                    put(placements, new BlockPos(x, floorY, z), floor);
+                }
                 for (int y = floorY + 1; y <= floorY + 4; y++) {
                     put(placements, new BlockPos(centerX - 2, y, z), wall);
                     put(placements, new BlockPos(centerX + 1, y, z), wall);
@@ -1493,8 +1509,9 @@ public final class ArchiveRoomPlacer {
             int minX = Math.min(first.maxX(), second.maxX());
             int maxX = Math.max(first.minX(), second.minX());
             for (int x = minX; x <= maxX; x++) {
-                put(placements, new BlockPos(x, floorY, centerZ - 1), floor);
-                put(placements, new BlockPos(x, floorY, centerZ), floor);
+                for (int z = centerZ - 2; z <= centerZ + 1; z++) {
+                    put(placements, new BlockPos(x, floorY, z), floor);
+                }
                 for (int y = floorY + 1; y <= floorY + 4; y++) {
                     put(placements, new BlockPos(x, y, centerZ - 2), wall);
                     put(placements, new BlockPos(x, y, centerZ + 1), wall);
@@ -1524,6 +1541,13 @@ public final class ArchiveRoomPlacer {
         BlockState stairState = ModBlocks.ARCHIVE_STAIRS.get().defaultBlockState()
                 .setValue(StairBlock.FACING, net.minecraft.core.Direction.EAST);
 
+        // The stairwell runs inside both rooms' footprints and through the void
+        // between them. Where it is inside a room, that room's own shell already
+        // encloses it and adding tunnel geometry there just hangs blocks in open
+        // air; where it is in the void it needs a full tube of its own.
+        BoundingBox lower = firstBounds.minY() == lowY ? firstBounds : secondBounds;
+        BoundingBox upper = firstBounds.minY() == highY ? firstBounds : secondBounds;
+
         // The lower route begins with a stair at floor level; a full upper
         // landing completes the transition without jumping or breaking the shell.
         for (int width = 0; width < 2; width++) {
@@ -1532,7 +1556,7 @@ public final class ArchiveRoomPlacer {
             for (int head = 1; head <= 3; head++) {
                 placements.remove(upperLanding.above(head));
             }
-            put(placements, upperLanding.above(4), roof);
+            putEnclosure(placements, upperLanding.above(4), roof, lower, upper);
         }
         for (int step = 0; step <= rise; step++) {
             int x = centerX - 9 + Math.min(16, step);
@@ -1546,7 +1570,14 @@ public final class ArchiveRoomPlacer {
                 placements.remove(stair.above(2));
                 placements.remove(stair.above(3));
                 put(placements, stair, stairState);
-                put(placements, stair.above(4), roof);
+                // Two courses, not one. Consecutive steps rise a block as they
+                // advance a block, so a single-course ceiling only ever touches
+                // its neighbour at a corner and reads as a line of loose blocks
+                // hanging in the air. The second course is what joins them.
+                putEnclosure(placements, stair.above(4), roof, lower, upper);
+                putEnclosure(placements, stair.above(5), roof, lower, upper);
+                // Nothing held the stairs up over the gap between floors.
+                putEnclosure(placements, stair.below(), wall, lower, upper);
             }
             for (int head = 0; head <= 3; head++) {
                 put(placements, new BlockPos(x, y + head, centerZ - 2), wall);
@@ -1558,9 +1589,44 @@ public final class ArchiveRoomPlacer {
                 centerX + 9, highY + 4, centerZ + 3));
     }
 
+    /**
+     * Place a piece of stairwell tube only where it is not already inside a
+     * room, so the tunnel never deposits blocks in a room's open interior.
+     */
+    private static void putEnclosure(
+            Map<BlockPos, BlockState> placements,
+            BlockPos position,
+            BlockState state,
+            BoundingBox lower,
+            BoundingBox upper) {
+        if (insideInterior(lower, position) || insideInterior(upper, position)) {
+            return;
+        }
+        put(placements, position, state);
+    }
+
+    /** True for a room's open interior — inside the shell, not part of it. */
+    private static boolean insideInterior(BoundingBox bounds, BlockPos position) {
+        return position.getX() > bounds.minX() && position.getX() < bounds.maxX()
+                && position.getY() > bounds.minY() && position.getY() < bounds.maxY()
+                && position.getZ() > bounds.minZ() && position.getZ() < bounds.maxZ();
+    }
+
+    /**
+     * Seal every doorway of a room whose encounter is holding it shut.
+     *
+     * <p>Walks the connections rather than the room's flat door list so each
+     * doorway gets the seal that matches what is on the other side of it. Doing
+     * this by position alone re-sealed a boss door with an ordinary Archive Seal
+     * moments after the wall pass had correctly given it a Cantor Gate.
+     */
     private static void placeDoorSeals(Map<BlockPos, BlockState> placements, ArchiveRun run, int roomIndex) {
-        for (BlockPos position : doorPositions(run, roomIndex)) {
-            put(placements, position, ModBlocks.ARCHIVE_SEAL.get().defaultBlockState());
+        ArchiveRoomNode room = run.dungeonGraph().room(roomIndex);
+        for (ArchiveConnection connection : room.connections()) {
+            BlockState seal = doorSeal(room, run.dungeonGraph().room(connection.targetRoom()));
+            for (BlockPos position : doorPositions(run, roomIndex, connection.direction())) {
+                put(placements, position, seal);
+            }
         }
     }
 
@@ -1584,8 +1650,26 @@ public final class ArchiveRoomPlacer {
         if (!revealed) {
             put(placements, position, ModBlocks.CRACKED_ARCHIVE_STONE.get().defaultBlockState());
         } else if (connection.locked()) {
-            put(placements, position, ModBlocks.ARCHIVE_SEAL.get().defaultBlockState());
+            put(placements, position, doorSeal(room, target));
         }
+    }
+
+    /**
+     * The block a locked doorway is filled with.
+     *
+     * <p>Every locked door used to be an Archive Seal, so nothing distinguished
+     * a door merely held shut from the one with a boss behind it until the
+     * player was already through. A door into a boss room gets the Cantor Gate
+     * instead, which is the same language in cyan and reads from across a room.
+     */
+    private static BlockState doorSeal(ArchiveRoomNode room, ArchiveRoomNode target) {
+        return isBossRoom(room.category()) || isBossRoom(target.category())
+                ? ModBlocks.CANTOR_GATE.get().defaultBlockState()
+                : ModBlocks.ARCHIVE_SEAL.get().defaultBlockState();
+    }
+
+    private static boolean isBossRoom(ArchiveRoomCategory category) {
+        return category == ArchiveRoomCategory.FINAL_BOSS || category == ArchiveRoomCategory.MINI_BOSS;
     }
 
     private static boolean openConnection(
@@ -1620,7 +1704,11 @@ public final class ArchiveRoomPlacer {
         BoundingBox bounds = roomBounds(run, roomIndex);
         clearVolumes.add(new BoundingBox(
                 bounds.minX() - 1,
-                bounds.minY(),
+                // One course below the floor plane, because breakable floor
+                // hazards put a solid catch there so a collapsing tile does not
+                // drop the player into the void. Clearing only from the floor up
+                // left those catch blocks behind on every regeneration.
+                bounds.minY() - 1,
                 bounds.minZ() - 1,
                 bounds.maxX() + 1,
                 bounds.maxY() + 2,

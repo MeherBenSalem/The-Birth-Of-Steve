@@ -1,6 +1,8 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "all": "tbos:block/choir_floor"
+    "top": "tbos:block/choir_floor",
+    "bottom": "tbos:block/choir_floor",
+    "side": "tbos:block/choir_floor_side"
   }
 }

@@ -8,5 +8,7 @@ public final class ThemeExclusiveRenderState extends LivingEntityRenderState {
     public float abilityProgress;
     public float attackTime;
     public float hurtTime;
+    public boolean finalBoss;
+    public int bossPhase;
     public String texturePath = "shard_drifter";
 }
