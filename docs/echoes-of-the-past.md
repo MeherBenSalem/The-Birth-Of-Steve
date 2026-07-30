@@ -244,9 +244,17 @@ optional and is not required for navigation.
 
 ## Server configuration
 
-NeoForge writes the authoritative values to
-`config/tbos-common.toml` under `echoesOfThePastDungeon`. Checked-in theme
-defaults also live at
+The authoritative values live in `config/tbos-common.json` under
+`echoesOfThePastDungeon`, written on first launch and rewritten on every load so
+new keys appear and invalid ones revert to their default. The format is the same
+on NeoForge and Fabric; entries whose key starts with `// ` are documentation and
+are ignored when reading.
+
+**Upgrading from 0.3.0 or earlier on NeoForge:** the old
+`config/tbos-common.toml` is no longer read. Re-apply any customised values in
+the new JSON file; defaults are otherwise unchanged.
+
+Checked-in theme defaults also live at
 `data/tbos/archive_dungeon/echoes_of_the_past.json` and
 `data/tbos/archive_encounters/echoes_of_the_past.json`.
 

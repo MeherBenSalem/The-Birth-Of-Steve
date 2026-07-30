@@ -26,8 +26,13 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # Builds :common, :neoforge and :fabric. :common:check pulls in the
+      # 1,000-seed dungeon simulation.
       - name: Build
         run: ./gradlew clean build --stacktrace
 
+      # The GameTest suite is the real regression gate. It runs on NeoForge:
+      # the test functions and their datapack instances are common code, so a
+      # green run here covers the Fabric jar's tests too.
       - name: GameTests
-        run: ./gradlew runGameTestServer --stacktrace --console=plain
+        run: ./gradlew :neoforge:runGameTestServer --stacktrace --console=plain

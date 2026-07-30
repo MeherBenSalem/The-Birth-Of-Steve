@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:phase_geometry_round_trip",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 140,
+  "padding": 48
+}

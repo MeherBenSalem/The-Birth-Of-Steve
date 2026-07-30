@@ -1,5 +1,43 @@
 # Changelog
 
+## Unreleased
+
+## 0.4.0 - 2026-07-30
+
+### Fabric support
+
+- **The mod now ships for Fabric as well as NeoForge**, built from one shared
+  codebase. Download the JAR matching your loader:
+  `tbos-neoforge-26.1.2-<version>.jar` or `tbos-fabric-26.1.2-<version>.jar`.
+  On Fabric you also need Fabric API. Gameplay, worldgen and saved data are
+  identical on both.
+
+### Archive floor theme textures
+
+- All eight theme palettes (floor, wall, roof, trim) were rebuilt to match
+  Archive craft: beveled tiles, ashlar masonry, panel grids, and wood shelving
+  instead of dotted placeholder fills. Theme materials stay distinct per floor.
+
+### The Archivist's Journal is readable again
+
+- Every heading, tab label and description in the Journal was being drawn with a
+  drop shadow, which on the pale parchment rendered as a second smeared copy of
+  the text one pixel down and to the right. The shadows are gone.
+- The inactive tab's label was dark brown on a dark olive tab — about 1.1:1
+  contrast, effectively invisible. Inactive tabs now use light ink and brighten
+  further on hover.
+- At small window sizes or high GUI scale the Story rows and the Archive Run
+  statistics ran straight through the progress bar at the bottom of the page.
+  Both lists now reserve the footer and compress instead, and a long step title
+  is trimmed rather than colliding with its counter.
+
+### Breaking change: config format
+
+- Settings moved from `config/tbos-common.toml` to `config/tbos-common.json`,
+  and the client settings to `config/tbos-client.json`, so that both loaders read
+  the same file. **The old `.toml` is not migrated.** If you had customised
+  values, re-enter them in the new file; every default is unchanged.
+
 ## 0.3.0 - 2026-07-28
 
 ### Theme bosses and Ominous runs

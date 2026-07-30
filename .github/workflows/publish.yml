@@ -53,7 +53,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "25"
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -68,9 +68,12 @@ jobs:
         id: jars
         shell: bash
         run: |
+          # Loader is inferred from the filename below, so the loader-agnostic
+          # :common jar must not be uploaded - it would be mislabelled.
           mapfile -t JARS < <(find . -type f -path "*/build/libs/*.jar" \
             ! -name "*-sources.jar" ! -name "*-javadoc.jar" \
-            ! -name "*-dev.jar" ! -name "*-dev-shadow.jar" | head -n 20)
+            ! -name "*-dev.jar" ! -name "*-dev-shadow.jar" \
+            ! -name "*-common-*.jar" | head -n 20)
           if [ ${#JARS[@]} -eq 0 ]; then
             echo "No jars in build/libs" >&2
             exit 1
@@ -80,6 +83,16 @@ jobs:
           echo "list<<$EOF" >> "$GITHUB_OUTPUT"
           printf '%s\n' "${JARS[@]}" >> "$GITHUB_OUTPUT"
           echo "$EOF" >> "$GITHUB_OUTPUT"
+
+      # Read the target game version from the single place that defines it
+      # rather than pattern-matching it out of a jar filename.
+      - name: Resolve Minecraft version
+        id: mc
+        shell: bash
+        run: |
+          MC=$(grep -E '^minecraft_version=' gradle.properties | cut -d= -f2)
+          test -n "$MC"
+          echo "version=$MC" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
         with:
@@ -95,6 +108,7 @@ jobs:
           CURSEFORGE_ID: ${{ vars.CURSEFORGE_ID }}
           VERSION: ${{ steps.ver.outputs.version }}
           JAR_LIST: ${{ steps.jars.outputs.list }}
+          MC_VERSION: ${{ steps.mc.outputs.version }}
         shell: bash
         run: |
           set -euo pipefail
@@ -113,10 +127,8 @@ jobs:
             else if (n.includes('quilt')) loaders.add('quilt');
             else if (n.includes('forge')) loaders.add('forge');
             else loaders.add('fabric');
-            const m = n.match(/1\.\d+(?:\.\d+)?/);
-            if (m) gvs.add(m[0]);
           }
-          if (!gvs.size) gvs.add('1.21.1');
+          gvs.add(process.env.MC_VERSION);
 
           (async () => {
             const fileParts = jars.map((_, i) => `file_${i}`);

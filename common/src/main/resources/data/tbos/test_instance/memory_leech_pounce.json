@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:memory_leech_pounce",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 120,
+  "padding": 48
+}

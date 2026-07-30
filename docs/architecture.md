@@ -1,7 +1,36 @@
 # Architecture
 
-- `Yesterglass`: minimal mod entry point.
-- `registry`: deferred block, item, sound, particle, and data-component registration.
+## Modules
+
+The mod is built once and shipped for two loaders.
+
+- `common`: nearly the whole mod, compiled against vanilla Minecraft only. It has
+  no knowledge of NeoForge or Fabric.
+- `neoforge`: the `@Mod` entry points plus adapters onto the NeoForge event bus,
+  payload registrar, and `DeferredRegister`.
+- `fabric`: the `ModInitializer`s plus Fabric API callbacks, and four mixins for
+  the hooks Fabric API does not expose (heal scaling, explosion block filtering,
+  block placement, and null-`DataFixTypes` saved data).
+
+Common reaches a loader only through `platform.Services`, which resolves
+`IPlatformHelper`, `IRegistryHelper` and `INetworkHelper` from `META-INF/services`.
+Loader projects may use everything in common; common may use nothing from them.
+The practical consequence for every new feature: write it in `common`, and only
+add to a loader project when the vanilla API genuinely cannot express it.
+
+Event handlers in common take vanilla parameters and return a verdict
+(`allowBreak`, `allowPlace`, `allowDeath`, `scaleHeal`, `filterExplosion`) so that
+one implementation serves a cancellable NeoForge event and a boolean-returning
+Fabric callback alike.
+
+## Packages
+
+- `Yesterglass`: common bootstrap; `TbosNeoForge` and `TbosFabric` are the real
+  entry points.
+- `platform`: the loader seam — `Services`, the `Registrar`/`RegistryEntry`
+  abstraction, and the three service interfaces.
+- `registry`: deferred block, item, sound, and data-component registration. Each
+  `Mod*` class fills `ModRegistries` from a static initialiser; the loader flushes.
 - `site`: temporal state machine, compact persistence, spatial lookup, and a
   versioned authored-site catalog. Each site persists a stable definition ID,
   origin, rotation, progress flags, transition timing, and deterministic seed.

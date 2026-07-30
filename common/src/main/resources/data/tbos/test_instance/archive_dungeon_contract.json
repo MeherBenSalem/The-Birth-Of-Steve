@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:archive_dungeon_contract",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 80,
+  "padding": 48
+}

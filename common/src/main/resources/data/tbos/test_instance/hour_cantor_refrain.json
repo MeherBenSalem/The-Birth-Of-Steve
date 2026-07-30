@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:hour_cantor_refrain",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 300,
+  "padding": 48
+}

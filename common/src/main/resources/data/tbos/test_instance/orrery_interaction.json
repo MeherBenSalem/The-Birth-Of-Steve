@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:orrery_interaction",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 160,
+  "padding": 48
+}

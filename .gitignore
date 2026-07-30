@@ -1,7 +1,10 @@
 .gradle/
 build/
 out/
-/run/
+# Dev game directories: NeoForge's gameTestServer uses <module>/run, the named
+# run configurations use <module>/runs.
+run/
+runs/
 /run-*/
 .idea/
 *.iml
@@ -15,5 +18,5 @@ bin/
 logs/
 crash-reports/
 graphify-out/
-src/generated/resources/.cache/
+*/src/generated/resources/.cache/
 /tools

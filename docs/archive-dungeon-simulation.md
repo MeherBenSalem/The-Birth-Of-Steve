@@ -3,10 +3,12 @@
 Command:
 
 ```text
-gradlew.bat runDungeonSimulation --console=plain
+gradlew.bat :common:runDungeonSimulation --console=plain
 ```
 
-The task generates 1,000 consecutive deterministic seeds with the production
+The task lives in the loader-agnostic `common` module because the generator is a
+pure seeded function that never touches a world. It generates 1,000 consecutive
+deterministic seeds with the production
 defaults. It fails the build if any seed cannot generate, any room is unreachable,
 any pair of room volumes overlaps, the derived lesser-boss count is wrong, the
 final gate begins unlocked, or the final-gate quest begins completed.

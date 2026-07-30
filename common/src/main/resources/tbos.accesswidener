@@ -1,0 +1,19 @@
+accessWidener	v2	official
+
+# The header must be the first line, and the namespace is "official" rather than
+# "named" because 26.1 ships deobfuscated: Loom treats the Mojang names as the
+# official namespace and rejects a "named" widener.
+#
+# Keep in sync with common/src/main/resources/META-INF/accesstransformer.cfg.
+
+# CreativeModeTab$Output is protected in vanilla; ModCreativeModeTabs needs to
+# name it to build the mod's creative tab in common code.
+accessible	class	net/minecraft/world/item/CreativeModeTab$Output
+
+# BlockEntityType's Set<Block> constructor is private in vanilla; ModBlockEntities
+# calls it directly for the three utility block entities.
+accessible	class	net/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier
+accessible	method	net/minecraft/world/level/block/entity/BlockEntityType	<init>	(Lnet/minecraft/world/level/block/entity/BlockEntityType$BlockEntitySupplier;Ljava/util/Set;)V
+
+# StairBlock's constructor is protected in vanilla; ModBlocks builds ARCHIVE_STAIRS.
+accessible	method	net/minecraft/world/level/block/StairBlock	<init>	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V

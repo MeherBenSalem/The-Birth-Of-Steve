@@ -2,9 +2,9 @@
 
 > Every ruin has a before.
 
-The Birth of Steve is a NeoForge adventure mod for Minecraft Java Edition 26.1.2. Its
-central mechanic reconstructs a remembered version of authored ruins at the same
-world coordinates.
+The Birth of Steve is an adventure mod for Minecraft Java Edition 26.1.2, built for
+both NeoForge and Fabric from a single shared codebase. Its central mechanic
+reconstructs a remembered version of authored ruins at the same world coordinates.
 
 ## Current state
 
@@ -34,16 +34,20 @@ the complete operator command reference, read
 Requirements: JDK 25. Use the checked-in Gradle wrapper:
 
 ```text
-gradlew.bat clean build
-gradlew.bat runClient
-gradlew.bat runGameTestServer
-gradlew.bat runDungeonSimulation
-gradlew.bat runServer
+gradlew.bat build
+gradlew.bat :neoforge:runClient
+gradlew.bat :fabric:runClient
+gradlew.bat :neoforge:runGameTestServer
+gradlew.bat :common:runDungeonSimulation
 ```
 
 On Linux or macOS, use `./gradlew` instead.
 
+The project is a MultiLoader-Template layout: `common` holds nearly all of the
+mod and compiles against vanilla, while `neoforge` and `fabric` only load it and
+supply loader-specific glue. `build` produces one jar per loader.
+
 ## License
 
-All Rights Reserved. See `LICENSE`. Minecraft, NeoForge, Gradle, and third-party
-components retain their respective ownership and licenses.
+All Rights Reserved. See `LICENSE`. Minecraft, NeoForge, Fabric, Gradle, and
+third-party components retain their respective ownership and licenses.

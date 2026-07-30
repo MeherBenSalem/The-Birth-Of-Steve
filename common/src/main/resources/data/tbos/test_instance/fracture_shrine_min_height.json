@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:fracture_shrine_min_height",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 20,
+  "padding": 48
+}

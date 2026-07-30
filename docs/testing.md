@@ -3,14 +3,20 @@
 ## Automated commands
 
 ```text
-gradlew.bat clean build
-gradlew.bat runData
-gradlew.bat runGameTestServer
-gradlew.bat runDungeonSimulation
+gradlew.bat build
+gradlew.bat :neoforge:runData
+gradlew.bat :neoforge:runGameTestServer
+gradlew.bat :common:runDungeonSimulation
 ```
 
-`clean build` also runs the 1,000-seed dungeon simulation through Gradle's
-`check` lifecycle.
+`build` compiles `common`, `neoforge` and `fabric`, and runs the 1,000-seed
+dungeon simulation through `:common:check`.
+
+The GameTest suite runs on NeoForge. Both the test functions and their
+`data/tbos/test_instance/` definitions are common code, so a green NeoForge run
+exercises the same tests the Fabric jar ships. What it does **not** cover is the
+loader glue itself — the Fabric entry points, the four Fabric mixins, and the
+Fabric registry flush order need the manual matrix below.
 
 Before a release build, regenerate and validate the v0.3.0-owned assets:
 
@@ -71,6 +77,32 @@ worked".
 
 Every other test in the namespace is stable, including all eight Archive creature
 tests.
+
+## Multi-loader parity matrix
+
+Run every row on **both** `:neoforge:runClient` and `:fabric:runClient`. The
+automated suite runs on NeoForge only, so this matrix is the sole coverage of the
+Fabric entry points, the four Fabric mixins, and the Fabric registry flush order.
+
+| Check | NeoForge | Fabric |
+| --- | --- | --- |
+| Mod loads; no missing-service or mixin-apply errors in the log | PASS 2026-07-30 | PASS 2026-07-30 |
+| Creative tab lists every block and item, in the same order on both loaders | unverified | unverified |
+| `/tbos dungeon validate_templates` passes | unverified | unverified |
+| Right-clicking the Archivist's Journal opens the quest screen (not the vanilla book) | unverified | unverified |
+| Quest HUD, puzzle HUD and floor intro draw above the hotbar | unverified | unverified |
+| `J` toggles the objectives HUD | unverified | unverified |
+| Entering the Fractured Archive generates a floor and syncs the quest payload | unverified | unverified |
+| Breaking a protected Archive block is denied and the block resyncs | unverified | unverified |
+| Placing a block inside run bounds is denied | unverified | unverified |
+| A creeper explosion inside run bounds destroys nothing | unverified | unverified |
+| A REDUCED_HEALING room halves regeneration | unverified | unverified |
+| Quitting and rejoining restores the run and site progress (saved data survives) | unverified | unverified |
+| `config/tbos-common.json` is written on first launch and edits take effect on restart | unverified | unverified |
+
+The saved-data row matters most on Fabric: it is what `SavedDataStorageMixin`
+exists for, and a regression there looks like silently empty progress rather than
+a crash.
 
 ## Onboarding and shrine worldgen manual matrix
 
@@ -248,6 +280,30 @@ procedure.
   overworld, Nether, and End, and `runClient` ended with `BUILD SUCCESSFUL`.
 - This confirmation does not yet cover the dedicated two-client, interrupted
   save/reload, or repeated ten-transition profiling cases.
+
+## Automated results — 2026-07-30 (multi-loader migration)
+
+- `gradlew.bat build --console=plain`: PASS. Built `:common`, `:neoforge` and
+  `:fabric`; the 1,000-seed simulation ran through `:common:check` with zero
+  failed generations, zero unreachable rooms, zero overlaps, zero lesser-boss
+  mismatches and zero quest-gate violations.
+- `gradlew.bat :neoforge:runGameTestServer --console=plain`: PASS, **all 56
+  required tests passed**. The same 56 pass on the pre-migration commit
+  (`dfbba82`), and the set of `tbos:` test ids is identical between the two runs,
+  so converting the test instances to datapack JSON changed nothing about what
+  runs.
+- `gradlew.bat :fabric:runServer`: the dedicated Fabric server reached
+  `Done (0.680s)!`, registered `tbos:fractured_archive`, and wrote
+  `config/tbos-common.json`. Ran until killed by a timeout, as expected for a
+  server.
+- `gradlew.bat :fabric:runClient`: reached the title screen. Mixin compatibility
+  level `JAVA_25`, all four mixins applied with no errors, `tbos` present in the
+  resource-manager pack list, atlases stitched. The only error in the log is the
+  usual dev-environment Realms authorisation failure. Killed by a timeout.
+- Not yet covered: every *gameplay* row of the multi-loader parity matrix above,
+  on either loader. Loading cleanly is not the same as the creative tab, journal
+  screen, HUDs, protection, reduced healing and saved-data round trip behaving
+  the same on both.
 
 ## Automated results — 2026-07-27 (theme art and silhouette pass)
 

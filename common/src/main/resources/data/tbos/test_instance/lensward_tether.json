@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:lensward_tether",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 300,
+  "padding": 48
+}

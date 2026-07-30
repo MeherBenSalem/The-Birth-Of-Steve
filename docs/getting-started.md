@@ -7,13 +7,15 @@ or cheats to begin the adventure.
 
 1. Install **Minecraft Java Edition 26.1.2** and **NeoForge 26.1.2.83 or newer**
    for that Minecraft version.
-2. Put `tbos-0.2.0-alpha.2.jar` in the instance's `mods` folder.
-3. Launch NeoForge and create or open an Overworld save. For multiplayer, put
+2. Put the JAR matching your loader in the instance's `mods` folder:
+   `tbos-neoforge-26.1.2-<version>.jar` for NeoForge, or
+   `tbos-fabric-26.1.2-<version>.jar` for Fabric.
+3. Launch the game and create or open an Overworld save. For multiplayer, put
    the same JAR on both the server and every client.
 4. Because this is an alpha, make a backup before updating an existing world.
 
-No other mod is required. Server owners can tune dungeon settings in
-`config/tbos-common.toml`.
+On NeoForge no other mod is required. On Fabric you also need **Fabric API**.
+Server owners can tune dungeon settings in `config/tbos-common.json`.
 
 ## Your first expedition
 

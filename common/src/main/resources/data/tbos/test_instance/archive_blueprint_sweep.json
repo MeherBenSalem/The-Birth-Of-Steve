@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:archive_blueprint_sweep",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 200,
+  "padding": 48
+}
