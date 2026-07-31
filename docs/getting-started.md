@@ -5,11 +5,15 @@ or cheats to begin the adventure.
 
 ## Install and launch
 
-1. Install **Minecraft Java Edition 26.1.2** and **NeoForge 26.1.2.83 or newer**
-   for that Minecraft version.
-2. Put the JAR matching your loader in the instance's `mods` folder:
-   `tbos-neoforge-26.1.2-<version>.jar` for NeoForge, or
-   `tbos-fabric-26.1.2-<version>.jar` for Fabric.
+1. Install **Minecraft Java Edition 26.1.2 or 26.2** and a loader for that
+   Minecraft version — **NeoForge 26.1.2.83 or newer** on 26.1.2, **NeoForge
+   26.2.0.1-beta or newer** on 26.2, or Fabric Loader.
+2. Put the JAR matching **both** your Minecraft version and your loader in the
+   instance's `mods` folder — `tbos-neoforge-26.1.2-<version>.jar`,
+   `tbos-fabric-26.1.2-<version>.jar`, `tbos-neoforge-26.2-<version>.jar` or
+   `tbos-fabric-26.2-<version>.jar`. The jar refuses to load on the wrong
+   Minecraft version rather than misbehaving, so if the game reports a version
+   mismatch you have the other one.
 3. Launch the game and create or open an Overworld save. For multiplayer, put
    the same JAR on both the server and every client.
 4. Because this is an alpha, make a backup before updating an existing world.

@@ -1,5 +1,10 @@
 # Dual-publish NightBeam mods/plugins to Modrinth + CurseForge on version tags.
-# Copy to each mod repo as: .github/workflows/publish.yml
+#
+# This repository builds several Minecraft versions from one source tree (see
+# settings.gradle), so each tag produces one release *per* Minecraft version:
+# 0.4.0+mc26.1.2 and 0.4.0+mc26.2, each carrying only its own game version and
+# its own two loader jars. A player on 26.1.2 is therefore never served the
+# 26.2 jar.
 #
 # Org/repo secrets:
 #   MODRINTH_TOKEN
@@ -30,10 +35,15 @@ on:
         default: "false"
 
 jobs:
-  publish:
+  # Resolved once so every Minecraft version publishes under the same release
+  # version, and so the matrix stays in step with the composite build.
+  plan:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      matrix: ${{ steps.discover.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
 
@@ -50,6 +60,34 @@ jobs:
             exit 1
           fi
 
+      - name: Discover Minecraft versions
+        id: discover
+        shell: bash
+        run: |
+          set -euo pipefail
+          MATRIX=$(sed -n "s/^includeBuild('\(.*\)')/\1/p" settings.gradle \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          test "$MATRIX" != "[]"
+          echo "$MATRIX"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: plan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      # Uploads are not transactional; a failure on one target must not cancel a
+      # sibling that may already be mid-upload.
+      fail-fast: false
+      # One release at a time, so a partial run is easy to reason about.
+      max-parallel: 1
+      matrix:
+        minecraft: ${{ fromJson(needs.plan.outputs.matrix) }}
+    name: publish (${{ matrix.minecraft }})
+    steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -60,9 +98,7 @@ jobs:
       - name: Build
         run: |
           chmod +x gradlew 2>/dev/null || true
-          if [ -f gradlew ]; then ./gradlew build --no-daemon
-          else gradle build --no-daemon
-          fi
+          ./gradlew -p ${{ matrix.minecraft }} build --no-daemon
 
       - name: Find jars
         id: jars
@@ -70,12 +106,12 @@ jobs:
         run: |
           # Loader is inferred from the filename below, so the loader-agnostic
           # :common jar must not be uploaded - it would be mislabelled.
-          mapfile -t JARS < <(find . -type f -path "*/build/libs/*.jar" \
+          mapfile -t JARS < <(find "${{ matrix.minecraft }}" -type f -path "*/build/libs/*.jar" \
             ! -name "*-sources.jar" ! -name "*-javadoc.jar" \
             ! -name "*-dev.jar" ! -name "*-dev-shadow.jar" \
-            ! -name "*-common-*.jar" | head -n 20)
+            ! -name "*-common-*.jar" | sort | head -n 20)
           if [ ${#JARS[@]} -eq 0 ]; then
-            echo "No jars in build/libs" >&2
+            echo "No jars in ${{ matrix.minecraft }}/*/build/libs" >&2
             exit 1
           fi
           printf '%s\n' "${JARS[@]}"
@@ -90,7 +126,7 @@ jobs:
         id: mc
         shell: bash
         run: |
-          MC=$(grep -E '^minecraft_version=' gradle.properties | cut -d= -f2)
+          MC=$(grep -E '^minecraft_version=' "${{ matrix.minecraft }}/gradle.properties" | cut -d= -f2)
           test -n "$MC"
           echo "version=$MC" >> "$GITHUB_OUTPUT"
 
@@ -106,7 +142,7 @@ jobs:
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
           MODRINTH_ID: ${{ vars.MODRINTH_ID }}
           CURSEFORGE_ID: ${{ vars.CURSEFORGE_ID }}
-          VERSION: ${{ steps.ver.outputs.version }}
+          VERSION: ${{ needs.plan.outputs.version }}
           JAR_LIST: ${{ steps.jars.outputs.list }}
           MC_VERSION: ${{ steps.mc.outputs.version }}
         shell: bash
@@ -117,29 +153,32 @@ jobs:
           const fs = require('fs');
           const path = require('path');
           const version = process.env.VERSION;
+          const mcVersion = process.env.MC_VERSION;
           const jars = process.env.JAR_LIST.split(/\n/).map(s => s.trim()).filter(Boolean);
-          const loaders = new Set();
-          const gvs = new Set();
-          for (const jar of jars) {
+
+          // CurseForge wants a loader tag per file; Modrinth wants the union.
+          const loaderOf = (jar) => {
             const n = path.basename(jar).toLowerCase();
-            if (n.includes('neoforge')) loaders.add('neoforge');
-            else if (n.includes('fabric')) loaders.add('fabric');
-            else if (n.includes('quilt')) loaders.add('quilt');
-            else if (n.includes('forge')) loaders.add('forge');
-            else loaders.add('fabric');
-          }
-          gvs.add(process.env.MC_VERSION);
+            if (n.includes('neoforge')) return 'neoforge';
+            if (n.includes('quilt')) return 'quilt';
+            if (n.includes('fabric')) return 'fabric';
+            if (n.includes('forge')) return 'forge';
+            return 'fabric';
+          };
+          const loaders = [...new Set(jars.map(loaderOf))];
 
           (async () => {
             const fileParts = jars.map((_, i) => `file_${i}`);
             const body = {
-              name: version,
-              version_number: version,
-              changelog: `Release ${version}`,
+              // Unique per Minecraft version: Modrinth rejects a duplicate
+              // version_number within a project.
+              name: `${version} for Minecraft ${mcVersion}`,
+              version_number: `${version}+mc${mcVersion}`,
+              changelog: `Release ${version} for Minecraft ${mcVersion}`,
               dependencies: [],
-              game_versions: [...gvs],
+              game_versions: [mcVersion],
               version_type: 'release',
-              loaders: [...loaders],
+              loaders,
               featured: false,
               status: 'listed',
               project_id: process.env.MODRINTH_ID,
@@ -166,18 +205,21 @@ jobs:
             const gvJson = await gvRes.json();
             const flat = [];
             for (const g of gvJson.data || []) for (const v of g.versions || []) flat.push(v);
-            const gameVersionIds = [...gvs].map((want) => {
-              const hit = flat.find((v) => v.name === want);
+            const idOf = (want) => {
+              const hit = flat.find((v) => v.name.toLowerCase() === want.toLowerCase());
               if (!hit) throw new Error('No CF game version for ' + want);
               return hit.id;
-            });
+            };
+            const gameVersionId = idOf(mcVersion);
 
             for (const jar of jars) {
               const meta = {
-                changelog: `Release ${version}`,
+                changelog: `Release ${version} for Minecraft ${mcVersion}`,
                 changelogType: 'markdown',
                 displayName: path.basename(jar),
-                gameVersions: gameVersionIds,
+                // Without the loader tag CurseForge lists the file under every
+                // loader, which is wrong once two loaders ship per version.
+                gameVersions: [gameVersionId, idOf(loaderOf(jar))],
                 releaseType: 1,
               };
               const cfForm = new FormData();

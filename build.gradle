@@ -1,10 +1,57 @@
-plugins {
-    // see https://fabricmc.net/develop/ for new versions
-    id 'net.fabricmc.fabric-loom' version '1.15.5' apply false
-    // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
-    id 'net.neoforged.moddev' version '2.0.142' apply false
+// Aggregate lifecycle tasks for the composite. The real work happens in the
+// per-Minecraft-version builds included from settings.gradle; this build owns no
+// source and applies no loader plugins.
+//
+//   gradlew build                        every loader jar for every version
+//   gradlew collectJars                  ...gathered into build/libs
+//   gradlew -p 26.2 :neoforge:runClient   a single version's own tasks
+
+def minecraftVersions = ['26.1.2', '26.2']
+def modules = ['common', 'fabric', 'neoforge']
+def loaders = ['fabric', 'neoforge']
+
+def fanOut = { String taskPath ->
+    minecraftVersions.collect { version -> gradle.includedBuild(version).task(taskPath) }
 }
 
-tasks.named('wrapper', Wrapper).configure {
-    distributionType = Wrapper.DistributionType.BIN
+tasks.register('build') {
+    group = 'build'
+    description = "Builds every Minecraft version: ${minecraftVersions.join(', ')}."
+    modules.each { module -> dependsOn fanOut(":$module:build") }
+}
+
+tasks.register('clean', Delete) {
+    group = 'build'
+    description = 'Cleans every Minecraft version.'
+    delete layout.buildDirectory
+    modules.each { module -> dependsOn fanOut(":$module:clean") }
+}
+
+tasks.register('gameTest') {
+    group = 'verification'
+    description = 'Runs the NeoForge GameTest suite on every Minecraft version.'
+    dependsOn fanOut(':neoforge:runGameTestServer')
+}
+
+tasks.register('sourceOverrides') {
+    group = 'help'
+    description = 'Lists the shared files each Minecraft version overrides.'
+    dependsOn fanOut(':common:sourceOverrides')
+}
+
+tasks.register('collectJars', Sync) {
+    group = 'build'
+    description = 'Collects the publishable loader jars from every version into build/libs.'
+    dependsOn tasks.named('build')
+
+    def jarDirs = minecraftVersions.collectMany { version ->
+        loaders.collect { loader -> file("$version/$loader/build/libs") }
+    }
+    from(jarDirs) {
+        include '*.jar'
+        // The loader is inferred from the filename downstream, so only the real
+        // distributable jars belong here.
+        exclude '*-sources.jar', '*-javadoc.jar', '*-dev.jar', '*-dev-shadow.jar'
+    }
+    into layout.buildDirectory.dir('libs')
 }

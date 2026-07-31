@@ -3,8 +3,13 @@
 Command:
 
 ```text
-gradlew.bat :common:runDungeonSimulation --console=plain
+gradlew.bat -p 26.1.2 :common:runDungeonSimulation --console=plain
 ```
+
+It writes `26.1.2/common/build/reports/tbos/archive-dungeon-simulation.json`. The
+same task exists for every Minecraft version and, because the generator is shared
+source, produces identical results — `-p 26.2` writes the same report under
+`26.2/`.
 
 The task lives in the loader-agnostic `common` module because the generator is a
 pure seeded function that never touches a world. It generates 1,000 consecutive

@@ -18,5 +18,5 @@ bin/
 logs/
 crash-reports/
 graphify-out/
-*/src/generated/resources/.cache/
+**/src/generated/resources/.cache/
 /tools

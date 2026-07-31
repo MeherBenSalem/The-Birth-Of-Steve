@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### Minecraft 26.2 support
+
+- **The mod now runs on Minecraft 26.2 as well as 26.1.2**, on both loaders.
+  Every release now publishes four downloads; pick the one matching your
+  Minecraft version *and* your loader:
+  `tbos-neoforge-26.1.2-<version>.jar`, `tbos-fabric-26.1.2-<version>.jar`,
+  `tbos-neoforge-26.2-<version>.jar`, `tbos-fabric-26.2-<version>.jar`.
+  Modrinth and CurseForge list each Minecraft version as its own release, so the
+  launcher will not offer you a jar built for the other one.
+- Gameplay, worldgen, loot and saved data are identical across all four builds —
+  they are compiled from the same source. Worlds are not transferable between
+  Minecraft versions, but that is a Minecraft limitation rather than a mod one.
+
+### For contributors
+
+- The repository was reorganised: the mod's source now lives once under
+  `shared/`, and each Minecraft version has its own top-level folder (`26.1.2/`,
+  `26.2/`) holding just that target's build scripts. `gradlew build` builds every
+  version; `gradlew -p 26.2 :fabric:runClient` drives a single one. See
+  `docs/architecture.md`.
+
 ## 0.4.0 - 2026-07-30
 
 ### Fabric support

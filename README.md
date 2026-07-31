@@ -2,9 +2,10 @@
 
 > Every ruin has a before.
 
-The Birth of Steve is an adventure mod for Minecraft Java Edition 26.1.2, built for
-both NeoForge and Fabric from a single shared codebase. Its central mechanic
-reconstructs a remembered version of authored ruins at the same world coordinates.
+The Birth of Steve is an adventure mod for Minecraft Java Edition 26.1.2 and 26.2,
+built for both NeoForge and Fabric from a single shared codebase. Its central
+mechanic reconstructs a remembered version of authored ruins at the same world
+coordinates.
 
 ## Current state
 
@@ -35,17 +36,25 @@ Requirements: JDK 25. Use the checked-in Gradle wrapper:
 
 ```text
 gradlew.bat build
-gradlew.bat :neoforge:runClient
-gradlew.bat :fabric:runClient
-gradlew.bat :neoforge:runGameTestServer
-gradlew.bat :common:runDungeonSimulation
+gradlew.bat -p 26.1.2 :neoforge:runClient
+gradlew.bat -p 26.1.2 :fabric:runClient
+gradlew.bat -p 26.1.2 :neoforge:runGameTestServer
+gradlew.bat -p 26.1.2 :common:runDungeonSimulation
 ```
 
 On Linux or macOS, use `./gradlew` instead.
 
-The project is a MultiLoader-Template layout: `common` holds nearly all of the
-mod and compiles against vanilla, while `neoforge` and `fabric` only load it and
-supply loader-specific glue. `build` produces one jar per loader.
+`build` at the root builds **every** Minecraft version — four jars, one per
+loader per version. `-p <version>` drives a single target's own Gradle build;
+swap `26.1.2` for `26.2` above to work on the other one.
+
+The mod's source lives once in `shared/`, in the MultiLoader-Template layout:
+`shared/common` holds nearly all of the mod and compiles against vanilla, while
+`shared/neoforge` and `shared/fabric` only load it and supply loader-specific
+glue. Each Minecraft version gets a top-level folder (`26.1.2/`, `26.2/`) holding
+only that target's build scripts and an `overrides/` directory for the handful of
+files that version has to do differently. See
+[`docs/architecture.md`](docs/architecture.md) for the full layout.
 
 ## License
 

@@ -1,8 +1,45 @@
 # Architecture
 
-## Modules
+## Repository layout
 
-The mod is built once and shipped for two loaders.
+The mod is written once and shipped for two loaders across several Minecraft
+versions.
+
+```
+shared/                 the mod: mod.properties plus common/, fabric/, neoforge/
+26.1.2/                 one Minecraft target: build scripts, build-logic, overrides/
+26.2/                   another target, same shape
+settings.gradle         the composite that includes every version folder
+```
+
+`shared/` is the only place mod code lives. Each version folder is a **complete,
+independent Gradle build** with its own Loom and ModDevGradle versions, so a new
+Minecraft target can move its loader plugins without disturbing the others. The
+root build is a composite that fans `build` out to all of them; `gradlew -p 26.2
+<task>` drives one target directly.
+
+Mod identity (`version`, `group`, `mod_id`, description) is declared once in
+`shared/mod.properties`; only Minecraft and loader versions live in
+`<version>/gradle.properties`. Neither can drift.
+
+### Overrides
+
+A file at `<version>/overrides/<module>/src/main/<java|resources>/<path>` replaces
+its `shared/` twin for that Minecraft version only. `multiloader-common.gradle`
+excludes the shadowed shared copy from compilation, javadoc, the sources jar and
+resource processing — including in the loader projects, which compile `:common`'s
+source directories directly — so a duplicate class is impossible.
+`gradlew -p <version> sourceOverrides` prints what is currently in effect.
+
+Overrides are for the small deltas a Minecraft version genuinely forces, not for
+forking the mod. Where a difference would otherwise spread through large files,
+route the call through the compat seam instead: `compat.VanillaCompat` (server)
+and `client.ClientCompat` (client) are ordinary shared classes whose *whole body*
+each version may replace. 26.2 uses exactly these two overrides to absorb
+`EntityType`'s constants moving to `EntityTypes`, `LivingEntity.knockback` gaining
+a damage source, and `Gui` splitting into `Gui` + `Hud`.
+
+## Modules
 
 - `common`: nearly the whole mod, compiled against vanilla Minecraft only. It has
   no knowledge of NeoForge or Fabric.

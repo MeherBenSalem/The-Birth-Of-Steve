@@ -1,0 +1,229 @@
+import groovy.io.FileType
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+// ---------------------------------------------------------------------------
+// Mod identity
+// ---------------------------------------------------------------------------
+// version/group/mod_id/description and friends are declared once in
+// shared/mod.properties so they cannot drift between Minecraft versions. Only
+// the Minecraft and loader versions live in <version>/gradle.properties.
+// Loaded here rather than in settings.gradle because archivesName below already
+// needs mod_id.
+def modProperties = new Properties()
+rootProject.file('../shared/mod.properties').withInputStream { modProperties.load(it) }
+modProperties.each { key, value ->
+    switch (key) {
+    // group, version and description are real Project fields; setting them as
+    // extra properties would leave the fields themselves unset.
+        case 'group': project.group = value; break
+        case 'version': project.version = value; break
+        case 'description': project.description = value; break
+        default: project.ext.set(key as String, value)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Shared sources with per-version overrides
+// ---------------------------------------------------------------------------
+// The mod lives once under <repo>/shared. A file placed at
+// <version>/overrides/<module>/src/main/<kind>/<path> replaces its shared twin,
+// which is how a Minecraft version ports a class without forking the whole mod.
+// Run `gradlew -p <version> sourceOverrides` to see what is currently shadowed.
+final List<String> MODULES = ['common', 'fabric', 'neoforge']
+
+def sharedRoot = rootProject.file('../shared')
+def overrideRoot = rootProject.file('overrides')
+
+ext.sharedSourceDir = { String module, String kind -> new File(sharedRoot, "$module/src/main/$kind") }
+ext.overrideSourceDir = { String module, String kind -> new File(overrideRoot, "$module/src/main/$kind") }
+
+// Prefers this version's override copy, falling back to the shared one. Used for
+// the files the build scripts read directly: the access transformer, the access
+// widener, and datagen's --existing directory.
+ext.resolveSharedFile = { String module, String kind, String relativePath ->
+    def override = new File(overrideRoot, "$module/src/main/$kind/$relativePath")
+    override.exists() ? override : new File(sharedRoot, "$module/src/main/$kind/$relativePath")
+}
+
+// [sharedDirAbsolutePath, relativePath] for every file the override tree shadows.
+// The shared directory is recorded so the spec can drop the shared copy while
+// leaving the override itself in the task's inputs.
+def collectShadows = { String kind ->
+    def shadows = []
+    MODULES.each { String module ->
+        File overrideDir = new File(overrideRoot, "$module/src/main/$kind")
+        if (!overrideDir.directory) {
+            return
+        }
+        File sharedDir = new File(sharedRoot, "$module/src/main/$kind")
+        overrideDir.eachFileRecurse(FileType.FILES) { File file ->
+            def relative = overrideDir.toPath().relativize(file.toPath()).toString().replace('\\', '/')
+            shadows << [sharedDir.absolutePath, relative]
+        }
+    }
+    shadows
+}
+
+def javaShadows = collectShadows('java')
+def resourceShadows = collectShadows('resources')
+
+def shadowSpec = { List shadows ->
+    return { FileTreeElement element ->
+        if (shadows.isEmpty()) {
+            return false
+        }
+        def relative = element.relativePath.pathString
+        def absolute = element.file.absolutePath
+        shadows.any { it[1] == relative && absolute.startsWith(it[0] as String) }
+    }
+}
+
+def shadowedJava = shadowSpec(javaShadows)
+def shadowedResources = shadowSpec(resourceShadows)
+
+sourceSets.main.java.setSrcDirs([sharedSourceDir(project.name, 'java'), overrideSourceDir(project.name, 'java')])
+sourceSets.main.resources.setSrcDirs([sharedSourceDir(project.name, 'resources'), overrideSourceDir(project.name, 'resources')])
+
+// Filtering at the task level rather than on the source set is deliberate:
+// multiloader-loader.gradle feeds :common's source and resource directories
+// straight into the loader projects' own compileJava, javadoc, sourcesJar and
+// processResources, so a source-set-only exclusion would never reach them and
+// the loader jars would compile both copies of an overridden class.
+tasks.withType(JavaCompile).configureEach {
+    exclude(shadowedJava)
+}
+
+tasks.withType(Javadoc).configureEach {
+    exclude(shadowedJava)
+}
+
+// Every Jar rather than just sourcesJar: withSourcesJar() has not run yet, and
+// the spec only ever matches paths under shared/, so the binary jars ignore it.
+tasks.withType(Jar).configureEach {
+    exclude(shadowedJava)
+    exclude(shadowedResources)
+}
+
+tasks.register('sourceOverrides') {
+    group = 'help'
+    description = 'Lists the shared files this Minecraft version overrides.'
+    doLast {
+        def all = (javaShadows + resourceShadows).collect { it[1] }.toSorted()
+        if (all.isEmpty()) {
+            logger.lifecycle("${rootProject.name}: no source overrides - every file comes from shared/.")
+        } else {
+            logger.lifecycle("${rootProject.name} overrides ${all.size()} shared file(s):")
+            all.each { logger.lifecycle("  $it") }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+
+base {
+    archivesName = "${mod_id}-${project.name}-${minecraft_version}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = Integer.parseInt(java_version)
+    options.compilerArgs.add('-Xlint:deprecation')
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    // The mod is not published as an API; javadoc exists only so the sources
+    // jar has a sibling. Malformed tags must not fail the build.
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+tasks.withType(Jar).configureEach {
+    // The LICENSE sits at the repository root, one level above this version's
+    // root project.
+    from(rootProject.file('../LICENSE')) {
+        rename { "${it}_${mod_name}" }
+    }
+}
+
+jar {
+
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_name,
+                'Specification-Vendor'  : mod_author,
+                'Specification-Version' : project.jar.archiveVersion,
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor' : mod_author,
+                'Built-On-Minecraft'    : minecraft_version
+        ])
+    }
+}
+
+processResources {
+    exclude(shadowedResources)
+
+    var expandProps = [
+            'version'                      : version,
+            'group'                        : project.group, //Else we target the task's group.
+            'minecraft_version'            : minecraft_version,
+            'minecraft_version_range'      : minecraft_version_range,
+            'fabric_version'               : fabric_version,
+            'fabric_loader_version'        : fabric_loader_version,
+            'mod_name'                     : mod_name,
+            'mod_author'                   : mod_author,
+            'mod_id'                       : mod_id,
+            'license'                      : license,
+            'description'                  : project.description,
+            'neoforge_version'             : neoforge_version,
+            'neoforge_loader_version_range': neoforge_loader_version_range,
+            'credits'                      : credits,
+            'java_version'                 : java_version
+    ]
+
+    var jsonExpandProps = expandProps.collectEntries {
+        key, value -> [(key): value instanceof String ? value.replace('\n', '\\\\n') : value]
+    }
+
+    filesMatching(['META-INF/mods.toml', 'META-INF/neoforge.mods.toml']) {
+        expand expandProps
+    }
+
+    filesMatching(['pack.mcmeta', 'fabric.mod.json', '*.mixins.json']) {
+        expand jsonExpandProps
+    }
+
+    inputs.properties(expandProps)
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            artifactId base.archivesName.get()
+            from components.java
+        }
+    }
+    // Release publishing goes to Modrinth/CurseForge from .github/workflows/publish.yml.
+    // Only add a Maven target when one is actually configured, or Gradle fails on a null url.
+    if (System.getenv('local_maven_url')) {
+        repositories {
+            maven {
+                url System.getenv('local_maven_url')
+            }
+        }
+    }
+}

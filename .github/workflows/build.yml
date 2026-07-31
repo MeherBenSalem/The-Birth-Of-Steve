@@ -8,8 +8,36 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  # The Minecraft targets are exactly the builds the composite root includes, so
+  # adding a version folder to settings.gradle is the only edit needed here.
+  versions:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Discover Minecraft versions
+        id: discover
+        shell: bash
+        run: |
+          set -euo pipefail
+          MATRIX=$(sed -n "s/^includeBuild('\(.*\)')/\1/p" settings.gradle \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          test "$MATRIX" != "[]"
+          echo "$MATRIX"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: versions
+    runs-on: ubuntu-latest
+    strategy:
+      # One broken target should not hide the state of the others.
+      fail-fast: false
+      matrix:
+        minecraft: ${{ fromJson(needs.versions.outputs.matrix) }}
+    name: build (${{ matrix.minecraft }})
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,13 +54,19 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # Builds :common, :neoforge and :fabric. :common:check pulls in the
-      # 1,000-seed dungeon simulation.
+      # -p selects one Minecraft version's own Gradle build. Builds :common,
+      # :neoforge and :fabric from the shared source tree plus this version's
+      # overrides; :common:check pulls in the 1,000-seed dungeon simulation.
       - name: Build
-        run: ./gradlew clean build --stacktrace
+        run: ./gradlew -p ${{ matrix.minecraft }} clean build --stacktrace
 
       # The GameTest suite is the real regression gate. It runs on NeoForge:
       # the test functions and their datapack instances are common code, so a
       # green run here covers the Fabric jar's tests too.
       - name: GameTests
-        run: ./gradlew :neoforge:runGameTestServer --stacktrace --console=plain
+        run: ./gradlew -p ${{ matrix.minecraft }} :neoforge:runGameTestServer --stacktrace --console=plain
+
+      # Catches an override that no longer shadows anything, or one added by
+      # accident to the mainline target.
+      - name: Report source overrides
+        run: ./gradlew -p ${{ matrix.minecraft }} :common:sourceOverrides --console=plain

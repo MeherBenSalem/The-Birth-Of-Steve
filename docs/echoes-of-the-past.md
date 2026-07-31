@@ -288,7 +288,7 @@ container treatment, missing safe markers, and generation failures.
 
 ## Platform scope
 
-The Birth of Steve targets NeoForge 26.1.2 on Minecraft Java 26.1.2. Paper/Folia region
+The Birth of Steve targets NeoForge and Fabric on Minecraft Java 26.1.2 and 26.2. Paper/Folia region
 scheduling is therefore not an applicable runtime target. The placement queue
 still preserves the equivalent safety invariant: background/pure graph work is
 separate from world changes, and every world change occurs on Minecraft's server

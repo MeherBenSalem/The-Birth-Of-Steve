@@ -4,19 +4,33 @@
 
 ```text
 gradlew.bat build
-gradlew.bat :neoforge:runData
-gradlew.bat :neoforge:runGameTestServer
-gradlew.bat :common:runDungeonSimulation
+gradlew.bat -p 26.1.2 :neoforge:runData
+gradlew.bat -p 26.1.2 :neoforge:runGameTestServer
+gradlew.bat -p 26.1.2 :common:runDungeonSimulation
+gradlew.bat -p 26.1.2 :common:sourceOverrides
 ```
 
-`build` compiles `common`, `neoforge` and `fabric`, and runs the 1,000-seed
-dungeon simulation through `:common:check`.
+`build` at the root builds **every** Minecraft version. `-p <version>` scopes a
+task to one target; every command above also exists for `26.2`, and each version
+must be gated separately. `build` compiles `common`, `neoforge` and `fabric` from
+`shared/` plus that version's `overrides/`, and runs the 1,000-seed dungeon
+simulation through `:common:check`.
+
+`sourceOverrides` prints the shared files a version replaces. It should list
+nothing for the mainline target and only the deliberate deltas for a port; an
+unexpected entry means a shared file is silently not compiling somewhere.
 
 The GameTest suite runs on NeoForge. Both the test functions and their
 `data/tbos/test_instance/` definitions are common code, so a green NeoForge run
 exercises the same tests the Fabric jar ships. What it does **not** cover is the
 loader glue itself — the Fabric entry points, the four Fabric mixins, and the
 Fabric registry flush order need the manual matrix below.
+
+`:fabric:runGameTestServer` runs the same suite under Fabric Loader, which is the
+cheapest way to prove the mixins still apply on a new Minecraft version:
+`BlockItem`, `LivingEntity` and `SavedDataStorage` are all transformed during a
+GameTest run. `ServerExplosion` is not — no test triggers an explosion — so its
+mixin has to be checked against the target's bytecode by hand.
 
 Before a release build, regenerate and validate the v0.3.0-owned assets:
 
@@ -280,6 +294,58 @@ procedure.
   overworld, Nether, and End, and `runClient` ended with `BUILD SUCCESSFUL`.
 - This confirmation does not yet cover the dedicated two-client, interrupted
   save/reload, or repeated ten-transition profiling cases.
+
+## Automated results — 2026-07-31 (multi-version layout and 26.2 port)
+
+Recorded on Gradle 9.5.0 after moving the mod into `shared/` and adding the
+`26.1.2/` and `26.2/` version folders.
+
+- `gradlew.bat -p 26.1.2 build --console=plain`: PASS. Built `:common`,
+  `:neoforge` and `:fabric` from `shared/`; the 1,000-seed simulation ran through
+  `:common:check` clean. Loom 1.15.5 works on Gradle 9.5.0, so the composite can
+  drive both targets from one wrapper.
+- `gradlew.bat -p 26.1.2 :neoforge:runGameTestServer --console=plain`: PASS,
+  **all 56 required tests passed** — the restructure changed nothing observable.
+- `gradlew.bat -p 26.2 build --console=plain`: PASS. Minecraft 26.2, NeoForge
+  26.2.0.1-beta, Fabric API 0.152.1+26.2 / loader 0.19.3, Loom 1.16.3, moddev
+  2.0.141. `:fabric:validateAccessWidener` passed, so all three widened vanilla
+  members still exist in 26.2.
+- `gradlew.bat -p 26.2 :neoforge:runGameTestServer --console=plain`: PASS,
+  **all 56 required tests passed**.
+- `gradlew.bat -p 26.2 :fabric:runGameTestServer --console=plain`: PASS,
+  **all 56 required tests passed** under Fabric Loader, Mixin 0.8.7 at
+  compatibility level `JAVA_25`, no mixin application errors.
+- Fabric mixin application on 26.2 verified directly: a run with
+  `-Dmixin.debug.export=true` exported transformed `LivingEntity`, `BlockItem`
+  and `SavedDataStorage`, proving those three applied. `ServerExplosion` never
+  loads during a GameTest run, so it was checked against the 26.2 bytecode
+  instead — `javap` confirms `private java.util.List<BlockPos>
+  calculateExplodedPositions()` (`()Ljava/util/List;`) and
+  `private final ServerLevel level`, which the `@Inject` and `@Shadow @Final`
+  match.
+- `gradlew.bat collectJars --console=plain`: PASS. The composite produced all
+  four jars — `tbos-{fabric,neoforge}-{26.1.2,26.2}-0.4.0.jar` — with no
+  included-build name or dependency-substitution collisions.
+- `gradlew.bat -p 26.2 :common:sourceOverrides`: 26.2 overrides exactly two
+  shared files, `client/ClientCompat.java` and `compat/VanillaCompat.java`.
+  26.1.2 overrides none.
+- `gradlew.bat -p 26.2 :neoforge:runClient`: PASS. `The Birth of Steve 0.4.0
+  (tbos)` loaded, `mod/tbos` present in the resource-manager pack list, and the
+  session reached a live world with the `tbos:fractured_archive` dimension
+  registered and saving chunks. The only errors in the log are the usual Windows
+  `oshi`/Perflib counter warnings.
+- `gradlew.bat -p 26.2 :fabric:runClient`: PASS. `tbos 0.4.0` loaded, Mixin
+  compatibility level `JAVA_25` with no application errors, `tbos` present in the
+  resource-manager pack list, and the session likewise reached a live world with
+  `tbos:fractured_archive` saving. The only error is the usual dev-environment
+  `Failed to retrieve profile key pair` 401.
+- Not yet covered: every *gameplay* row of the multi-loader parity matrix on
+  26.2. Reaching a live world is not the same as the creative tab, journal
+  screen, HUDs, protection and transition presentation behaving identically —
+  and `ClientCompat` is precisely the client code that changed for 26.2, so its
+  HUD-hidden (F1), screen-open and overlay-message paths still want a deliberate
+  in-game check: press F1 during a floor intro, open the Journal, and toggle the
+  objectives keybind.
 
 ## Automated results — 2026-07-30 (multi-loader migration)
 
