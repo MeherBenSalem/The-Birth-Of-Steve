@@ -1,0 +1,83 @@
+plugins {
+    id 'multiloader-loader'
+    id 'fabric-loom'
+}
+
+dependencies {
+    minecraft("com.mojang:minecraft:${minecraft_version}")
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
+    }
+    modImplementation("net.fabricmc:fabric-loader:${fabric_loader_version}")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${fabric_version}")
+}
+
+def accessWidener = resolveSharedFile('common', 'resources', "${mod_id}.accesswidener")
+
+// Loom scans source resource directories for fabric.mod.json before Gradle's
+// normal copy task has applied our target shadowing. Keep shared resources in
+// that scan and inject the two target-specific descriptors through
+// processResources, so Loom observes exactly one mixin configuration.
+sourceSets.main.resources.setSrcDirs([sharedSourceDir('fabric', 'resources')])
+sourceSets.main.resources.exclude('fabric.mod.json', "${mod_id}.fabric.mixins.json")
+
+processResources {
+    from(overrideSourceDir('fabric', 'resources'))
+}
+
+tasks.named('sourcesJar', Jar) {
+    from(overrideSourceDir('fabric', 'resources'))
+}
+
+loom {
+    if (accessWidener.exists()) {
+        accessWidenerPath.set(accessWidener)
+    }
+    mixin {
+        defaultRefmapName.set("${mod_id}.refmap.json")
+    }
+    runs {
+        client {
+            client()
+            setConfigName('Fabric Client')
+            ideConfigGenerated(true)
+            runDir('runs/client')
+        }
+        server {
+            server()
+            setConfigName('Fabric Server')
+            ideConfigGenerated(true)
+            runDir('runs/server')
+            programArgs('--nogui')
+        }
+        // Fabric API's GameTest launcher is not present in the supplied 1.21.1
+        // template, but is required for the same cross-loader test gate as 26.x.
+        gameTestServer {
+            server()
+            setConfigName('Fabric Game Test')
+            ideConfigGenerated(true)
+            runDir('runs/gametest')
+            vmArg('-Dfabric-api.gametest')
+            vmArg("-Dfabric-api.gametest.report-file=${project.layout.buildDirectory.get()}/junit.xml")
+        }
+    }
+}
+
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements', 'javadocElements', 'includeInternal', 'modCompileClasspath'].each { variant ->
+    configurations.named(variant) {
+        attributes {
+            attribute(loaderAttribute, 'fabric')
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant ->
+        configurations.named(variant) {
+            attributes {
+                attribute(loaderAttribute, 'fabric')
+            }
+        }
+    }
+}

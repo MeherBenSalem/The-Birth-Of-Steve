@@ -2,11 +2,12 @@
 
 ## Repository layout
 
-The mod is written once and shipped for two loaders across several Minecraft
+The mod is written once and shipped for two loaders across three Minecraft
 versions.
 
 ```
 shared/                 the mod: mod.properties plus common/, fabric/, neoforge/
+1.21.1/                 Java 21 target: build scripts, build-logic, overrides/
 26.1.2/                 one Minecraft target: build scripts, build-logic, overrides/
 26.2/                   another target, same shape
 settings.gradle         the composite that includes every version folder
@@ -15,12 +16,16 @@ settings.gradle         the composite that includes every version folder
 `shared/` is the only place mod code lives. Each version folder is a **complete,
 independent Gradle build** with its own Loom and ModDevGradle versions, so a new
 Minecraft target can move its loader plugins without disturbing the others. The
-root build is a composite that fans `build` out to all of them; `gradlew -p 26.2
-<task>` drives one target directly.
+root build is a composite that fans `build` out to all of them; `gradlew -p 1.21.1
+<task>` (or either 26.x target) drives one target directly.
 
 Mod identity (`version`, `group`, `mod_id`, description) is declared once in
 `shared/mod.properties`; only Minecraft and loader versions live in
 `<version>/gradle.properties`. Neither can drift.
+
+The Java toolchain is target-local too: `1.21.1/` compiles and runs on Java 21,
+while `26.1.2/` and `26.2/` remain on Java 25. This keeps the old baseline's
+toolchain from leaking into the 1.21.1 loader builds.
 
 ### Overrides
 
@@ -30,6 +35,13 @@ excludes the shadowed shared copy from compilation, javadoc, the sources jar and
 resource processing — including in the loader projects, which compile `:common`'s
 source directories directly — so a duplicate class is impossible.
 `gradlew -p <version> sourceOverrides` prints what is currently in effect.
+
+Minecraft 1.21.1 predates the data-driven `TEST_FUNCTION` registry used by the
+26.x targets. Its target-local Fabric and NeoForge bridges register the unchanged
+common GameTest bodies through their annotation APIs instead. The target ships an
+empty `tbos:empty` structure with the same 48-block horizontal isolation envelope
+as the newer test-instance padding, so its parallel integration fixtures remain
+independent.
 
 Overrides are for the small deltas a Minecraft version genuinely forces, not for
 forking the mod. Where a difference would otherwise spread through large files,

@@ -4,6 +4,8 @@ out/
 # Dev game directories: NeoForge's gameTestServer uses <module>/run, the named
 # run configurations use <module>/runs.
 run/
+!1.21.1/overrides/common/src/main/java/com/nightbeam/tbos/run/
+!1.21.1/overrides/common/src/main/java/com/nightbeam/tbos/run/**
 runs/
 /run-*/
 .idea/

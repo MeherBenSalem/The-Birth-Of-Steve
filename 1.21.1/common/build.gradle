@@ -1,0 +1,75 @@
+plugins {
+    id 'multiloader-common'
+    id 'net.neoforged.moddev'
+}
+
+// Resolve outside the neoForge closure, whose delegate cannot see convention
+// plugin helpers.
+def accessTransformer = resolveSharedFile('common', 'resources', 'META-INF/accesstransformer.cfg')
+
+neoForge {
+    neoFormVersion = neo_form_version
+    if (accessTransformer.exists()) {
+        accessTransformers.from(accessTransformer.absolutePath)
+    }
+    // 1.21.1 is distributed obfuscated; the supplied template's Mojang/
+    // Parchment mapping layer is required for the shared Mojmap source.
+    parchment {
+        minecraftVersion = parchment_minecraft
+        mappingsVersion = parchment_version
+    }
+}
+
+dependencies {
+    // Baseline versions from MultiLoader-Template-1.21.1.zip. Both supported
+    // loaders bundle these libraries at runtime, so common only compiles them.
+    compileOnly('org.spongepowered:mixin:0.8.5')
+    compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
+}
+
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+artifacts {
+    sourceSets.main.java.srcDirs.each { if (it.directory) commonJava it }
+    sourceSets.main.resources.srcDirs.each { if (it.directory) commonResources it }
+}
+
+// A loader-neutral invariant gate over the common vanilla classpath.
+tasks.register('runDungeonSimulation', JavaExec) {
+    group = 'verification'
+    description = 'Runs the 1,000-seed Echoes of the Past dungeon invariant simulation.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.nightbeam.tbos.run.ArchiveDungeonSimulation'
+    args '1000'
+}
+
+tasks.named('check').configure {
+    dependsOn tasks.named('runDungeonSimulation')
+}
+
+def loaderAttribute = Attribute.of('io.github.mcgradleconventions.loader', String)
+['apiElements', 'runtimeElements', 'sourcesElements', 'javadocElements'].each { variant ->
+    configurations.named(variant) {
+        attributes {
+            attribute(loaderAttribute, 'common')
+        }
+    }
+}
+sourceSets.configureEach {
+    [it.compileClasspathConfigurationName, it.runtimeClasspathConfigurationName].each { variant ->
+        configurations.named(variant) {
+            attributes {
+                attribute(loaderAttribute, 'common')
+            }
+        }
+    }
+}

@@ -9,3 +9,4 @@ rootProject.name = 'The Birth of Steve'
 
 includeBuild('26.1.2')
 includeBuild('26.2')
+includeBuild('1.21.1')

@@ -1,0 +1,10 @@
+accessWidener	v2	named
+
+# 1.21.1 Fabric Loom maps Mojang names into its named namespace. The paths and
+# descriptors are otherwise the same widening contract as the shared 26.x file.
+# Keep this in step with the 1.21.1 access-transformer override when a target
+# API changes one of these members.
+
+accessible	class	net/minecraft/world/item/CreativeModeTab$Output
+
+accessible	method	net/minecraft/world/level/block/StairBlock	<init>	(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V

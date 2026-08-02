@@ -1,0 +1,7 @@
+plugins {
+    // The supplied 1.8-SNAPSHOT baseline cannot run on this repository's
+    // Gradle 9.5 wrapper (it calls the removed ProjectDependency API). Loom
+    // 1.9.2 is the nearest stable newer line with the 1.21 mapping model.
+    id 'fabric-loom' version '1.9.2' apply false
+    id 'net.neoforged.moddev' version '2.0.49-beta' apply false
+}

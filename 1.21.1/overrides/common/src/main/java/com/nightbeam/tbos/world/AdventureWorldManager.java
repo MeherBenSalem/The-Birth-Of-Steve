@@ -1,0 +1,334 @@
+package com.nightbeam.tbos.world;
+
+import com.nightbeam.tbos.block.FractureCofferBlock;
+import com.nightbeam.tbos.registry.ModBlocks;
+import com.nightbeam.tbos.site.BuiltInTemporalSites;
+import com.nightbeam.tbos.site.TemporalSite;
+import com.nightbeam.tbos.site.TemporalSiteManager;
+import com.nightbeam.tbos.site.TemporalSiteSavedData;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.levelgen.Heightmap;
+
+public final class AdventureWorldManager {
+    public static final int SHRINE_DISCOVERY_RANGE = 14;
+    public static final int MIN_SHRINE_DISTANCE = 192;
+    public static final int MAX_SHRINE_DISTANCE = 640;
+    private static final long SHRINE_PLACEMENT_SALT = 0x54424F5353485249L;
+    private static final int UPDATE_FLAGS = Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS;
+
+    private AdventureWorldManager() {
+    }
+
+    /**
+     * Returns the persisted seed-derived shrine plan, deriving and storing it on
+     * first call. Pure lookup: this never writes blocks or loads chunks.
+     */
+    public static List<FractureShrinePlan> plannedShrines(ServerLevel level) {
+        TemporalSiteSavedData data = TemporalSiteManager.data(level);
+        if (!data.plannedShrines().isEmpty()) {
+            return data.plannedShrines();
+        }
+
+        FractureShrineVariant[] variants = FractureShrineVariant.values();
+        List<BlockPos> targets = shrineTargets(level.getSeed(), level.getLevelData().getSpawnPos());
+        List<FractureShrinePlan> plans = new ArrayList<>(variants.length);
+        for (int index = 0; index < variants.length; index++) {
+            plans.add(new FractureShrinePlan(variants[index], targets.get(index)));
+        }
+        data.setPlannedShrines(plans);
+        return data.plannedShrines();
+    }
+
+    /** Plans whose shrine has not been built into the world yet. */
+    public static List<FractureShrinePlan> unbuiltShrines(ServerLevel level) {
+        Set<FractureShrineVariant> built = builtVariants(level);
+        return plannedShrines(level).stream()
+                .filter(plan -> !built.contains(plan.variant()))
+                .toList();
+    }
+
+    public static boolean isShrineBuilt(ServerLevel level, FractureShrineVariant variant) {
+        return builtVariants(level).contains(variant);
+    }
+
+    /**
+     * Builds one planned shrine at its resolved dry surface and records the
+     * placement. Returns false when that variant already exists.
+     */
+    public static boolean materializeShrine(ServerLevel level, FractureShrinePlan plan) {
+        TemporalSiteSavedData data = TemporalSiteManager.data(level);
+        if (builtVariants(level).contains(plan.variant())) {
+            return false;
+        }
+        int salt = plan.variant().ordinal() * 37;
+        BlockPos origin = findDrySurface(level, plan.target().getX(), plan.target().getZ(), salt);
+        placeShrine(level, origin, plan.variant());
+        recordShrine(level, data, new FractureShrinePlacement(plan.variant(), origin));
+        return true;
+    }
+
+    /** Records an out-of-plan shrine, such as one an operator forced into place. */
+    public static FractureShrinePlacement registerShrine(
+            ServerLevel level, BlockPos origin, FractureShrineVariant variant) {
+        FractureShrinePlacement placement = new FractureShrinePlacement(variant, origin);
+        recordShrine(level, TemporalSiteManager.data(level), placement);
+        return placement;
+    }
+
+    /** Builds every planned shrine immediately. Operator and migration path only. */
+    public static List<FractureShrinePlacement> ensureShrines(ServerLevel level, BlockPos requester) {
+        TemporalSiteSavedData data = TemporalSiteManager.data(level);
+        deactivateLegacyShrineThresholds(level, data.fractureShrines());
+        for (FractureShrinePlan plan : plannedShrines(level)) {
+            materializeShrine(level, plan);
+        }
+        return data.fractureShrines();
+    }
+
+    private static Set<FractureShrineVariant> builtVariants(ServerLevel level) {
+        return TemporalSiteManager.data(level).fractureShrines().stream()
+                .map(FractureShrinePlacement::variant)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(FractureShrineVariant.class)));
+    }
+
+    private static void recordShrine(
+            ServerLevel level, TemporalSiteSavedData data, FractureShrinePlacement placement) {
+        List<FractureShrinePlacement> placements = new ArrayList<>(data.fractureShrines());
+        placements.removeIf(existing -> existing.variant() == placement.variant());
+        placements.add(placement);
+        data.setFractureShrines(placements);
+        FractureShrineQueue.invalidate(level);
+    }
+
+    /**
+     * Produces stable, world-seeded shrine targets in three separated angular
+     * sectors around world spawn. The first player no longer determines their
+     * locations.
+     */
+    public static List<BlockPos> shrineTargets(long worldSeed, BlockPos worldSpawn) {
+        FractureShrineVariant[] variants = FractureShrineVariant.values();
+        RandomSource random = RandomSource.create(worldSeed ^ SHRINE_PLACEMENT_SALT);
+        double rotation = random.nextDouble() * Math.PI * 2.0D;
+        ArrayList<BlockPos> targets = new ArrayList<>(variants.length);
+        for (int index = 0; index < variants.length; index++) {
+            double sectorCenter = rotation + index * Math.PI * 2.0D / variants.length;
+            double jitter = (random.nextDouble() - 0.5D) * Math.PI / 4.0D;
+            int radius = MIN_SHRINE_DISTANCE
+                    + random.nextInt(MAX_SHRINE_DISTANCE - MIN_SHRINE_DISTANCE + 1);
+            targets.add(new BlockPos(
+                    worldSpawn.getX() + (int) Math.round(Math.cos(sectorCenter + jitter) * radius),
+                    worldSpawn.getY(),
+                    worldSpawn.getZ() + (int) Math.round(Math.sin(sectorCenter + jitter) * radius)));
+        }
+        return List.copyOf(targets);
+    }
+
+    public static BlockPos ensureArchive(ServerLevel level, BlockPos requester) {
+        TemporalSiteSavedData data = TemporalSiteManager.data(level);
+        if (data.archiveOrigin().isPresent()) {
+            return data.archiveOrigin().orElseThrow();
+        }
+
+        Optional<TemporalSite> existing = data.all().stream()
+                .filter(site -> site.definitionId().equals(BuiltInTemporalSites.PARALLAX_ATRIUM_ID))
+                .findFirst();
+        if (existing.isPresent()) {
+            BlockPos origin = existing.get().origin();
+            data.setArchiveOrigin(origin);
+            return origin;
+        }
+
+        // Anchor on the seed-derived plan rather than built shrines: the Survey Map
+        // must not force three distant shrine regions into existence.
+        BlockPos center = plannedShrines(level).stream()
+                .min(Comparator.comparingDouble(plan -> plan.distanceToSqr(requester)))
+                .map(FractureShrinePlan::target)
+                .orElse(requester);
+        int direction = Math.floorMod((int) (level.getSeed() >>> 17), 4);
+        int dx = switch (direction) {
+            case 0 -> 384;
+            case 2 -> -384;
+            default -> 0;
+        };
+        int dz = switch (direction) {
+            case 1 -> 384;
+            case 3 -> -384;
+            default -> 0;
+        };
+        BlockPos surface = findDrySurface(level, center.getX() + dx, center.getZ() + dz, 113);
+        // The authored floor now begins at the first air block reported by the
+        // surface heightmap. Individual rooms clear their enclosed volume, so
+        // neither the Atrium nor later puzzle rooms can be buried by terrain.
+        BlockPos origin = new BlockPos((surface.getX() >> 4) << 4, surface.getY(), (surface.getZ() >> 4) << 4);
+        placeFullArchive(level, origin);
+        data.setArchiveOrigin(origin);
+        return origin;
+    }
+
+    public static Optional<FractureShrinePlacement> nearestShrine(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel level)) {
+            return Optional.empty();
+        }
+        double rangeSqr = SHRINE_DISCOVERY_RANGE * SHRINE_DISCOVERY_RANGE;
+        return TemporalSiteManager.data(level).fractureShrines().stream()
+                .filter(shrine -> shrine.distanceToSqr(player.blockPosition()) <= rangeSqr)
+                .min(Comparator.comparingDouble(shrine -> shrine.distanceToSqr(player.blockPosition())));
+    }
+
+    public static void placeShrine(ServerLevel level, BlockPos origin, FractureShrineVariant variant) {
+        origin = clampShrineOrigin(level, origin);
+        ensureAreaLoaded(level, origin, 5);
+        clearAndFloor(level, origin);
+        placeCommonRuins(level, origin);
+        switch (variant) {
+            case OBSERVATORY -> placeObservatory(level, origin);
+            case CURATOR_WORKSHOP -> placeCuratorWorkshop(level, origin);
+            case EVACUATION_GATE -> placeEvacuationGate(level, origin);
+        }
+        level.setBlock(
+                origin.offset(0, 0, 2),
+                ModBlocks.FRACTURE_COFFER.get().defaultBlockState()
+                        .setValue(FractureCofferBlock.VARIANT, variant.ordinal()),
+                UPDATE_FLAGS);
+    }
+
+    public static void placeFullArchive(ServerLevel level, BlockPos origin) {
+        TemporalSiteManager.placeParallaxAtrium(level, origin, Rotation.NONE);
+        TemporalSiteManager.placeHallOfAlignment(level, origin.offset(-4, 3, 16), Rotation.NONE);
+        TemporalSiteManager.placeChoirOfHours(level, origin.offset(-2, 3, 34), Rotation.NONE);
+        TemporalSiteManager.placeBrokenMeridian(level, origin.offset(-2, 3, 52), Rotation.NONE);
+        TemporalSiteManager.placeGrandOrrery(level, origin.offset(-8, 3, 82), Rotation.NONE);
+    }
+
+    private static BlockPos findDrySurface(ServerLevel level, int targetX, int targetZ, int salt) {
+        for (int attempt = 0; attempt < 12; attempt++) {
+            int x = targetX + Math.floorMod(salt * 11 + attempt * 29, 49) - 24;
+            int z = targetZ + Math.floorMod(salt * 17 + attempt * 31, 49) - 24;
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            BlockPos surface = clampShrineOrigin(level, new BlockPos(x, y, z));
+            if (level.getFluidState(surface.below()).isEmpty()) {
+                return surface;
+            }
+        }
+        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, targetX, targetZ);
+        return clampShrineOrigin(level, new BlockPos(targetX, y, targetZ));
+    }
+
+    private static BlockPos clampShrineOrigin(ServerLevel level, BlockPos origin) {
+        // Shrine floors are placed one block below the origin. Empty/minimal-height
+        // test worlds can report the dimension floor as their surface, so keep the
+        // authored platform inside the buildable range instead of dropping it below
+        // the world and leaving the threshold suspended over the void.
+        int safeY = Math.max(level.getMinBuildHeight() + 1, origin.getY());
+        return origin.getY() == safeY ? origin : new BlockPos(origin.getX(), safeY, origin.getZ());
+    }
+
+    private static void clearAndFloor(ServerLevel level, BlockPos origin) {
+        for (int x = -4; x <= 4; x++) {
+            for (int z = -4; z <= 4; z++) {
+                Block floor = (Math.abs(x) == 4 || Math.abs(z) == 4 || (x + z & 3) == 0)
+                        ? ModBlocks.CRACKED_ARCHIVE_STONE.get()
+                        : ModBlocks.ARCHIVE_STONE.get();
+                set(level, origin.offset(x, -1, z), floor);
+                for (int y = 0; y <= 5; y++) {
+                    set(level, origin.offset(x, y, z), Blocks.AIR);
+                }
+            }
+        }
+    }
+
+    private static void placeCommonRuins(ServerLevel level, BlockPos origin) {
+        for (int x : new int[] {-4, 4}) {
+            for (int z : new int[] {-4, 4}) {
+                int height = x == z ? 3 : 2;
+                for (int y = 0; y < height; y++) {
+                    set(level, origin.offset(x, y, z), y == height - 1
+                            ? ModBlocks.CRACKED_ARCHIVE_STONE.get()
+                            : ModBlocks.ARCHIVE_STONE.get());
+                }
+            }
+        }
+        set(level, origin.offset(0, 0, -3), ModBlocks.ENGRAVED_MERIDIAN_TILE.get());
+        set(level, origin, ModBlocks.ENGRAVED_MERIDIAN_TILE.get());
+    }
+
+    private static void deactivateLegacyShrineThresholds(
+            ServerLevel level, List<FractureShrinePlacement> placements) {
+        for (FractureShrinePlacement placement : placements) {
+            if (level.getBlockState(placement.origin()).is(ModBlocks.RIFT_THRESHOLD.get())) {
+                level.setBlock(
+                        placement.origin(),
+                        ModBlocks.ENGRAVED_MERIDIAN_TILE.get().defaultBlockState(),
+                        UPDATE_FLAGS);
+            }
+        }
+    }
+
+    private static void placeObservatory(ServerLevel level, BlockPos origin) {
+        for (int x = -3; x <= 3; x++) {
+            int height = Math.abs(x) == 3 ? 1 : Math.abs(x) == 2 ? 3 : 4;
+            set(level, origin.offset(x, height, 3), ModBlocks.CHRONICLE_BRONZE.get());
+            if (Math.abs(x) >= 2) {
+                for (int y = 0; y < height; y++) {
+                    set(level, origin.offset(x, y, 3), ModBlocks.CRACKED_ARCHIVE_STONE.get());
+                }
+            }
+        }
+        set(level, origin.offset(0, 3, 3), ModBlocks.YESTERGLASS.get());
+        set(level, origin.offset(-2, 1, 0), ModBlocks.LENSWORK_CRYSTAL.get());
+        set(level, origin.offset(2, 1, 0), ModBlocks.LENSWORK_CRYSTAL.get());
+    }
+
+    private static void placeCuratorWorkshop(ServerLevel level, BlockPos origin) {
+        for (int y = 0; y <= 3; y++) {
+            set(level, origin.offset(-3, y, 3), y == 2 ? ModBlocks.CHRONICLE_BRONZE.get() : ModBlocks.ARCHIVE_STONE.get());
+            set(level, origin.offset(3, y, 3), y == 1 ? ModBlocks.CHRONICLE_BRONZE.get() : ModBlocks.ARCHIVE_STONE.get());
+        }
+        for (int x = -3; x <= 3; x++) {
+            set(level, origin.offset(x, 4, 3), x % 2 == 0 ? ModBlocks.CHRONICLE_BRONZE.get() : ModBlocks.CRACKED_ARCHIVE_STONE.get());
+        }
+        set(level, origin.offset(-2, 0, 0), ModBlocks.MEMORY_ANCHOR.get());
+        set(level, origin.offset(2, 0, 0), ModBlocks.ARCHIVE_CORE.get());
+        set(level, origin.offset(0, 1, 3), ModBlocks.YESTERGLASS.get());
+    }
+
+    private static void placeEvacuationGate(ServerLevel level, BlockPos origin) {
+        for (int x : new int[] {-3, 3}) {
+            for (int y = 0; y <= 4; y++) {
+                set(level, origin.offset(x, y, 3), y == 2
+                        ? ModBlocks.CRACKED_ARCHIVE_STONE.get()
+                        : ModBlocks.ARCHIVE_STONE.get());
+            }
+        }
+        for (int x = -3; x <= 3; x++) {
+            set(level, origin.offset(x, 4, 3), x == 0
+                    ? ModBlocks.YESTERGLASS.get()
+                    : ModBlocks.CRACKED_ARCHIVE_STONE.get());
+        }
+        set(level, origin.offset(-1, 0, 0), ModBlocks.CHRONICLE_BRONZE.get());
+        set(level, origin.offset(1, 0, 0), ModBlocks.LENSWORK_CRYSTAL.get());
+        set(level, origin.offset(0, 0, -1), ModBlocks.ENGRAVED_MERIDIAN_TILE.get());
+    }
+
+    private static void ensureAreaLoaded(ServerLevel level, BlockPos origin, int radius) {
+        level.getChunkAt(origin.offset(-radius, 0, -radius));
+        level.getChunkAt(origin.offset(radius, 0, radius));
+    }
+
+    private static void set(ServerLevel level, BlockPos pos, Block block) {
+        level.setBlock(pos, block.defaultBlockState(), UPDATE_FLAGS);
+    }
+}

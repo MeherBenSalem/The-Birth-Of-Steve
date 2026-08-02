@@ -4,6 +4,9 @@
 
 ```text
 gradlew.bat build
+gradlew.bat -p 1.21.1 :neoforge:runGameTestServer
+gradlew.bat -p 1.21.1 :fabric:runGameTestServer
+gradlew.bat -p 1.21.1 :common:runDungeonSimulation
 gradlew.bat -p 26.1.2 :neoforge:runData
 gradlew.bat -p 26.1.2 :neoforge:runGameTestServer
 gradlew.bat -p 26.1.2 :common:runDungeonSimulation
@@ -11,20 +14,20 @@ gradlew.bat -p 26.1.2 :common:sourceOverrides
 ```
 
 `build` at the root builds **every** Minecraft version. `-p <version>` scopes a
-task to one target; every command above also exists for `26.2`, and each version
-must be gated separately. `build` compiles `common`, `neoforge` and `fabric` from
-`shared/` plus that version's `overrides/`, and runs the 1,000-seed dungeon
-simulation through `:common:check`.
+task to one target; gate `1.21.1`, `26.1.2`, and `26.2` separately. `build`
+compiles `common`, `neoforge` and `fabric` from `shared/` plus that version's
+`overrides/`, and runs the 1,000-seed dungeon simulation through `:common:check`.
 
 `sourceOverrides` prints the shared files a version replaces. It should list
 nothing for the mainline target and only the deliberate deltas for a port; an
 unexpected entry means a shared file is silently not compiling somewhere.
 
-The GameTest suite runs on NeoForge. Both the test functions and their
-`data/tbos/test_instance/` definitions are common code, so a green NeoForge run
-exercises the same tests the Fabric jar ships. What it does **not** cover is the
-loader glue itself — the Fabric entry points, the four Fabric mixins, and the
-Fabric registry flush order need the manual matrix below.
+Run the GameTest suite on both loaders. The 26.x targets use common
+`data/tbos/test_instance/` definitions. Minecraft 1.21.1 predates that
+`TEST_FUNCTION` registry, so its target-local Fabric and NeoForge annotation
+bridges invoke the same 56 common bodies and use an isolated `tbos:empty`
+template. A green run therefore exercises the shared behaviors and the loader
+registration path; the manual matrix below still covers interactive parity.
 
 `:fabric:runGameTestServer` runs the same suite under Fabric Loader, which is the
 cheapest way to prove the mixins still apply on a new Minecraft version:
@@ -94,9 +97,10 @@ tests.
 
 ## Multi-loader parity matrix
 
-Run every row on **both** `:neoforge:runClient` and `:fabric:runClient`. The
-automated suite runs on NeoForge only, so this matrix is the sole coverage of the
-Fabric entry points, the four Fabric mixins, and the Fabric registry flush order.
+Run every row on **both** `:neoforge:runClient` and `:fabric:runClient`. Automated
+GameTests exercise both loader registration paths, but this matrix remains the
+coverage for interactive UI, gameplay presentation, and the explosion mixin that
+no GameTest triggers.
 
 | Check | NeoForge | Fabric |
 | --- | --- | --- |
@@ -294,6 +298,32 @@ procedure.
   overworld, Nether, and End, and `runClient` ended with `BUILD SUCCESSFUL`.
 - This confirmation does not yet cover the dedicated two-client, interrupted
   save/reload, or repeated ten-transition profiling cases.
+
+## Automated results — 2026-08-02 (Minecraft 1.21.1 port)
+
+- `gradlew.bat collectJars --console=plain --no-parallel --no-daemon`: PASS.
+  The root Gradle 9.5.0 composite built all targets and collected six release
+  jars, including `tbos-fabric-1.21.1-0.4.0.jar` and
+  `tbos-neoforge-1.21.1-0.4.0.jar`. The Java 21 1.21.1 target and the Java 25
+  26.x targets compiled in the same invocation.
+- The 1.21.1 dungeon simulation ran 1,000 seeds with zero failed generations,
+  unreachable rooms, overlaps, lesser-boss count mismatches, or quest-gate
+  violations.
+- `gradlew.bat -p 1.21.1 :fabric:runGameTestServer --console=plain --no-parallel
+  --no-daemon`: PASS twice consecutively after final packaging. Both runs
+  discovered 56 tests and passed all 56 required tests (26.44 s, then 20.29 s).
+- `gradlew.bat -p 1.21.1 :neoforge:runGameTestServer --console=plain
+  --no-parallel --no-daemon`: PASS. The NeoForge annotation bridge enabled the
+  `tbos` namespace, discovered 56 tests, and passed all 56 required tests in
+  31.86 s.
+- Both client smoke starts loaded `tbos 0.4.0`, reloaded the resource pack,
+  stitched block and GUI atlases, and loaded recipes and advancements. Target
+  model adapters eliminate the 1.21.1 missing/failed `tbos` model diagnostics on
+  both loaders. The Fabric smoke also has no `No data fixer registered for
+  tbos:*` messages: the target uses Fabric API's saveable no-argument entity
+  builder, while NeoForge retains its keyed builder path. Both smoke processes
+  were intentionally terminated after startup; their nonzero Gradle exits are
+  therefore not test failures.
 
 ## Automated results — 2026-07-31 (multi-version layout and 26.2 port)
 

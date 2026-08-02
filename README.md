@@ -2,10 +2,10 @@
 
 > Every ruin has a before.
 
-The Birth of Steve is an adventure mod for Minecraft Java Edition 26.1.2 and 26.2,
-built for both NeoForge and Fabric from a single shared codebase. Its central
-mechanic reconstructs a remembered version of authored ruins at the same world
-coordinates.
+The Birth of Steve is an adventure mod for Minecraft Java Edition 1.21.1, 26.1.2,
+and 26.2, built for both NeoForge and Fabric from a single shared codebase. Its
+central mechanic reconstructs a remembered version of authored ruins at the same
+world coordinates.
 
 ## Current state
 
@@ -32,10 +32,15 @@ the complete operator command reference, read
 
 ## Development setup
 
-Requirements: JDK 25. Use the checked-in Gradle wrapper:
+Requirements: JDK 21 for the 1.21.1 target and JDK 25 for the 26.x targets. Use
+the checked-in Gradle wrapper:
 
 ```text
 gradlew.bat build
+gradlew.bat -p 1.21.1 :neoforge:runClient
+gradlew.bat -p 1.21.1 :fabric:runClient
+gradlew.bat -p 1.21.1 :neoforge:runGameTestServer
+gradlew.bat -p 1.21.1 :fabric:runGameTestServer
 gradlew.bat -p 26.1.2 :neoforge:runClient
 gradlew.bat -p 26.1.2 :fabric:runClient
 gradlew.bat -p 26.1.2 :neoforge:runGameTestServer
@@ -44,16 +49,16 @@ gradlew.bat -p 26.1.2 :common:runDungeonSimulation
 
 On Linux or macOS, use `./gradlew` instead.
 
-`build` at the root builds **every** Minecraft version — four jars, one per
+`build` at the root builds **every** Minecraft version — six jars, one per
 loader per version. `-p <version>` drives a single target's own Gradle build;
-swap `26.1.2` for `26.2` above to work on the other one.
+use `1.21.1`, `26.1.2`, or `26.2` to select a target.
 
 The mod's source lives once in `shared/`, in the MultiLoader-Template layout:
 `shared/common` holds nearly all of the mod and compiles against vanilla, while
 `shared/neoforge` and `shared/fabric` only load it and supply loader-specific
-glue. Each Minecraft version gets a top-level folder (`26.1.2/`, `26.2/`) holding
-only that target's build scripts and an `overrides/` directory for the handful of
-files that version has to do differently. See
+glue. Each Minecraft version gets a top-level folder (`1.21.1/`, `26.1.2/`,
+`26.2/`) holding only that target's build scripts and an `overrides/` directory
+for the files that version has to do differently. See
 [`docs/architecture.md`](docs/architecture.md) for the full layout.
 
 ## License

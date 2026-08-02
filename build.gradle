@@ -6,7 +6,7 @@
 //   gradlew collectJars                  ...gathered into build/libs
 //   gradlew -p 26.2 :neoforge:runClient   a single version's own tasks
 
-def minecraftVersions = ['26.1.2', '26.2']
+def minecraftVersions = ['1.21.1', '26.1.2', '26.2']
 def modules = ['common', 'fabric', 'neoforge']
 def loaders = ['fabric', 'neoforge']
 

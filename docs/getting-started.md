@@ -5,21 +5,25 @@ or cheats to begin the adventure.
 
 ## Install and launch
 
-1. Install **Minecraft Java Edition 26.1.2 or 26.2** and a loader for that
-   Minecraft version — **NeoForge 26.1.2.83 or newer** on 26.1.2, **NeoForge
-   26.2.0.1-beta or newer** on 26.2, or Fabric Loader.
+1. Install **Minecraft Java Edition 1.21.1, 26.1.2, or 26.2** and a loader for
+   that Minecraft version — **NeoForge 21.1.80 or newer** on 1.21.1, **NeoForge
+   26.1.2.83 or newer** on 26.1.2, **NeoForge 26.2.0.1-beta or newer** on 26.2,
+   or Fabric Loader.
 2. Put the JAR matching **both** your Minecraft version and your loader in the
-   instance's `mods` folder — `tbos-neoforge-26.1.2-<version>.jar`,
-   `tbos-fabric-26.1.2-<version>.jar`, `tbos-neoforge-26.2-<version>.jar` or
-   `tbos-fabric-26.2-<version>.jar`. The jar refuses to load on the wrong
-   Minecraft version rather than misbehaving, so if the game reports a version
-   mismatch you have the other one.
+   instance's `mods` folder — for example,
+   `tbos-neoforge-1.21.1-<version>.jar` or
+   `tbos-fabric-1.21.1-<version>.jar`; corresponding 26.1.2 and 26.2 names use
+   the same pattern. The jar refuses to load on the wrong Minecraft version
+   rather than misbehaving, so if the game reports a version mismatch you have
+   the other one.
 3. Launch the game and create or open an Overworld save. For multiplayer, put
    the same JAR on both the server and every client.
 4. Because this is an alpha, make a backup before updating an existing world.
 
-On NeoForge no other mod is required. On Fabric you also need **Fabric API**.
-Server owners can tune dungeon settings in `config/tbos-common.json`.
+On NeoForge no other mod is required. On Fabric you also need **Fabric API**;
+the 1.21.1 build is tested with Fabric Loader 0.16.9 and Fabric API
+0.109.0+1.21.1. Server owners can tune dungeon settings in
+`config/tbos-common.json`.
 
 ## Your first expedition
 
