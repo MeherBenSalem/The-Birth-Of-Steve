@@ -6,31 +6,58 @@
 //   gradlew collectJars                  ...gathered into build/libs
 //   gradlew -p 26.2 :neoforge:runClient   a single version's own tasks
 
-def minecraftVersions = ['1.21.1', '26.1.2', '26.2']
-def modules = ['common', 'fabric', 'neoforge']
-def loaders = ['fabric', 'neoforge']
+// Per-version loader list. 1.20.1 ships Forge; the rest ship NeoForge.
+def versionLoaders = [
+        '1.20.1': ['fabric', 'forge'],
+        '1.21.1': ['fabric', 'neoforge'],
+        '26.1.2': ['fabric', 'neoforge'],
+        '26.2'  : ['fabric', 'neoforge'],
+]
+def minecraftVersions = versionLoaders.keySet().toList()
+def allModules = minecraftVersions.collectMany { version ->
+    versionLoaders[version] + 'common'
+}.toSet().toList()
 
-def fanOut = { String taskPath ->
-    minecraftVersions.collect { version -> gradle.includedBuild(version).task(taskPath) }
+def fanOut = { String taskPath, List<String> acrossVersions = minecraftVersions ->
+    acrossVersions.collect { version -> gradle.includedBuild(version).task(taskPath) }
+}
+
+def versionsWithModule = { String module ->
+    minecraftVersions.findAll { v -> module == 'common' || versionLoaders[v].contains(module) }
 }
 
 tasks.register('build') {
     group = 'build'
-    description = "Builds every Minecraft version: ${minecraftVersions.join(', ')}."
-    modules.each { module -> dependsOn fanOut(":$module:build") }
+    description = "Builds every Minecraft version: ${minecraftVersions.sort().join(', ')}."
+    allModules.each { module ->
+        dependsOn fanOut(":$module:build", versionsWithModule(module))
+    }
 }
 
 tasks.register('clean', Delete) {
     group = 'build'
     description = 'Cleans every Minecraft version.'
     delete layout.buildDirectory
-    modules.each { module -> dependsOn fanOut(":$module:clean") }
+    allModules.each { module ->
+        dependsOn fanOut(":$module:clean", versionsWithModule(module))
+    }
 }
 
 tasks.register('gameTest') {
     group = 'verification'
-    description = 'Runs the NeoForge GameTest suite on every Minecraft version.'
-    dependsOn fanOut(':neoforge:runGameTestServer')
+    description = 'Runs the loader GameTest suite on every Minecraft version.'
+    dependsOn versionLoaders.collectMany { version, loaders ->
+        // 1.20.1 gates on Fabric's suite. Its :forge:runGameTestServer works and
+        // runs the same 56 shared tests, but 14 of them need
+        // GameTestHelper.makeMockServerPlayerInLevel(), which Forge 1.20.1 breaks
+        // by dereferencing the netty channel of the mock player's connection on
+        // the join path. See 1.20.1/overrides/README.md. The rest run NeoForge's.
+        if (version == '1.20.1') {
+            gradle.includedBuild(version).task(':fabric:runGameTestServer')
+        } else {
+            gradle.includedBuild(version).task(':neoforge:runGameTestServer')
+        }
+    }
 }
 
 tasks.register('sourceOverrides') {
@@ -45,7 +72,7 @@ tasks.register('collectJars', Sync) {
     dependsOn tasks.named('build')
 
     def jarDirs = minecraftVersions.collectMany { version ->
-        loaders.collect { loader -> file("$version/$loader/build/libs") }
+        versionLoaders[version].collect { loader -> file("$version/$loader/build/libs") }
     }
     from(jarDirs) {
         include '*.jar'

@@ -1,0 +1,2 @@
+// Included builds in a composite must have distinct names.
+rootProject.name = 'build-logic-1-20-1'

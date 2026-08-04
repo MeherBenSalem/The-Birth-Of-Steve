@@ -1,0 +1,264 @@
+import groovy.io.FileType
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+// ---------------------------------------------------------------------------
+// Mod identity
+// ---------------------------------------------------------------------------
+// Version, group, mod id, and description are declared once in shared/ so they
+// cannot drift. Java is intentionally a per-target Gradle property.
+def modProperties = new Properties()
+rootProject.file('../shared/mod.properties').withInputStream { modProperties.load(it) }
+modProperties.each { key, value ->
+    switch (key) {
+        case 'group': project.group = value; break
+        case 'version': project.version = value; break
+        case 'description': project.description = value; break
+        default: project.ext.set(key as String, value)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net'
+    }
+    maven {
+        name = 'Forge'
+        url = 'https://maven.minecraftforge.net'
+    }
+    maven {
+        name = 'Sponge'
+        url = 'https://repo.spongepowered.org/repository/maven-public'
+    }
+    maven {
+        name = 'ParchmentMC'
+        url = 'https://maven.parchmentmc.org/'
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Shared sources with per-version overrides
+// ---------------------------------------------------------------------------
+// A file under overrides/<module>/src/main/<kind>/ replaces the corresponding
+// shared/<module>/src/main/<kind>/ file. The shared copy is excluded at task
+// level as the loader projects consume common's raw source directories.
+final List<String> MODULES = ['common', 'fabric', 'forge']
+def sharedRoot = rootProject.file('../shared')
+def overrideRoot = rootProject.file('overrides')
+def sharedModuleName = { String module -> module == 'forge' ? 'neoforge' : module }
+
+ext.sharedSourceDir = { String module, String kind -> new File(sharedRoot, "${sharedModuleName(module)}/src/main/$kind") }
+ext.overrideSourceDir = { String module, String kind -> new File(overrideRoot, "$module/src/main/$kind") }
+ext.resolveSharedFile = { String module, String kind, String relativePath ->
+    def override = new File(overrideRoot, "$module/src/main/$kind/$relativePath")
+    override.exists() ? override : new File(sharedRoot, "${sharedModuleName(module)}/src/main/$kind/$relativePath")
+}
+
+def collectShadows = { String kind ->
+    def shadows = []
+    MODULES.each { String module ->
+        File overrideDir = new File(overrideRoot, "$module/src/main/$kind")
+        if (!overrideDir.directory) {
+            return
+        }
+        File sharedDir = new File(sharedRoot, "${sharedModuleName(module)}/src/main/$kind")
+        overrideDir.eachFileRecurse(FileType.FILES) { File file ->
+            def relative = overrideDir.toPath().relativize(file.toPath()).toString().replace('\\', '/')
+            shadows << [sharedDir.absolutePath, relative]
+        }
+    }
+    shadows
+}
+
+def javaShadows = collectShadows('java')
+def resourceShadows = collectShadows('resources')
+def shadowSpec = { List shadows ->
+    return { FileTreeElement element ->
+        if (shadows.isEmpty()) {
+            return false
+        }
+        def relative = element.relativePath.pathString
+        def absolute = element.file.absolutePath
+        shadows.any { it[1] == relative && absolute.startsWith(it[0] as String) }
+    }
+}
+def shadowedJava = shadowSpec(javaShadows)
+def shadowedResources = shadowSpec(resourceShadows)
+
+sourceSets.main.java.setSrcDirs([sharedSourceDir(project.name, 'java'), overrideSourceDir(project.name, 'java')])
+sourceSets.main.resources.setSrcDirs([sharedSourceDir(project.name, 'resources'), overrideSourceDir(project.name, 'resources')])
+
+tasks.withType(JavaCompile).configureEach {
+    exclude(shadowedJava)
+}
+tasks.withType(Javadoc).configureEach {
+    exclude(shadowedJava)
+}
+tasks.withType(Jar).configureEach {
+    exclude(shadowedJava)
+    exclude(shadowedResources)
+}
+
+tasks.register('sourceOverrides') {
+    group = 'help'
+    description = 'Lists the shared files this Minecraft version overrides.'
+    doLast {
+        def all = (javaShadows + resourceShadows).collect { it[1] }.toSorted()
+        if (all.isEmpty()) {
+            logger.lifecycle("${rootProject.name}: no source overrides - every file comes from shared/.")
+        } else {
+            logger.lifecycle("${rootProject.name} overrides ${all.size()} shared file(s):")
+            all.each { logger.lifecycle("  $it") }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Java, jars, resource expansion, and publication
+// ---------------------------------------------------------------------------
+base {
+    archivesName = "${mod_id}-${project.name}-${minecraft_version}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = Integer.parseInt(java_version)
+    options.compilerArgs.add('-Xlint:deprecation')
+}
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+tasks.withType(Jar).configureEach {
+    from(rootProject.file('../LICENSE')) {
+        rename { "${it}_${mod_name}" }
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_name,
+                'Specification-Vendor'  : mod_author,
+                'Specification-Version' : project.jar.archiveVersion,
+                'Implementation-Title'  : project.name,
+                'Implementation-Version': project.jar.archiveVersion,
+                'Implementation-Vendor' : mod_author,
+                'Built-On-Minecraft'    : minecraft_version
+        ])
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Datapack layout
+// ---------------------------------------------------------------------------
+// Minecraft 1.21 renamed the datapack registry directories to their singular
+// form ("recipes" -> "recipe", "tags/blocks" -> "tags/block", ...), and shared/
+// is authored in that newer layout. 1.20.1 still reads the plural names, so the
+// directories are relocated on the way into the jar.
+//
+// This lives in the build rather than in overrides/ on purpose: the delta is a
+// folder name, not a file body, and copying ~140 data files into overrides/
+// purely to rename their parent directory is exactly the "forking the mod" that
+// overrides/ is not for. A file whose *body* differs on 1.20.1 still belongs in
+// overrides/ at its shared (singular) path, and is relocated by this same step.
+def datapackDirRenames = [
+        'advancement': 'advancements',
+        'loot_table' : 'loot_tables',
+        'recipe'     : 'recipes',
+        'structure'  : 'structures',
+]
+def datapackTagRenames = [
+        'block'      : 'blocks',
+        'item'       : 'items',
+        'entity_type': 'entity_types',
+        'fluid'      : 'fluids',
+        'game_event' : 'game_events',
+]
+
+processResources {
+    exclude(shadowedResources)
+
+    // The data-driven GameTest registries are 26.x-only. 1.20.1 discovers its
+    // tests from @GameTestHolder, so these would be inert files in the jar.
+    exclude('data/*/test_instance/**', 'data/*/test_environment/**')
+
+    eachFile { FileCopyDetails details ->
+        String[] segments = details.relativePath.segments
+        if (segments.length < 3 || segments[0] != 'data') {
+            return
+        }
+        String[] renamed = segments.clone()
+        if (segments[2] == 'tags') {
+            if (segments.length < 4 || datapackTagRenames[segments[3]] == null) {
+                return
+            }
+            renamed[3] = datapackTagRenames[segments[3]]
+        } else {
+            if (datapackDirRenames[segments[2]] == null) {
+                return
+            }
+            renamed[2] = datapackDirRenames[segments[2]]
+        }
+        details.relativePath = new RelativePath(true, renamed)
+    }
+
+    var expandProps = [
+            'version'                      : version,
+            'group'                        : project.group,
+            'minecraft_version'            : minecraft_version,
+            'minecraft_version_range'      : minecraft_version_range,
+            'fabric_version'               : fabric_version,
+            'fabric_loader_version'        : fabric_loader_version,
+            'mod_name'                     : mod_name,
+            'mod_author'                   : mod_author,
+            'mod_id'                       : mod_id,
+            'license'                      : license,
+            'description'                  : project.description,
+            'forge_version'                : forge_version,
+            'forge_loader_version_range'   : forge_loader_version_range,
+            'credits'                      : credits,
+            'java_version'                 : java_version
+    ]
+    var jsonExpandProps = expandProps.collectEntries {
+        key, value -> [(key): value instanceof String ? value.replace('\n', '\\\\n') : value]
+    }
+
+    filesMatching(['META-INF/mods.toml', 'META-INF/neoforge.mods.toml']) {
+        expand expandProps
+    }
+    filesMatching(['pack.mcmeta', 'fabric.mod.json', '*.mixins.json']) {
+        expand jsonExpandProps
+    }
+    inputs.properties(expandProps)
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            artifactId base.archivesName.get()
+            from components.java
+        }
+    }
+    if (System.getenv('local_maven_url')) {
+        repositories {
+            maven {
+                url System.getenv('local_maven_url')
+            }
+        }
+    }
+}

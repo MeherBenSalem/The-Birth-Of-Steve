@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": { "item": "minecraft:amethyst_shard" },
+    "C": { "item": "minecraft:copper_ingot" },
+    "G": { "item": "minecraft:glass" },
+    "K": { "item": "tbos:curator_core" }
+  },
+  "pattern": [
+    " A ",
+    "GKG",
+    "CCC"
+  ],
+  "result": {
+    "item": "tbos:memory_lantern"
+  }
+}

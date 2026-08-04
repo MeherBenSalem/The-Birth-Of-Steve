@@ -7,6 +7,7 @@
 // (see https://youtrack.jetbrains.com/issue/IDEA-317606)
 rootProject.name = 'The Birth of Steve'
 
+includeBuild('1.20.1')
 includeBuild('26.1.2')
 includeBuild('26.2')
 includeBuild('1.21.1')

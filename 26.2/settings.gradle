@@ -1,4 +1,9 @@
 pluginManagement {
+    // Scoped to this build's plugin resolution. Every version's build-logic
+    // publishes the same plugin ids (multiloader-common/-loader), so including
+    // it at the top level offers this copy to the whole composite and the root
+    // build applies one version's conventions to all of them.
+    includeBuild('build-logic')
     repositories {
         gradlePluginPortal()
         mavenCentral()
@@ -23,7 +28,6 @@ plugins {
 // Must match the folder name of the project, or else IDEA may complain
 // (see https://youtrack.jetbrains.com/issue/IDEA-317606)
 rootProject.name = '26.2'
-includeBuild('build-logic')
 include('common')
 include('fabric')
 include('neoforge')

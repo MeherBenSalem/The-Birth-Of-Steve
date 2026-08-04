@@ -1,0 +1,68 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev.legacyforge'
+}
+
+def accessTransformer = resolveSharedFile('common', 'resources', 'META-INF/accesstransformer.cfg')
+
+legacyForge {
+    version = "${minecraft_version}-${forge_version}"
+
+    validateAccessTransformers = false
+
+    if (accessTransformer.exists()) {
+        accessTransformers = [accessTransformer.absolutePath]
+    }
+    parchment {
+        minecraftVersion = parchment_minecraft
+        mappingsVersion = parchment_version
+    }
+    runs {
+        configureEach {
+            // Forge 1.20.1 reads the GameTest namespace filter from forge.*;
+            // the property only became neoforge.* after the NeoForge split.
+            systemProperty('forge.enabledGameTestNamespaces', mod_id)
+            ideName = "Forge ${it.name.capitalize()} (${project.path})"
+        }
+        client {
+            client()
+        }
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+        // Forge 1.20.1's userdev ships a real gameTestServer launch target
+        // (forgegametestserveruserdev), so this target runs the suite itself
+        // rather than deferring to Fabric's.
+        gameTestServer {
+            type = 'gameTestServer'
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+sourceSets.main.resources.srcDir 'src/generated/resources'
+
+// The forge module inherits the shared neoforge resource tree, but Minecraft
+// 1.20.1 Forge reads META-INF/mods.toml (provided by the target override), not
+// the neoforge descriptor.
+processResources {
+    exclude('META-INF/neoforge.mods.toml')
+}
+
+dependencies {
+    compileOnly project(":common")
+}
+
+jar {
+    finalizedBy('reobfJar')
+}
