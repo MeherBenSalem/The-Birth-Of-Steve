@@ -36,6 +36,10 @@ public enum ArchiveEnemyKind {
     LABYRINTH_USHER(Yesterglass.MOD_ID, "labyrinth_usher"),
     BLANK_CHRONIST(Yesterglass.MOD_ID, "blank_chronist"),
     HOUR_HAND_WRAITH(Yesterglass.MOD_ID, "hour_hand_wraith"),
+    // Chamber bruiser, placed before LENSWARD: the `lensward_contract` GameTest
+    // asserts Lensward is the last constant, because rollEnemyDrop seeds on
+    // ordinal(). New kinds go here, above it, never after.
+    MINOTAUR(Yesterglass.MOD_ID, "minotaur"),
     LENSWARD(Yesterglass.MOD_ID, "lensward");
 
     private final Identifier id;

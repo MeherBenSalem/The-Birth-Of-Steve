@@ -1812,7 +1812,12 @@ public final class ModGameTests {
             helper.assertTrue(remembered.state() == TemporalState.REMEMBERED, "Transition did not reach remembered state");
 
             BlockPos occupiedRelative = relativeOrigin.offset(7, 2, 8);
-            helper.spawn(VanillaCompat.ARMOR_STAND, occupiedRelative);
+            // Held so it can be removed again below. Leaving it behind poisons every
+            // later run against the same GameTest world: it is a LivingEntity sitting
+            // in a phase volume, so isTransitionSafe cancels the next fixture's
+            // transition as "blocked late" and the failure surfaces somewhere else.
+            net.minecraft.world.entity.decoration.ArmorStand obstacle =
+                    helper.spawn(VanillaCompat.ARMOR_STAND, occupiedRelative);
             TemporalSite reverse = remembered.beginTransition(helper.getLevel().getGameTime(), 40, 17L);
             TemporalSiteManager.data(helper.getLevel()).replace(reverse);
             TemporalSiteManager.recover(helper.getLevel());
@@ -1827,6 +1832,7 @@ public final class ModGameTests {
                             helper.getLevel().getBlockState(phasePos).is(ModBlocks.PHASE_PLATFORM.get()),
                             "Cancelled removal changed phase geometry");
                 }
+                obstacle.discard();
                 helper.succeed();
             });
         });
@@ -2510,6 +2516,83 @@ public final class ModGameTests {
         helper.succeed();
     }
 
+    /**
+     * The Curator's rebirth must fire exactly once.
+     *
+     * <p>Health is zeroed before each call because 1.20.1 and 1.21.1 define
+     * {@code isDeadOrDying} purely as {@code health <= 0}, with no {@code dead}
+     * flag, so a killing blow has to look like one on every version.
+     *
+     * <p>Driven through {@code die} rather than by dealing damage, because that
+     * is the seam the mechanic hangs on: if the override ever stops intercepting,
+     * the first blow kills and this fails immediately.
+     */
+    public static void phoenixGuardianRisesExactlyOnce(GameTestHelper helper) {
+        combatFloor(helper, 9);
+        com.nightbeam.tbos.entity.PhoenixGuardianEntity curator = helper.spawn(
+                ModEntities.PHOENIX_GUARDIAN.get(),
+                new Vec3(4.5D, 1.0D, 4.5D));
+        curator.setNoAi(true);
+        helper.assertTrue(!curator.hasRisen(), "Curator spawned already risen");
+
+        float half = curator.getMaxHealth()
+                * com.nightbeam.tbos.entity.PhoenixGuardianEntity.REBIRTH_HEALTH_FRACTION;
+        curator.setHealth(0.0F);
+        curator.die(helper.getLevel().damageSources().generic());
+        helper.assertTrue(curator.hasRisen(), "First killing blow did not trigger the rebirth");
+        helper.assertTrue(curator.isAlive(), "Curator did not survive its own rebirth");
+        helper.assertTrue(curator.getHealth() == half, "Rebirth did not restore half health");
+
+        curator.setHealth(0.0F);
+        curator.die(helper.getLevel().damageSources().generic());
+        helper.assertTrue(curator.isDeadOrDying(), "Second killing blow was survived");
+        curator.discard();
+        helper.succeed();
+    }
+
+    /**
+     * A site-managed Curator must not run its own rebirth.
+     *
+     * <p>{@code LastCuratorEncounterTracker} owns the three-phase health curve;
+     * a second life underneath it would desynchronise {@code LastCuratorProgress}.
+     */
+    public static void siteManagedCuratorDoesNotRise(GameTestHelper helper) {
+        combatFloor(helper, 9);
+        com.nightbeam.tbos.entity.PhoenixGuardianEntity curator = helper.spawn(
+                ModEntities.PHOENIX_GUARDIAN.get(),
+                new Vec3(4.5D, 1.0D, 4.5D));
+        curator.setNoAi(true);
+        curator.setSiteManaged(true);
+
+        curator.setHealth(0.0F);
+        curator.die(helper.getLevel().damageSources().generic());
+        helper.assertTrue(!curator.hasRisen(), "Site-managed Curator ran its own rebirth");
+        helper.assertTrue(curator.isDeadOrDying(), "Site-managed Curator survived a killing blow");
+        curator.discard();
+        helper.succeed();
+    }
+
+    /** The minotaur must be reachable from encounter-pool config and spawn configured. */
+    public static void chamberMinotaurResolvesFromPool(GameTestHelper helper) {
+        helper.assertTrue(
+                com.nightbeam.tbos.run.ArchiveEnemyKind.parse("tbos:minotaur").isPresent(),
+                "Minotaur is not addressable from encounter-pool config");
+        combatFloor(helper, 9);
+        com.nightbeam.tbos.entity.MinotaurEntity minotaur = helper.spawn(
+                ModEntities.MINOTAUR.get(),
+                new Vec3(4.5D, 1.0D, 4.5D));
+        minotaur.setNoAi(true);
+        helper.assertTrue(minotaur.isAlive(), "Minotaur did not spawn alive");
+        helper.assertTrue(
+                minotaur.getPhase() == com.nightbeam.tbos.entity.MinotaurEntity.Phase.IDLE,
+                "Minotaur did not start in its idle phase");
+        helper.assertTrue(
+                minotaur.getMaxHealth() == 46.0F,
+                "Minotaur did not receive its authored attributes");
+        minotaur.discard();
+        helper.succeed();
+    }
+
     public static void curatorRuntimePersistsHealthAndReward(GameTestHelper helper) {
         BlockPos origin = helper.absolutePos(new BlockPos(2, 1, 2));
         TemporalSite base = TemporalSiteManager.placeGrandOrrery(helper.getLevel(), origin, Rotation.NONE);
@@ -2519,7 +2602,7 @@ public final class ModGameTests {
         LastCuratorEncounterTracker.startIfAbsent(helper.getLevel(), active);
         LastCuratorEncounterTracker.tick(helper.getLevel().getServer());
 
-        net.minecraft.world.entity.animal.IronGolem curator =
+        com.nightbeam.tbos.entity.PhoenixGuardianEntity curator =
                 LastCuratorEncounterTracker.findCurator(helper.getLevel(), active).orElseThrow();
         helper.assertTrue(curator.getMaxHealth() == 300.0F, "Runtime Curator did not receive its authored health");
         curator.setHealth(195.0F);

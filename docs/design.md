@@ -194,6 +194,32 @@ because in a dark procedural room shape is all that arrives first:
   tightens as the refrain approaches and tightens again below half health, so a
   player who watches the chest knows what a player who watches the health bar knows.
 
+Two later creatures come from **Blockbench sources rather than code-native meshes**,
+and are the first in the mod to do so:
+
+- **The Last Curator** (`phoenix_guardian`) closes the Overworld campaign, and is
+  legless like the Cantor — the whole silhouette is a crowned head over four
+  wing-arms and a hanging torso, with nothing below it. Its tell is spatial rather
+  than rhythmic: the wing-arms fan wide during the charge and stay wide until the
+  ember burst lands, so the danger zone is drawn in the air before it exists on the
+  ground. It reads as *one* creature in two states because the crown ring keeps
+  turning through both.
+- The **Minotaur** is the only chamber enemy that plants itself. Where the theme
+  exclusives skirmish, it coils its whole body away from the target during the
+  wind-up and drops through the swing, which is what makes being cornered by one
+  the actual threat rather than being hit by one.
+
+#### Model provenance
+
+`phoenix_guardian` and `minotaur` were imported from Blockbench `.bbmodel`
+sources supplied for this project. They carry Bedrock `bedrock_binding` bones and
+their original geometry names (`guardian_of_the_phoenix.geo`, `minotaur.geo`), so
+unlike the rest of the art in this document they were **not** authored in-repo.
+Ownership is the supplier's to confirm; the conversion, animation and texture
+placement are project work. The `.bbmodel` files themselves are not committed —
+`tools/models/raw/` holds only the Blockbench Java export each generated class is
+built from.
+
 Sixteen floor-theme exclusives (two per cycling floor name) each have **their own
 silhouette**, on the same palette with a theme accent bias. They briefly shared one
 box-and-two-legs mesh, and the result was that every theme's pair read as the same

@@ -4,7 +4,9 @@ import com.nightbeam.tbos.entity.HourCantorEntity;
 import com.nightbeam.tbos.entity.LenswardEntity;
 import com.nightbeam.tbos.entity.MemoryLeechEntity;
 import com.nightbeam.tbos.entity.MeridianSentinelEntity;
+import com.nightbeam.tbos.entity.MinotaurEntity;
 import com.nightbeam.tbos.entity.ParallaxWraithEntity;
+import com.nightbeam.tbos.entity.PhoenixGuardianEntity;
 import com.nightbeam.tbos.entity.ThemeExclusiveEntity;
 import com.nightbeam.tbos.entity.ThemeExclusiveKind;
 import com.nightbeam.tbos.platform.registry.ModRegistries;
@@ -68,6 +70,33 @@ public final class ModEntities {
                     builder -> builder
                             .sized(0.9F, 1.0F)
                             .eyeHeight(0.7F)
+                            .clientTrackingRange(10)
+                            .updateInterval(2)
+                            .noLootTable());
+
+    // Sized to the body, not the wingspan: the wing-arms fan several blocks wide
+    // during a charge and a hitbox that covered them would be hit through walls.
+    public static final RegistryEntry<EntityType<PhoenixGuardianEntity>> PHOENIX_GUARDIAN =
+            ModRegistries.ENTITIES.registerEntityType(
+                    "phoenix_guardian",
+                    PhoenixGuardianEntity::new,
+                    MobCategory.MONSTER,
+                    builder -> builder
+                            .sized(1.6F, 3.4F)
+                            .eyeHeight(2.9F)
+                            .fireImmune()
+                            .clientTrackingRange(16)
+                            .updateInterval(2)
+                            .noLootTable());
+
+    public static final RegistryEntry<EntityType<MinotaurEntity>> MINOTAUR =
+            ModRegistries.ENTITIES.registerEntityType(
+                    "minotaur",
+                    MinotaurEntity::new,
+                    MobCategory.MONSTER,
+                    builder -> builder
+                            .sized(1.2F, 3.4F)
+                            .eyeHeight(3.0F)
                             .clientTrackingRange(10)
                             .updateInterval(2)
                             .noLootTable());
@@ -170,6 +199,24 @@ public final class ModEntities {
                         .add(Attributes.ARMOR, 10.0D)
                         .add(Attributes.KNOCKBACK_RESISTANCE, 0.75D)
                         .add(Attributes.FOLLOW_RANGE, 48.0D));
+        sink.accept(
+                PHOENIX_GUARDIAN.get(),
+                Monster.createMonsterAttributes()
+                        .add(Attributes.MAX_HEALTH, 220.0D)
+                        .add(Attributes.ATTACK_DAMAGE, 12.0D)
+                        .add(Attributes.MOVEMENT_SPEED, 0.29D)
+                        .add(Attributes.ARMOR, 12.0D)
+                        .add(Attributes.KNOCKBACK_RESISTANCE, 0.8D)
+                        .add(Attributes.FOLLOW_RANGE, 48.0D));
+        sink.accept(
+                MINOTAUR.get(),
+                Monster.createMonsterAttributes()
+                        .add(Attributes.MAX_HEALTH, 46.0D)
+                        .add(Attributes.ATTACK_DAMAGE, 9.0D)
+                        .add(Attributes.MOVEMENT_SPEED, 0.28D)
+                        .add(Attributes.ARMOR, 6.0D)
+                        .add(Attributes.KNOCKBACK_RESISTANCE, 0.5D)
+                        .add(Attributes.FOLLOW_RANGE, 32.0D));
         sink.accept(
                 MEMORY_LEECH.get(),
                 Monster.createMonsterAttributes()

@@ -6,6 +6,8 @@ out/
 run/
 !1.21.1/overrides/common/src/main/java/com/nightbeam/tbos/run/
 !1.21.1/overrides/common/src/main/java/com/nightbeam/tbos/run/**
+!1.20.1/overrides/common/src/main/java/com/nightbeam/tbos/run/
+!1.20.1/overrides/common/src/main/java/com/nightbeam/tbos/run/**
 runs/
 /run-*/
 .idea/
@@ -21,4 +23,5 @@ logs/
 crash-reports/
 graphify-out/
 **/src/generated/resources/.cache/
+__pycache__/
 /tools

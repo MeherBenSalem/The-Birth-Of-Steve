@@ -20,4 +20,8 @@ build
 
 # other
 eclipse
-run
+
+# Dev game directories only. A bare `run` here also matched the mod's own
+# com/nightbeam/tbos/run package and silently left it untracked.
+/*/run/
+/*/runs/

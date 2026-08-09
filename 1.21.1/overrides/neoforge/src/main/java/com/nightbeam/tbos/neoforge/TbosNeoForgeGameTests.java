@@ -19,6 +19,18 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class TbosNeoForgeGameTests {
     @GameTest(template = "empty", batch = "tbos", timeoutTicks = 1000)
+    public void phoenixGuardianRisesExactlyOnce(GameTestHelper helper) {
+        ModGameTests.phoenixGuardianRisesExactlyOnce(helper);
+    }
+    @GameTest(template = "empty", batch = "tbos", timeoutTicks = 1000)
+    public void siteManagedCuratorDoesNotRise(GameTestHelper helper) {
+        ModGameTests.siteManagedCuratorDoesNotRise(helper);
+    }
+    @GameTest(template = "empty", batch = "tbos", timeoutTicks = 1000)
+    public void chamberMinotaurResolvesFromPool(GameTestHelper helper) {
+        ModGameTests.chamberMinotaurResolvesFromPool(helper);
+    }
+    @GameTest(template = "empty", batch = "tbos", timeoutTicks = 1000)
     public void adventureWorldMetadataPersistsCoordinates(GameTestHelper helper) {
         ModGameTests.adventureWorldMetadataPersistsCoordinates(helper);
     }

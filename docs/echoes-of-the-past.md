@@ -92,8 +92,8 @@ maps are keyed by run, member, or allocation slot.
 ## Encounters, loot, and modifiers
 
 Encounter composition is drawn from configurable weighted groups containing the
-original Parallax Wraith, Meridian Sentinel, Memory Leech, Lensward, and Hour
-Cantor plus selected vanilla monsters: husks, skeletons, strays, cave spiders,
+original Parallax Wraith, Meridian Sentinel, Memory Leech, Lensward, Minotaur,
+and Hour Cantor plus selected vanilla monsters: husks, skeletons, strays, cave spiders,
 silverfish, vindicators, evokers, and ravagers. Selection uses the room's
 historical group, seed, wave, size, difficulty, active players, and the run's
 floor theme (`ArchiveFloorTheme`, keyed by the eight cycling floor names). Each
@@ -159,6 +159,12 @@ sparks and rings audibly for exactly that window.
   pursuing. Its focused beam telegraphs for thirty ticks and is cancelled outright
   if the target breaks line of sight before it fires, so room geometry is a
   defence. It never appears in lesser-boss or final-boss pools.
+- **Minotaur** — the only chamber enemy that gives up its mobility to attack. It
+  plants itself for a twenty-two tick wind-up and then drops a slam that damages
+  and throws everything within 3.5 blocks. Because it cannot reposition mid-swing,
+  open ground beats it and a corridor does not. It appears in the Elite Echoes
+  (weight 2) and Ruined Guardian (weight 3) pools only, never in the opening
+  Forgotten Legion wave.
 
 The slam and the refrain skip other monsters, so a wave cannot shatter its own
 formation. All three windups abort back to a shortened cooldown when the target

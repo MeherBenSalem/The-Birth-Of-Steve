@@ -16,6 +16,18 @@ import net.minecraft.gametest.framework.GameTestHelper;
  */
 public final class TbosFabricGameTests implements FabricGameTest {
     @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void phoenixGuardianRisesExactlyOnce(GameTestHelper helper) {
+        ModGameTests.phoenixGuardianRisesExactlyOnce(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void siteManagedCuratorDoesNotRise(GameTestHelper helper) {
+        ModGameTests.siteManagedCuratorDoesNotRise(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void chamberMinotaurResolvesFromPool(GameTestHelper helper) {
+        ModGameTests.chamberMinotaurResolvesFromPool(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
     public void adventureWorldMetadataPersistsCoordinates(GameTestHelper helper) {
         ModGameTests.adventureWorldMetadataPersistsCoordinates(helper);
     }

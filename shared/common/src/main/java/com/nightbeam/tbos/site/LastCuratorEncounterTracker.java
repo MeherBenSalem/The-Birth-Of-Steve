@@ -1,9 +1,10 @@
 package com.nightbeam.tbos.site;
 
 import com.nightbeam.tbos.advancement.ModAdvancements;
-import com.nightbeam.tbos.compat.VanillaCompat;
+import com.nightbeam.tbos.entity.PhoenixGuardianEntity;
 import com.nightbeam.tbos.item.MemoryPlateItem;
 import com.nightbeam.tbos.item.MemoryScene;
+import com.nightbeam.tbos.registry.ModEntities;
 import com.nightbeam.tbos.registry.ModItems;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
@@ -29,7 +30,6 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -81,7 +81,7 @@ public final class LastCuratorEncounterTracker {
         Key key = new Key(level.dimension(), site.siteId());
         removeRuntime(key);
         if (discardEntity) {
-            findCurator(level, site).ifPresent(IronGolem::discard);
+            findCurator(level, site).ifPresent(PhoenixGuardianEntity::discard);
         }
     }
 
@@ -92,9 +92,9 @@ public final class LastCuratorEncounterTracker {
         ACTIVE.clear();
     }
 
-    public static java.util.Optional<IronGolem> findCurator(ServerLevel level, TemporalSite site) {
+    public static java.util.Optional<PhoenixGuardianEntity> findCurator(ServerLevel level, TemporalSite site) {
         return level.getEntities(
-                        EntityTypeTest.forClass(IronGolem.class),
+                        EntityTypeTest.forClass(PhoenixGuardianEntity.class),
                         bounds(site),
                         entity -> entity.entityTags().contains(CURATOR_TAG))
                 .stream()
@@ -136,7 +136,7 @@ public final class LastCuratorEncounterTracker {
     }
 
     private static boolean tickEncounter(ServerLevel level, TemporalSite site, Runtime runtime) {
-        IronGolem curator = findCurator(level, site).orElse(null);
+        PhoenixGuardianEntity curator = findCurator(level, site).orElse(null);
         if (curator == null) {
             curator = spawnCurator(level, site);
         }
@@ -195,8 +195,8 @@ public final class LastCuratorEncounterTracker {
         return true;
     }
 
-    private static IronGolem spawnCurator(ServerLevel level, TemporalSite site) {
-        IronGolem curator = VanillaCompat.IRON_GOLEM.create(level, EntitySpawnReason.EVENT);
+    private static PhoenixGuardianEntity spawnCurator(ServerLevel level, TemporalSite site) {
+        PhoenixGuardianEntity curator = ModEntities.PHOENIX_GUARDIAN.get().create(level, EntitySpawnReason.EVENT);
         if (curator == null) {
             return null;
         }
@@ -204,7 +204,7 @@ public final class LastCuratorEncounterTracker {
         BlockPos worldSpawn = definition(site).worldPosition(site.origin(), spawn, site.rotation());
         curator.snapTo(worldSpawn.getX() + 0.5D, worldSpawn.getY(), worldSpawn.getZ() + 0.5D, 180.0F, 0.0F);
         curator.addTag(CURATOR_TAG);
-        curator.setPlayerCreated(false);
+        curator.setSiteManaged(true);
         curator.setPersistenceRequired();
         curator.setCustomNameVisible(true);
         AttributeInstance maxHealth = curator.getAttribute(Attributes.MAX_HEALTH);
@@ -219,7 +219,7 @@ public final class LastCuratorEncounterTracker {
     private static void applyFormAndVulnerability(
             ServerLevel level,
             TemporalSite site,
-            IronGolem curator,
+            PhoenixGuardianEntity curator,
             LastCuratorProgress.Phase phase) {
         boolean remembered = site.state().targetStableState() == TemporalState.REMEMBERED;
         boolean vulnerable = LastCuratorProgress.isVulnerable(site.progressFlags(), site.state());
@@ -244,7 +244,7 @@ public final class LastCuratorEncounterTracker {
     private static void updateBossBar(
             ServerLevel level,
             TemporalSite site,
-            IronGolem curator,
+            PhoenixGuardianEntity curator,
             Runtime runtime,
             LastCuratorProgress.Phase phase) {
         runtime.bossBar.setProgress(Math.max(0.0F, curator.getHealth() / LastCuratorProgress.MAX_HEALTH));
@@ -447,7 +447,7 @@ public final class LastCuratorEncounterTracker {
         return cells.stream().distinct().toList();
     }
 
-    private static void tickHalo(ServerLevel level, TemporalSite site, IronGolem curator) {
+    private static void tickHalo(ServerLevel level, TemporalSite site, PhoenixGuardianEntity curator) {
         if (level.getGameTime() % 5L != 0L) {
             return;
         }
@@ -470,7 +470,7 @@ public final class LastCuratorEncounterTracker {
         }
     }
 
-    private static void leashToArena(TemporalSite site, IronGolem curator) {
+    private static void leashToArena(TemporalSite site, PhoenixGuardianEntity curator) {
         BlockPos center = definition(site).transitionCenter(site.origin(), site.rotation());
         double dx = curator.getX() - (center.getX() + 0.5D);
         double dz = curator.getZ() - (center.getZ() + 0.5D);
@@ -480,7 +480,7 @@ public final class LastCuratorEncounterTracker {
         }
     }
 
-    private static void defeat(ServerLevel level, TemporalSite site, IronGolem curator, Runtime runtime) {
+    private static void defeat(ServerLevel level, TemporalSite site, PhoenixGuardianEntity curator, Runtime runtime) {
         curator.discard();
         int flags = LastCuratorProgress.recordHealth(site.progressFlags(), 0);
         if (!LastCuratorProgress.isRewardGranted(flags)) {

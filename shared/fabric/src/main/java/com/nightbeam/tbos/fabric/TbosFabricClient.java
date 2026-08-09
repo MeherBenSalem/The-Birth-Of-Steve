@@ -11,6 +11,8 @@ import com.nightbeam.tbos.client.YesterglassClient;
 import com.nightbeam.tbos.client.render.AlignmentDialRenderer;
 import com.nightbeam.tbos.client.render.ArchiveCoreRenderer;
 import com.nightbeam.tbos.client.render.HourCantorRenderer;
+import com.nightbeam.tbos.client.render.MinotaurRenderer;
+import com.nightbeam.tbos.client.render.PhoenixGuardianRenderer;
 import com.nightbeam.tbos.client.render.LenswardRenderer;
 import com.nightbeam.tbos.client.render.MemoryLanternRenderer;
 import com.nightbeam.tbos.client.render.MemoryLeechRenderer;
@@ -100,6 +102,8 @@ public final class TbosFabricClient implements ClientModInitializer {
         EntityRendererRegistry.register(ModEntities.PARALLAX_WRAITH.get(), ParallaxWraithRenderer::new);
         EntityRendererRegistry.register(ModEntities.MERIDIAN_SENTINEL.get(), MeridianSentinelRenderer::new);
         EntityRendererRegistry.register(ModEntities.HOUR_CANTOR.get(), HourCantorRenderer::new);
+        EntityRendererRegistry.register(ModEntities.PHOENIX_GUARDIAN.get(), PhoenixGuardianRenderer::new);
+        EntityRendererRegistry.register(ModEntities.MINOTAUR.get(), MinotaurRenderer::new);
         // Each kind renders through its own silhouette, so the renderer needs to
         // know which one it is serving before it can bake a layer.
         for (ThemeExclusiveKind kind : ThemeExclusiveKind.values()) {

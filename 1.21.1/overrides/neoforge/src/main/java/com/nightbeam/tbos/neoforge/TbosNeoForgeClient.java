@@ -14,7 +14,9 @@ import com.nightbeam.tbos.client.render.LenswardRenderer;
 import com.nightbeam.tbos.client.render.MemoryLanternRenderer;
 import com.nightbeam.tbos.client.render.MemoryLeechRenderer;
 import com.nightbeam.tbos.client.render.MeridianSentinelRenderer;
+import com.nightbeam.tbos.client.render.MinotaurRenderer;
 import com.nightbeam.tbos.client.render.ParallaxWraithRenderer;
+import com.nightbeam.tbos.client.render.PhoenixGuardianRenderer;
 import com.nightbeam.tbos.client.render.ThemeExclusiveRenderer;
 import com.nightbeam.tbos.entity.ThemeExclusiveKind;
 import com.nightbeam.tbos.registry.ModBlockEntities;
@@ -90,6 +92,8 @@ public final class TbosNeoForgeClient {
         event.registerEntityRenderer(ModEntities.PARALLAX_WRAITH.get(), ParallaxWraithRenderer::new);
         event.registerEntityRenderer(ModEntities.MERIDIAN_SENTINEL.get(), MeridianSentinelRenderer::new);
         event.registerEntityRenderer(ModEntities.HOUR_CANTOR.get(), HourCantorRenderer::new);
+        event.registerEntityRenderer(ModEntities.PHOENIX_GUARDIAN.get(), PhoenixGuardianRenderer::new);
+        event.registerEntityRenderer(ModEntities.MINOTAUR.get(), MinotaurRenderer::new);
         // Each kind renders through its own silhouette, so the renderer needs to
         // know which one it is serving before it can bake a layer.
         for (ThemeExclusiveKind kind : ThemeExclusiveKind.values()) {

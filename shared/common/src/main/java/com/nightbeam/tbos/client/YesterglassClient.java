@@ -4,7 +4,9 @@ import com.nightbeam.tbos.client.render.HourCantorModel;
 import com.nightbeam.tbos.client.render.LenswardModel;
 import com.nightbeam.tbos.client.render.MemoryLeechModel;
 import com.nightbeam.tbos.client.render.MeridianSentinelModel;
+import com.nightbeam.tbos.client.render.MinotaurModel;
 import com.nightbeam.tbos.client.render.ParallaxWraithModel;
+import com.nightbeam.tbos.client.render.PhoenixGuardianModel;
 import com.nightbeam.tbos.client.render.ThemeExclusiveSilhouettes;
 import com.nightbeam.tbos.config.YesterglassClientConfig;
 import java.util.function.BiConsumer;
@@ -42,6 +44,8 @@ public final class YesterglassClient {
         sink.accept(ParallaxWraithModel.MODEL_LAYER, ParallaxWraithModel::createBodyLayer);
         sink.accept(MeridianSentinelModel.MODEL_LAYER, MeridianSentinelModel::createBodyLayer);
         sink.accept(HourCantorModel.MODEL_LAYER, HourCantorModel::createBodyLayer);
+        sink.accept(PhoenixGuardianModel.MODEL_LAYER, PhoenixGuardianModel::createBodyLayer);
+        sink.accept(MinotaurModel.MODEL_LAYER, MinotaurModel::createBodyLayer);
         ThemeExclusiveSilhouettes.forEachLayer(sink);
     }
 }

@@ -44,6 +44,13 @@ public final class ModItems {
                     .component(
                             DataComponents.LORE,
                             new ItemLore(List.of(Component.translatable("item.tbos.curator_core.tooltip")))));
+    public static final RegistryEntry<Item> STARTER_TOME = ModRegistries.ITEMS.registerSimpleItem(
+            "starter_tome",
+            properties -> properties
+                    .stacksTo(1)
+                    .component(
+                            DataComponents.LORE,
+                            new ItemLore(List.of(Component.translatable("item.tbos.starter_tome.tooltip")))));
     public static final RegistryEntry<Item> CHRONICLE_SHARD = ModRegistries.ITEMS.registerSimpleItem(
             "chronicle_shard",
             properties -> properties.component(

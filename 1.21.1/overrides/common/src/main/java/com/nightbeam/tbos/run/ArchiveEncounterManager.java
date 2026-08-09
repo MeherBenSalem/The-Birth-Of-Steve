@@ -1169,7 +1169,8 @@ public final class ArchiveEncounterManager {
                     SHARD_DRIFTER, WAKE_CUTTER, NULL_PORTRAIT, GALLERY_MOTH,
                     GNOMON_KNIGHT, ARMILLARY_SCOUT, DUST_CANTORILE, ASH_CHORISTER,
                     PRISM_STALKER, SHARDLING_SWARM, INDEX_WIGHT, SHELF_CRAWLER,
-                    METRONOME_HOUND, LABYRINTH_USHER, BLANK_CHRONIST, HOUR_HAND_WRAITH ->
+                    METRONOME_HOUND, LABYRINTH_USHER, BLANK_CHRONIST, HOUR_HAND_WRAITH,
+                    MINOTAUR ->
                     EnumSet.noneOf(ArchiveEnemyAbility.class);
             case SKELETON, STRAY, EVOKER -> EnumSet.of(ArchiveEnemyAbility.ECHO_BOLT);
             case CAVE_SPIDER, SILVERFISH -> EnumSet.of(ArchiveEnemyAbility.SPLITTER);
@@ -1194,7 +1195,8 @@ public final class ArchiveEncounterManager {
                     SHARD_DRIFTER, WAKE_CUTTER, NULL_PORTRAIT, GALLERY_MOTH,
                     GNOMON_KNIGHT, ARMILLARY_SCOUT, DUST_CANTORILE, ASH_CHORISTER,
                     PRISM_STALKER, SHARDLING_SWARM, INDEX_WIGHT, SHELF_CRAWLER,
-                    METRONOME_HOUND, LABYRINTH_USHER, BLANK_CHRONIST, HOUR_HAND_WRAITH -> true;
+                    METRONOME_HOUND, LABYRINTH_USHER, BLANK_CHRONIST, HOUR_HAND_WRAITH,
+                    MINOTAUR -> true;
             default -> false;
         };
     }
@@ -1866,6 +1868,7 @@ public final class ArchiveEncounterManager {
             case RAVAGER -> VanillaCompat.RAVAGER;
             case MEMORY_LEECH -> ModEntities.MEMORY_LEECH.get();
             case LENSWARD -> ModEntities.LENSWARD.get();
+            case MINOTAUR -> ModEntities.MINOTAUR.get();
             case SHARD_DRIFTER -> ModEntities.SHARD_DRIFTER.get();
             case WAKE_CUTTER -> ModEntities.WAKE_CUTTER.get();
             case NULL_PORTRAIT -> ModEntities.NULL_PORTRAIT.get();

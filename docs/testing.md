@@ -204,6 +204,31 @@ Unverified until run and dated below.
   vindicators, and ravagers. Confirm the slam and refrain never damage other
   Archive monsters.
 
+## Imported creature matrix — The Last Curator and the Minotaur
+
+Unverified until run and dated below. These two are the first creatures whose
+mesh comes from a Blockbench export rather than code, so the checks are aimed at
+the conversion rather than at the fiction.
+
+- `/summon tbos:phoenix_guardian` on flat ground. The crown ring must turn
+  continuously, the four wing-arms must beat out of phase with each other, and
+  nothing may render below the torso — the model is legless by design, so a
+  visible leg means the wrong layer baked.
+- Damage it to zero **outside** a Hall of Alignment. It must not die: expect a
+  flare, a red boss bar, and half health back. Kill it a second time to confirm
+  the rebirth does not repeat.
+- Stand within seven blocks and wait for the wind-up. The wing-arms must reach
+  full spread **before** the burst lands, and stepping outside the spread during
+  the wind-up must avoid all damage and ignition.
+- Fight the Curator inside its authored site. Exactly one boss bar may appear
+  (the site's, named for its phase); the entity's own bar must stay hidden and
+  the rebirth must not fire.
+- `/summon tbos:minotaur`. Confirm a heavy two-legged gait with the torso
+  counter-rotating against the stride, then let it reach melee: the wind-up must
+  plant it in place, and the slam must knock back everything within 3.5 blocks.
+- Enter a Fractured Archive run and clear Elite Echoes and Ruined Guardian rooms
+  until a minotaur spawns, confirming the encounter pool wiring end to end.
+
 ## Echoes of the Past manual matrix
 
 - In a fresh world, confirm all three Fracture Shrine locations are persistent,
@@ -507,3 +532,55 @@ Recorded on Gradle 9.5.0 after moving the mod into `shared/` and adding the
   `minecraft:item/handheld` parent.
 - The final GameTest server run shut down cleanly while a separate development
   client remained open.
+
+## Automated results — 2026-08-09 (Blockbench creature import)
+
+Command lines exactly as run, from the repository root.
+
+**Green:**
+
+- `gradlew.bat build --console=plain`: PASS. All four Minecraft versions, eight
+  jars, including the 1,000-seed dungeon simulation through `:common:check`.
+- `gradlew.bat -p 26.2 :neoforge:runGameTestServer --console=plain`: PASS —
+  **all 59 required tests**, up from 56. The three added are
+  `phoenix_guardian_rebirth`, `site_managed_curator` and `chamber_minotaur`.
+- `gradlew.bat -p 26.2 :fabric:runGameTestServer --console=plain`: PASS, 59/59.
+- `gradlew.bat -p 1.21.1 :neoforge:runGameTestServer --console=plain`: PASS, 59/59.
+- `gradlew.bat -p 1.21.1 :fabric:runGameTestServer --console=plain`: PASS, 59/59.
+
+**1.20.1 is green now. Four causes, three in the mod and one in the harness:**
+
+- *Fourteen tests died before their first assertion* on `Connection.channel()` being
+  null. 1.20.1's vanilla `GameTestHelper.makeMockServerPlayerInLevel` builds its
+  `Connection` without ever attaching a netty channel, and Forge's login path runs
+  `NetworkFilters.injectIfNecessary`, which dereferences it unconditionally. Mojang
+  fixed this upstream by attaching an `EmbeddedChannel` — 26.2's copy of the same
+  method does exactly that. `mockServerPlayer` backports that line.
+- *Four combat tests then held the wrong target.* Vanilla marks the mock player
+  creative so mobs ignore it, but on 1.20.1 that intent does not survive:
+  `TargetingConditions` rejects a target whose `canBeSeenAsEnemy()` is false, and
+  that reads `Entity.isInvulnerable()`, which `isCreative()` never sets. The
+  observer is now explicitly invulnerable.
+- *`archive_run_entry` assumed the Archive dimension was absent.* True on 26.x and
+  1.21.1, false on Forge 1.20.1, where the same validated entry started a real run
+  whose generation load then perturbed neighbouring fixtures. It now asserts the
+  run-ownership gate, which is deterministic everywhere and leaves no run behind.
+- *`phase_geometry_round_trip` leaked an armor stand on every run.* It spawns one
+  deliberately, to prove a transition is cancelled when something stands in a phase
+  volume, and never removed it. It is a `LivingEntity` sitting in that volume, so on
+  the **next** run against the same world `isTransitionSafe` cancelled whichever
+  fixture came near it as "blocked late" — surfacing as an unrelated failure
+  somewhere else. Now discarded once the assertion it exists for has been made.
+
+**The GameTest world is not reset between runs, and that was most of the noise.**
+`<version>/<loader>/run` had grown to 151 MB on Forge and 70 MB on Fabric, carrying
+leaked entities and site SavedData from every previous run. Measured directly:
+1.20.1 Forge went from 2 failures to **all 59 passing** on a wiped world with no
+code change, and 1.20.1 Fabric went from 6–8 failures to 0–1. What looked like a
+load-dependent flake was mostly accumulated state. **Wipe `<version>/<loader>/run`
+before trusting a red 1.20.1 result**, and re-read the leak note above — a fixture
+that leaves a `LivingEntity` behind will not fail itself, it will fail its
+neighbours on the following run.
+
+Everything in the manual matrices above remains unverified — no client session
+was run for this change.

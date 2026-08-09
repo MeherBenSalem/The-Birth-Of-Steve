@@ -1055,7 +1055,7 @@ public final class ModGameTests {
                 new Vec3(5.5D, 1.0D, 4.5D));
         victim.setNoAi(true);
 
-        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer observer = mockServerPlayer(helper);
         Vec3 observerPosition = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
         observer.moveTo(observerPosition.x, observerPosition.y, observerPosition.z, 90.0F, 0.0F);
 
@@ -1076,7 +1076,7 @@ public final class ModGameTests {
                             + ", victim=" + victim.position()
                             + ", distanceSqr=" + leech.distanceToSqr(victim)
                             + ", onGround=" + leech.onGround()
-                            + ", hasTarget=" + (leech.getTarget() == victim)
+                            + ", hasTarget=" + (leech.getTarget() == victim) + ", actualTarget=" + (leech.getTarget() == null ? "null" : leech.getTarget().getType().toString())
                             + ", lineOfSight=" + leech.getSensing().hasLineOfSight(victim)
                             + "]");
             helper.assertTrue(
@@ -1145,6 +1145,69 @@ public final class ModGameTests {
         helper.succeed();
     }
 
+    /**
+     * Builds the observer player that 1.20.1's vanilla helper cannot.
+     *
+     * <p>{@code GameTestHelper.makeMockServerPlayerInLevel} on 1.20.1 constructs its
+     * {@link net.minecraft.network.Connection} and never attaches a netty channel, so
+     * {@code Connection.channel()} stays null. Forge's login path runs
+     * {@code NetworkFilters.injectIfNecessary}, which dereferences that channel
+     * unconditionally, and every test needing an observer died on
+     * {@code Channel.pipeline()} before reaching its first assertion.
+     *
+     * <p>Mojang fixed this upstream by attaching an {@code EmbeddedChannel} to the
+     * connection — 26.2's copy of the same vanilla method does exactly that. This is
+     * that one line, backported. Attaching the connection to an embedded channel fires
+     * {@code channelActive}, which is what assigns {@code Connection.channel}, and the
+     * embedded pipeline has no {@code packet_handler} entry, so Forge's filter
+     * injection returns early rather than installing anything.
+     */
+    private static net.minecraft.server.level.ServerPlayer mockServerPlayer(GameTestHelper helper) {
+        net.minecraft.server.level.ServerLevel level = helper.getLevel();
+        net.minecraft.server.level.ServerPlayer player = new net.minecraft.server.level.ServerPlayer(
+                level.getServer(),
+                level,
+                new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "test-mock-player")) {
+            @Override
+            public boolean isSpectator() {
+                return false;
+            }
+
+            @Override
+            public boolean isCreative() {
+                return true;
+            }
+        };
+        net.minecraft.network.Connection connection =
+                new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        io.netty.channel.embedded.EmbeddedChannel channel =
+                new io.netty.channel.embedded.EmbeddedChannel(connection);
+        // Giving the connection a channel also makes Connection.isConnected() true, so
+        // the server starts queueing every packet this observer would receive — chunks
+        // included — into the embedded channel's outbound buffer, where nothing ever
+        // drains it. Over a full suite that garbage is enough to slow the server and
+        // lose the timing-sensitive fixtures. Swallow writes at the tail of the
+        // pipeline instead: outbound travels tail-to-head, so addFirst sees them last.
+        channel.pipeline().addFirst(new io.netty.channel.ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(
+                    io.netty.channel.ChannelHandlerContext context,
+                    Object message,
+                    io.netty.channel.ChannelPromise promise) {
+                io.netty.util.ReferenceCountUtil.release(message);
+                promise.setSuccess();
+            }
+        });
+        level.getServer().getPlayerList().placeNewPlayer(connection, player);
+        // Vanilla marks the mock player creative so mobs leave it alone, but on
+        // 1.20.1 that intent does not survive: TargetingConditions rejects a target
+        // whose canBeSeenAsEnemy() is false, and that reads Entity.isInvulnerable(),
+        // which isCreative() never sets. Without this every combat fixture's mob
+        // drops the victim the test handed it and walks at the observer instead.
+        player.setInvulnerable(true);
+        return player;
+    }
+
     private static void combatFloor(GameTestHelper helper, int maxX) {
         // Force-load chunks so spawned entities tick; without this they sit at tickCount==0.
         BlockPos min = helper.absolutePos(new BlockPos(-2, 0, 0));
@@ -1176,7 +1239,7 @@ public final class ModGameTests {
         victim.setNoAi(true);
         float startHealth = victim.getHealth();
 
-        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer observer = mockServerPlayer(helper);
         Vec3 observerPosition = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
         observer.moveTo(observerPosition.x, observerPosition.y, observerPosition.z, 90.0F, 0.0F);
 
@@ -1194,7 +1257,7 @@ public final class ModGameTests {
                                 + ", ticks=" + lensward.tickCount
                                 + ", alive=" + lensward.isAlive()
                                 + ", health=" + victim.getHealth() + "/" + startHealth
-                                + ", hasTarget=" + (lensward.getTarget() == victim)
+                                + ", hasTarget=" + (lensward.getTarget() == victim) + ", actualTarget=" + (lensward.getTarget() == null ? "null" : lensward.getTarget().getType().toString())
                                 + ", lineOfSight=" + lensward.getSensing().hasLineOfSight(victim)
                                 + "]"))
                 .thenIdle(30)
@@ -1218,7 +1281,7 @@ public final class ModGameTests {
         victim.setNoAi(true);
         float startHealth = victim.getHealth();
 
-        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer observer = mockServerPlayer(helper);
         Vec3 observerPosition = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
         observer.moveTo(observerPosition.x, observerPosition.y, observerPosition.z, 90.0F, 0.0F);
 
@@ -1266,7 +1329,7 @@ public final class ModGameTests {
     public static void lenswardHoldsItsWard(GameTestHelper helper) {
         combatFloor(helper, 20);
 
-        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer observer = mockServerPlayer(helper);
         Vec3 observerPosition = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
         observer.moveTo(observerPosition.x, observerPosition.y, observerPosition.z, 90.0F, 0.0F);
 
@@ -1304,7 +1367,7 @@ public final class ModGameTests {
     /** Parks a mock observer clear of the fixture so entities are tracked and ticked. */
     @SuppressWarnings("removal")
     private static void combatObserver(GameTestHelper helper) {
-        net.minecraft.server.level.ServerPlayer observer = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer observer = mockServerPlayer(helper);
         Vec3 position = helper.absoluteVec(new Vec3(0.5D, 1.0D, 4.5D));
         observer.moveTo(position.x, position.y, position.z, 90.0F, 0.0F);
     }
@@ -1336,7 +1399,7 @@ public final class ModGameTests {
                                 + " [phase=" + wraith.getDisplacePhase()
                                 + ", cooldown=" + wraith.getDisplaceCooldown()
                                 + ", ticks=" + wraith.tickCount
-                                + ", hasTarget=" + (wraith.getTarget() == victim)
+                                + ", hasTarget=" + (wraith.getTarget() == victim) + ", actualTarget=" + (wraith.getTarget() == null ? "null" : wraith.getTarget().getType().toString())
                                 + ", lineOfSight=" + wraith.getSensing().hasLineOfSight(victim)
                                 + "]"))
                 .thenWaitUntil(() -> helper.assertTrue(
@@ -1476,7 +1539,7 @@ public final class ModGameTests {
 
     @SuppressWarnings("removal")
     public static void archiveRunEntryValidatesBeforeMutation(GameTestHelper helper) {
-        net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer player = mockServerPlayer(helper);
         BlockPos threshold = player.blockPosition();
         player.setYRot(37.0F);
         player.setXRot(-12.0F);
@@ -1501,14 +1564,13 @@ public final class ModGameTests {
         player.getInventory().add(new net.minecraft.world.item.ItemStack(ModItems.CURATOR_CORE.get()));
         player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
                 net.minecraft.world.effect.MobEffects.BAD_OMEN, 1200, 2));
-        helper.assertTrue(
-                ArchiveRunManager.enterFromThreshold(player, threshold)
-                        == ArchiveRunManager.EntryResult.ARCHIVE_UNAVAILABLE,
-                "GameTest entry did not fail safely when its archive dimension was absent");
-        helper.assertTrue(
-                player.hasEffect(net.minecraft.world.effect.MobEffects.BAD_OMEN),
-                "A failed Archive entry consumed Bad Omen");
-
+        // The run-ownership gate is asserted instead of the dimension gate, and
+        // deliberately so. Whether the Archive dimension is loaded is environmental:
+        // 26.x and 1.21.1 run this fixture without it and stop at ARCHIVE_UNAVAILABLE,
+        // while Forge 1.20.1's GameTest server does load it, so the same validated
+        // entry would proceed to STARTED and spin up a real run whose generation load
+        // perturbs neighbouring fixtures. Registering the run first keeps the fixture
+        // deterministic on every target and leaves nothing behind.
         ArchiveRunSavedData storage = ArchiveRunSavedData.get(helper.getLevel().getServer());
         ArchiveRun existing = testArchiveRun(UUID.randomUUID(), storage.nextFreeSlot(), player.getUUID());
         storage.register(existing);
@@ -1517,6 +1579,9 @@ public final class ModGameTests {
                         == ArchiveRunManager.EntryResult.ALREADY_IN_RUN,
                 "Archive entry accepted a player who already owns a live run");
         helper.assertTrue(!existing.geometryPlaced(), "Rejected archive entry mutated the existing run");
+        helper.assertTrue(
+                player.hasEffect(net.minecraft.world.effect.MobEffects.BAD_OMEN),
+                "A rejected Archive entry consumed Bad Omen");
         helper.succeed();
     }
 
@@ -1798,7 +1863,12 @@ public final class ModGameTests {
             for (BlockPos phasePos : TemporalSiteManager.phasePositions(origin)) {
                 helper.assertTrue(
                         helper.getLevel().getBlockState(phasePos).is(ModBlocks.PHASE_PLATFORM.get()),
-                        "Remembered phase platform was not applied");
+                        "Remembered phase platform was not applied"
+                                + " [pos=" + phasePos
+                                + ", actual=" + helper.getLevel().getBlockState(phasePos).getBlock()
+                                + ", stored=" + TemporalSiteManager.data(helper.getLevel())
+                                        .find(site.siteId()).map(x -> x.state().toString()).orElse("ABSENT")
+                                + "]");
             }
             for (BlockPos lampPos : TemporalSiteManager.lampPositions(site)) {
                 helper.assertTrue(
@@ -1812,7 +1882,12 @@ public final class ModGameTests {
             helper.assertTrue(remembered.state() == TemporalState.REMEMBERED, "Transition did not reach remembered state");
 
             BlockPos occupiedRelative = relativeOrigin.offset(7, 2, 8);
-            helper.spawn(VanillaCompat.ARMOR_STAND, occupiedRelative);
+            // Held so it can be removed again below. Leaving it behind poisons every
+            // later run against the same GameTest world: it is a LivingEntity sitting
+            // in a phase volume, so isTransitionSafe cancels the next fixture's
+            // transition as "blocked late" and the failure surfaces somewhere else.
+            net.minecraft.world.entity.decoration.ArmorStand obstacle =
+                    helper.spawn(VanillaCompat.ARMOR_STAND, occupiedRelative);
             TemporalSite reverse = remembered.beginTransition(helper.getLevel().getGameTime(), 40, 17L);
             TemporalSiteManager.data(helper.getLevel()).replace(reverse);
             TemporalSiteManager.recover(helper.getLevel());
@@ -1827,6 +1902,7 @@ public final class ModGameTests {
                             helper.getLevel().getBlockState(phasePos).is(ModBlocks.PHASE_PLATFORM.get()),
                             "Cancelled removal changed phase geometry");
                 }
+                obstacle.discard();
                 helper.succeed();
             });
         });
@@ -2042,8 +2118,15 @@ public final class ModGameTests {
     public static void choirCompletionPersistsAndOpensRoute(GameTestHelper helper) {
         BlockPos origin = helper.absolutePos(new BlockPos(2, 1, 2));
         TemporalSite site = TemporalSiteManager.placeChoirOfHours(helper.getLevel(), origin, Rotation.NONE);
-        net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer player = mockServerPlayer(helper);
         List<BlockPos> bells = TemporalSiteManager.choirBellPositions(site);
+        helper.assertTrue(
+                !bells.isEmpty(),
+                "Choir fixture registered no bells"
+                        + " [origin=" + origin
+                        + ", siteId=" + site.siteId()
+                        + ", definition=" + site.definitionId()
+                        + "]");
         for (int bellIndex : ChoirHoursPuzzle.sequence()) {
             helper.assertTrue(
                     TemporalSiteManager.ringChoirBell(player, bells.get(bellIndex)),
@@ -2147,7 +2230,7 @@ public final class ModGameTests {
                         .getValue(EngravedMeridianTileBlock.CHARGED),
                 "Initial Broken Meridian channel was not visibly charged");
 
-        net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer player = mockServerPlayer(helper);
         List<BlockPos> seals = TemporalSiteManager.meridianRoutingSealPositions(remembered);
         List<BlockPos> sockets = TemporalSiteManager.meridianSocketPositions(remembered);
         helper.assertTrue(TemporalSiteManager.routeBrokenMeridian(player, seals.get(0)), "First route seal was rejected");
@@ -2183,7 +2266,7 @@ public final class ModGameTests {
                 .stable(TemporalState.REMEMBERED);
         TemporalSiteManager.data(helper.getLevel()).replace(site);
         TemporalSiteManager.recover(helper.getLevel());
-        net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer player = mockServerPlayer(helper);
         List<BlockPos> relays = TemporalSiteManager.meridianRelayPositions(site);
         List<BlockPos> seals = TemporalSiteManager.meridianRoutingSealPositions(site);
         List<BlockPos> sockets = TemporalSiteManager.meridianSocketPositions(site);
@@ -2320,7 +2403,7 @@ public final class ModGameTests {
         // one of them gets released partway through the reconstruction. That is
         // what made this test fail roughly one run in six.
         setSiteChunksForced(helper, site, true);
-        net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer player = mockServerPlayer(helper);
         helper.assertTrue(
                 TemporalSiteManager.startCuratorEncounter(
                         player, TemporalSiteManager.orreryCorePositions(site).get(0)),
@@ -2510,6 +2593,83 @@ public final class ModGameTests {
         helper.succeed();
     }
 
+    /**
+     * The Curator's rebirth must fire exactly once.
+     *
+     * <p>Health is zeroed before each call because 1.20.1 and 1.21.1 define
+     * {@code isDeadOrDying} purely as {@code health <= 0}, with no {@code dead}
+     * flag, so a killing blow has to look like one on every version.
+     *
+     * <p>Driven through {@code die} rather than by dealing damage, because that
+     * is the seam the mechanic hangs on: if the override ever stops intercepting,
+     * the first blow kills and this fails immediately.
+     */
+    public static void phoenixGuardianRisesExactlyOnce(GameTestHelper helper) {
+        combatFloor(helper, 9);
+        com.nightbeam.tbos.entity.PhoenixGuardianEntity curator = helper.spawn(
+                ModEntities.PHOENIX_GUARDIAN.get(),
+                new Vec3(4.5D, 1.0D, 4.5D));
+        curator.setNoAi(true);
+        helper.assertTrue(!curator.hasRisen(), "Curator spawned already risen");
+
+        float half = curator.getMaxHealth()
+                * com.nightbeam.tbos.entity.PhoenixGuardianEntity.REBIRTH_HEALTH_FRACTION;
+        curator.setHealth(0.0F);
+        curator.die(helper.getLevel().damageSources().generic());
+        helper.assertTrue(curator.hasRisen(), "First killing blow did not trigger the rebirth");
+        helper.assertTrue(curator.isAlive(), "Curator did not survive its own rebirth");
+        helper.assertTrue(curator.getHealth() == half, "Rebirth did not restore half health");
+
+        curator.setHealth(0.0F);
+        curator.die(helper.getLevel().damageSources().generic());
+        helper.assertTrue(curator.isDeadOrDying(), "Second killing blow was survived");
+        curator.discard();
+        helper.succeed();
+    }
+
+    /**
+     * A site-managed Curator must not run its own rebirth.
+     *
+     * <p>{@code LastCuratorEncounterTracker} owns the three-phase health curve;
+     * a second life underneath it would desynchronise {@code LastCuratorProgress}.
+     */
+    public static void siteManagedCuratorDoesNotRise(GameTestHelper helper) {
+        combatFloor(helper, 9);
+        com.nightbeam.tbos.entity.PhoenixGuardianEntity curator = helper.spawn(
+                ModEntities.PHOENIX_GUARDIAN.get(),
+                new Vec3(4.5D, 1.0D, 4.5D));
+        curator.setNoAi(true);
+        curator.setSiteManaged(true);
+
+        curator.setHealth(0.0F);
+        curator.die(helper.getLevel().damageSources().generic());
+        helper.assertTrue(!curator.hasRisen(), "Site-managed Curator ran its own rebirth");
+        helper.assertTrue(curator.isDeadOrDying(), "Site-managed Curator survived a killing blow");
+        curator.discard();
+        helper.succeed();
+    }
+
+    /** The minotaur must be reachable from encounter-pool config and spawn configured. */
+    public static void chamberMinotaurResolvesFromPool(GameTestHelper helper) {
+        helper.assertTrue(
+                com.nightbeam.tbos.run.ArchiveEnemyKind.parse("tbos:minotaur").isPresent(),
+                "Minotaur is not addressable from encounter-pool config");
+        combatFloor(helper, 9);
+        com.nightbeam.tbos.entity.MinotaurEntity minotaur = helper.spawn(
+                ModEntities.MINOTAUR.get(),
+                new Vec3(4.5D, 1.0D, 4.5D));
+        minotaur.setNoAi(true);
+        helper.assertTrue(minotaur.isAlive(), "Minotaur did not spawn alive");
+        helper.assertTrue(
+                minotaur.getPhase() == com.nightbeam.tbos.entity.MinotaurEntity.Phase.IDLE,
+                "Minotaur did not start in its idle phase");
+        helper.assertTrue(
+                minotaur.getMaxHealth() == 46.0F,
+                "Minotaur did not receive its authored attributes");
+        minotaur.discard();
+        helper.succeed();
+    }
+
     public static void curatorRuntimePersistsHealthAndReward(GameTestHelper helper) {
         BlockPos origin = helper.absolutePos(new BlockPos(2, 1, 2));
         TemporalSite base = TemporalSiteManager.placeGrandOrrery(helper.getLevel(), origin, Rotation.NONE);
@@ -2519,7 +2679,7 @@ public final class ModGameTests {
         LastCuratorEncounterTracker.startIfAbsent(helper.getLevel(), active);
         LastCuratorEncounterTracker.tick(helper.getLevel().getServer());
 
-        net.minecraft.world.entity.animal.IronGolem curator =
+        com.nightbeam.tbos.entity.PhoenixGuardianEntity curator =
                 LastCuratorEncounterTracker.findCurator(helper.getLevel(), active).orElseThrow();
         helper.assertTrue(curator.getMaxHealth() == 300.0F, "Runtime Curator did not receive its authored health");
         curator.setHealth(195.0F);
@@ -2573,7 +2733,7 @@ public final class ModGameTests {
 
     @SuppressWarnings("removal")
     public static void memoryPlateVariantsRemainDistinct(GameTestHelper helper) {
-        net.minecraft.server.level.ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        net.minecraft.server.level.ServerPlayer player = mockServerPlayer(helper);
         java.util.Set<MemoryScene> observed = new java.util.HashSet<>();
         for (MemoryScene scene : MemoryScene.values()) {
             net.minecraft.world.item.ItemStack plate = MemoryPlateItem.forScene(scene);

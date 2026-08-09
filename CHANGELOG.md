@@ -1,6 +1,46 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 - 2026-08-09
+
+### The Last Curator, rebuilt
+
+- **The Overworld campaign's final boss is now a creature of its own** rather than
+  a reskinned iron golem. The Last Curator fights on a two-beat rhythm: it dashes
+  to close the gap, then winds up and detonates an ember burst that ignites
+  everything within seven blocks. The wind-up fans its wing-arms wide well before
+  the blast lands, so the burst is dodgeable by reading the boss instead of the
+  health bar.
+- **Fought outside its site, the Curator does not die the first time.** The first
+  killing blow burns it back to half health and turns its bar red for a second,
+  angrier pass. Inside the Hall it still follows the authored three-phase curve —
+  the site owns that fight.
+- **Minotaurs now roam the Fractured Archive's chambers**, in the Elite Echoes and
+  Ruined Guardian encounter pools. They plant themselves to swing, so the danger is
+  being cornered by one in a corridor rather than trading hits in the open.
+- Added the **Starter Tome**, a new item.
+
+### For contributors
+
+- **1.20.1's GameTest suite passes for the first time.** Four causes: 1.20.1's
+  vanilla mock-player helper never attaches a netty channel, which Forge's login
+  path dereferences (fixed by backporting the `EmbeddedChannel` line Mojang added
+  later); the mock observer was a valid combat target on 1.20.1, so mobs abandoned
+  the victim each fixture handed them; `archive_run_entry` assumed the Archive
+  dimension was absent, which is only true on the newer targets; and
+  `phase_geometry_round_trip` leaked the armor stand it spawns as a deliberate
+  obstacle, which then cancelled a *neighbouring* fixture's transition on the next
+  run.
+- **The GameTest world is never reset between runs.** `<version>/<loader>/run` had
+  reached 151 MB, carrying leaked entities and site SavedData forward, and that
+  accounted for most of what looked like flakiness. Wipe it before trusting a red
+  1.20.1 result.
+- Two `.gitignore` scoping bugs fixed: the root file ignored `/tools`, so the
+  texture and model authoring sources were never tracked, and `1.20.1/.gitignore`
+  ended with a bare `run` that also matched the mod's own `com/nightbeam/tbos/run`
+  package, leaving all 16 of its files untracked.
+- Adding an entity is now scripted rather than hand-repeated: `tools/models/`
+  holds the Blockbench-to-Java model generator, the legacy entity port, and the
+  Curator swap, each idempotent and each failing loudly if an anchor stops matching.
 
 ### Minecraft 26.2 support
 
