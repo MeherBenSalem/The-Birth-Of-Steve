@@ -106,10 +106,11 @@ jobs:
         run: |
           # Loader is inferred from the filename below, so the loader-agnostic
           # :common jar must not be uploaded - it would be mislabelled.
-          mapfile -t JARS < <(find "${{ matrix.minecraft }}" -type f -path "*/build/libs/*.jar" \
+          mapfile -t JARS < <(find "${{ matrix.minecraft }}/fabric" "${{ matrix.minecraft }}/neoforge" "${{ matrix.minecraft }}/forge" \
+            -type f -path "*/build/libs/*.jar" \
             ! -name "*-sources.jar" ! -name "*-javadoc.jar" \
             ! -name "*-dev.jar" ! -name "*-dev-shadow.jar" \
-            ! -name "*-common-*.jar" | sort | head -n 20)
+            ! -name "*-common-*.jar" 2>/dev/null | sort)
           if [ ${#JARS[@]} -eq 0 ]; then
             echo "No jars in ${{ matrix.minecraft }}/*/build/libs" >&2
             exit 1
