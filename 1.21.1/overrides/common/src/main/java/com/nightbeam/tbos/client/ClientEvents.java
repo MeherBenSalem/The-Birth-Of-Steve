@@ -52,6 +52,10 @@ public final class ClientEvents {
             ArchivistQuestScreen.requestOpen();
             return UseResult.CONSUME_NO_SWING;
         }
+        if (held.is(ModItems.STARTER_TOME.get())) {
+            ArchivistNotesScreen.open();
+            return UseResult.CONSUME_NO_SWING;
+        }
         if (!held.is(ModItems.YESTERGLASS_LENS.get())) {
             return UseResult.PASS;
         }

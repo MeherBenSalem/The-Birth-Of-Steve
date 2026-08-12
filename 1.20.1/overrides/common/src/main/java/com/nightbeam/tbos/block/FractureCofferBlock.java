@@ -47,7 +47,7 @@ public final class FractureCofferBlock extends Block {
             return InteractionResult.PASS;
         }
         if (state.getValue(OPENED)) {
-            serverPlayer.displayClientMessage(Component.literal("FRACTURE COFFER  ·  Already recalled")
+            serverPlayer.displayClientMessage(Component.translatable("message.tbos.coffer.already_opened")
                     .withStyle(ChatFormatting.GRAY), true);
             return InteractionResult.SUCCESS;
         }
@@ -58,7 +58,8 @@ public final class FractureCofferBlock extends Block {
             }
         }
         level.setBlock(pos, state.setValue(OPENED, true), Block.UPDATE_ALL);
-        serverPlayer.displayClientMessage(Component.literal("FRACTURE COFFER  ·  Lens kit recovered")
+        serverPlayer.displayClientMessage(Component.translatable(
+                        "message.tbos.coffer.recovered." + variant.serializedName())
                 .withStyle(ChatFormatting.AQUA), true);
         return InteractionResult.SUCCESS;
     }
@@ -67,6 +68,7 @@ public final class FractureCofferBlock extends Block {
         return List.of(
                 new ItemStack(ModItems.CRACKED_YESTERGLASS_LENS.get()),
                 new ItemStack(ModItems.ARCHIVE_SURVEY_MAP.get()),
+                new ItemStack(ModItems.STARTER_TOME.get()),
                 MemoryPlateItem.forScene(variant.memoryScenes().get(0)),
                 MemoryPlateItem.forScene(variant.memoryScenes().get(1)),
                 new ItemStack(ModItems.CHRONICLE_SHARD.get(), 3),

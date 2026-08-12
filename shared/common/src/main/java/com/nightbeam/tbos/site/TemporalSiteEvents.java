@@ -5,6 +5,7 @@ import com.nightbeam.tbos.world.AdventureWorldManager;
 import com.nightbeam.tbos.world.FractureShrineQueue;
 import com.nightbeam.tbos.world.PlayerOnboarding;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -34,9 +35,13 @@ public final class TemporalSiteEvents {
                 continue;
             }
             for (ServerPlayer player : level.players()) {
-                if (AdventureWorldManager.nearestShrine(player).isPresent()) {
-                    ModAdvancements.awardDiscoverFractureShrine(player);
-                }
+                AdventureWorldManager.nearestShrine(player).ifPresent(shrine -> {
+                    if (ModAdvancements.tryAwardDiscoverFractureShrine(player)) {
+                        player.sendOverlayMessage(Component.translatable(
+                                        "message.tbos.shrine.discovered." + shrine.variant().serializedName())
+                                .withStyle(ChatFormatting.AQUA));
+                    }
+                });
                 TemporalSiteManager.data(level).findContaining(player.blockPosition())
                         .filter(site -> site.definitionId().equals(BuiltInTemporalSites.PARALLAX_ATRIUM_ID))
                         .ifPresent(site -> ModAdvancements.awardEnterMeridianArchive(player));

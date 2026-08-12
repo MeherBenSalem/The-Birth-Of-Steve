@@ -117,7 +117,7 @@ public final class ArchiveFloorIntroHud {
                 minecraft.font,
                 Component.translatable(intro.ominous()
                         ? "floor.tbos.intro.subtitle.ominous"
-                        : "floor.tbos.intro.subtitle"),
+                        : "floor.tbos.intro.blurb." + ArchiveFloorPresentation.nameIndex(intro.floorIndex())),
                 width / 2,
                 centerY + 23,
                 (textAlpha << 24) | (intro.ominous() ? 0xFF6655 : 0xB8A98B));

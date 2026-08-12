@@ -968,8 +968,10 @@ public final class TemporalSiteManager {
                 notifyNearby(level, site, Component.translatable("message.tbos.blocked_late"));
                 continue;
             }
-            if (finished.state() == TemporalState.REMEMBERED
-                    && finished.definitionId().equals(BuiltInTemporalSites.PARALLAX_ATRIUM_ID)) {
+            boolean firstAtriumRecall = finished.state() == TemporalState.REMEMBERED
+                    && finished.definitionId().equals(BuiltInTemporalSites.PARALLAX_ATRIUM_ID)
+                    && !finished.hasProgressFlag(HallAlignmentPuzzle.FIRST_RECONSTRUCTION_COMPLETE);
+            if (firstAtriumRecall) {
                 finished = finished.withProgressFlag(HallAlignmentPuzzle.FIRST_RECONSTRUCTION_COMPLETE);
             }
             if (hasLoadedChunks(level, finished)) {
@@ -983,6 +985,9 @@ public final class TemporalSiteManager {
                 for (ServerPlayer player : level.getPlayers(
                         player -> completedSite.distanceToCenterSqr(player.blockPosition()) <= 96.0D * 96.0D)) {
                     ModAdvancements.awardFirstReconstruction(player);
+                }
+                if (firstAtriumRecall) {
+                    notifyNearby(level, finished, Component.translatable("message.tbos.atrium.begin"));
                 }
             }
             if (finished.state() == TemporalState.REMEMBERED

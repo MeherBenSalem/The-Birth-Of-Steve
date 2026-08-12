@@ -347,6 +347,13 @@ public final class ArchivistQuestScreen extends Screen {
                 listY + 18,
                 detailWidth,
                 INK);
+        inkWrapped(
+                graphics,
+                Component.translatable("journal.tbos.quest." + (detail + 1) + ".flavor"),
+                detailX,
+                listY + 52,
+                detailWidth,
+                INK_SOFT);
 
         int barX = wellX + 8;
         int barY = wellY + wellHeight - 16;

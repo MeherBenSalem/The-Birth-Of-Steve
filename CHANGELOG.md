@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.6.0 - 2026-08-12
+
+### The Archive Speaks
+
+- **The Archivist's Journal now carries the last archivist's voice.** Each story
+  step still tells you what to do; the detail pane also keeps a short recollection
+  of why the day was filed and never closed.
+- **Fracture Shrines announce themselves.** The first time you reach one, an overlay
+  names the Observatory, Curator Workshop, or Evacuation Gate. Opening its coffer
+  speaks in the same voice, and the kit now includes the **Last Archivist's Notes**.
+- **The Notes are readable.** Right-click the tome found in a coffer to turn six
+  short pages — one for each Memory Plate scene. They are not granted on join; the
+  Journal remains the spawn item.
+- **Memory Plates and chamber lines are longer.** Plate tooltips hold a second
+  sentence, the Parallax Atrium speaks on its first recall, and Hall, Choir,
+  Meridian, and Curator begin-lines lead with voice before the how-to.
+- **Echoes of the Past no longer shouts debug English.** Room intros, encounter
+  waves, cache seals, and floor title cards use the Archive lexicon, including a
+  one-line blurb per named floor. Sleeping in the Fractured Archive is refused with
+  a proper message.
+
 ## 0.5.0 - 2026-08-09
 
 ### The Last Curator, rebuilt

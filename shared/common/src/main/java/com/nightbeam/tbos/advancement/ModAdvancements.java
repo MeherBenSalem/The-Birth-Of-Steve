@@ -47,6 +47,11 @@ public final class ModAdvancements {
         award(player, DISCOVER_FRACTURE_SHRINE);
     }
 
+    /** @return true when the shrine discovery criterion was newly granted */
+    public static boolean tryAwardDiscoverFractureShrine(ServerPlayer player) {
+        return awardIfNew(player, DISCOVER_FRACTURE_SHRINE);
+    }
+
     public static void awardEnterMeridianArchive(ServerPlayer player) {
         award(player, ENTER_MERIDIAN_ARCHIVE);
     }
@@ -103,11 +108,16 @@ public final class ModAdvancements {
     }
 
     private static void award(ServerPlayer player, AdvancementStep step) {
+        awardIfNew(player, step);
+    }
+
+    private static boolean awardIfNew(ServerPlayer player, AdvancementStep step) {
         Identifier id = Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, step.path());
         AdvancementHolder advancement = player.level().getServer().getAdvancements().get(id);
-        if (advancement != null) {
-            player.getAdvancements().award(advancement, step.criterion());
+        if (advancement == null) {
+            return false;
         }
+        return player.getAdvancements().award(advancement, step.criterion());
     }
 
     private static boolean completed(ServerPlayer player, String path) {

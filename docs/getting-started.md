@@ -29,16 +29,19 @@ the 1.21.1 build is tested with Fabric Loader 0.16.9 and Fabric API
 
 The first time you join a world you are given the **Archivist's Journal** and a
 short chat message telling you where to start. Right-click the Journal at any
-time to reread the full route; it is the in-game version of this page.
+time to reread the full route; each step's detail pane also keeps a short note
+from the last archivist.
 
 Each world plans three Fracture Shrine variants at persistent, world-seeded
 locations scattered 192–640 blocks from world spawn. Their positions do not
 depend on which player joins first, and each shrine is built into the world when
 its own chunk generates, so exploring toward one is what makes it appear.
-Explore for a shrine, break its Fracture Coffer, recover the **Cracked
-Yesterglass Lens**, and gather its repair materials. Repair the lens, then use
-the **Archive Survey Map** by right-clicking it: it reports the direction,
-distance, and coordinates of the Meridian Archive.
+The first time you reach a shrine it names itself. Explore for a shrine, open its
+Fracture Coffer, recover the **Cracked Yesterglass Lens**, the **Last Archivist's
+Notes**, and gather its repair materials. Right-click the Notes to read six short
+pages of the day that never ended. Repair the lens, then use the **Archive Survey
+Map** by right-clicking it: it reports the direction, distance, and coordinates of
+the Meridian Archive.
 
 Follow the map and play through the authored route:
 

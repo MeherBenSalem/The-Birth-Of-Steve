@@ -23,12 +23,10 @@ normal acquisition steps.
 That chain is only discoverable if the player knows it exists, so the first
 Overworld join hands out the **Archivist's Journal** and a two-line chat pointer
 at the Fracture Shrines. The Journal is diegetic instruction rather than a tutorial
-overlay: nine pages of the last archivist's own route, readable at any time and
-never modal. It renders through the vanilla book interface so it costs no new
-client surface, and its pages are translation keys so the route stays localisable.
-The greeting is recorded per player in overworld SavedData, not on the item, so a
-player who loses or drops the Journal is not re-greeted and can recover one with
-`/tbos debug give_journal`.
+overlay: a quest ledger whose detail pane keeps both the operational step and a
+short recollection in the last archivist's voice. The greeting is recorded per
+player in overworld SavedData, not on the item, so a player who loses or drops the
+Journal is not re-greeted and can recover one with `/tbos debug give_journal`.
 
 Fracture Shrines are planned from the world seed but constructed only when their
 own chunk generates. Discovery is therefore an act of travel rather than a
@@ -174,7 +172,14 @@ carry a real item for their step — cracked Lens, repaired Lens, Survey Map,
 Curator Core — rather than describing it in text.
 
 Hovering a step shows it in the detail pane rather than raising a tooltip, so the
-pointer never occludes the list it is pointing at.
+pointer never occludes the list it is pointing at. The pane shows the operational
+description first, then a `journal.tbos.quest.N.flavor` recollection in softer ink.
+
+The **Last Archivist's Notes** (`starter_tome`) are a separate readable item found
+in Fracture Coffers, not granted on join. Right-click opens `ArchivistNotesScreen`,
+a read-only parchment that reuses the journal frame and well sprites, with six
+translation-keyed pages matching the Memory Plate scenes. The Journal stays the
+quest ledger; the Notes stay the day that would not end.
 
 ### Archive enemy presentation
 

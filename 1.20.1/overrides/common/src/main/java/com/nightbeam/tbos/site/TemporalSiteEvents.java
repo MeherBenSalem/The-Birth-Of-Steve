@@ -43,9 +43,13 @@ public final class TemporalSiteEvents {
                 continue;
             }
             for (ServerPlayer player : level.players()) {
-                if (AdventureWorldManager.nearestShrine(player).isPresent()) {
-                    ModAdvancements.awardDiscoverFractureShrine(player);
-                }
+                AdventureWorldManager.nearestShrine(player).ifPresent(shrine -> {
+                    if (ModAdvancements.tryAwardDiscoverFractureShrine(player)) {
+                        player.displayClientMessage(Component.translatable(
+                                        "message.tbos.shrine.discovered." + shrine.variant().serializedName())
+                                .withStyle(net.minecraft.ChatFormatting.AQUA), true);
+                    }
+                });
                 TemporalSiteManager.data(level).findContaining(player.blockPosition())
                         .filter(site -> site.definitionId().equals(BuiltInTemporalSites.PARALLAX_ATRIUM_ID))
                         .ifPresent(site -> ModAdvancements.awardEnterMeridianArchive(player));

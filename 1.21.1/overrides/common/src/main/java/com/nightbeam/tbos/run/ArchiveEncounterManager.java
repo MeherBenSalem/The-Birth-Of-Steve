@@ -341,15 +341,16 @@ public final class ArchiveEncounterManager {
         if (position.equals(ArchiveRoomPlacer.rewardCachePosition(run))) {
             ArchiveRunMember member = run.member(player.getUUID()).orElse(null);
             if (member != null && member.rewardClaimed()) {
-                player.displayClientMessage(Component.literal("ARCHIVE CACHE - Your recollection was already released")
+                player.displayClientMessage(Component.translatable("message.tbos.archive.cache.already_released")
                         .withStyle(ChatFormatting.GRAY), true);
             } else if (run.status() == ArchiveRunStatus.RETURNING_VICTORY
                     || run.status() == ArchiveRunStatus.COMPLETED) {
-                player.displayClientMessage(Component.literal("ARCHIVE CACHE - Break the seal to release its recollection")
+                player.displayClientMessage(Component.translatable("message.tbos.archive.cache.break_seal")
                         .withStyle(ChatFormatting.GOLD), true);
             } else {
-                player.displayClientMessage(Component.literal(
-                                "ARCHIVE CACHE - " + bossDisplayName(run.floor()) + " still binds this seal")
+                player.displayClientMessage(Component.translatable(
+                                "message.tbos.archive.cache.boss_binds",
+                                Component.translatable(bossTranslationKey(run.floor())))
                         .withStyle(ChatFormatting.RED), true);
             }
             return true;
@@ -363,13 +364,13 @@ public final class ArchiveEncounterManager {
                 .findFirst()
                 .orElse(-1);
         if (roomIndex < 0) {
-            player.displayClientMessage(Component.literal("ARCHIVE CACHE - No reward is bound here")
+            player.displayClientMessage(Component.translatable("message.tbos.archive.cache.unbound")
                     .withStyle(ChatFormatting.GRAY), true);
             return false;
         }
         ArchiveRoomNode room = run.dungeonGraph().room(roomIndex);
         if (room.category().combat() && !room.runtime().completed()) {
-            player.displayClientMessage(Component.literal("ARCHIVE CACHE - Guardians still bind this room")
+            player.displayClientMessage(Component.translatable("message.tbos.archive.cache.guardians")
                     .withStyle(ChatFormatting.RED), true);
             return true;
         }
@@ -379,11 +380,11 @@ public final class ArchiveEncounterManager {
                 ? run.hasMemberClaimedContainer(player.getUUID(), roomIndex, marker)
                 : room.runtime().openedContainers().contains(marker);
         if (alreadyClaimed) {
-            player.displayClientMessage(Component.literal("ARCHIVE CACHE - Your recollection was already released")
+            player.displayClientMessage(Component.translatable("message.tbos.archive.cache.already_released")
                     .withStyle(ChatFormatting.GRAY), true);
             return true;
         }
-        player.displayClientMessage(Component.literal("ARCHIVE CACHE - Break the seal to release its recollection")
+        player.displayClientMessage(Component.translatable("message.tbos.archive.cache.break_seal")
                 .withStyle(ChatFormatting.GOLD), true);
         return true;
     }
@@ -414,7 +415,7 @@ public final class ArchiveEncounterManager {
         }
         ArchiveRoomNode room = run.dungeonGraph().room(roomIndex);
         if (room.category().combat() && !room.runtime().completed()) {
-            player.displayClientMessage(Component.literal("ARCHIVE CACHE - Guardians still bind this room")
+            player.displayClientMessage(Component.translatable("message.tbos.archive.cache.guardians")
                     .withStyle(ChatFormatting.RED), true);
             level.playSound(
                     null,
@@ -431,7 +432,7 @@ public final class ArchiveEncounterManager {
                 ? run.hasMemberClaimedContainer(player.getUUID(), roomIndex, marker)
                 : room.runtime().openedContainers().contains(marker);
         if (alreadyClaimed) {
-            player.displayClientMessage(Component.literal("ARCHIVE CACHE - Your recollection was already released")
+            player.displayClientMessage(Component.translatable("message.tbos.archive.cache.already_released")
                     .withStyle(ChatFormatting.GRAY), true);
             return false;
         }
@@ -522,7 +523,7 @@ public final class ArchiveEncounterManager {
         }
         ArchiveRunMember member = run.member(player.getUUID()).orElse(null);
         if (member == null || member.rewardClaimed()) {
-            player.displayClientMessage(Component.literal("ARCHIVE CACHE - Your recollection was already released")
+            player.displayClientMessage(Component.translatable("message.tbos.archive.cache.already_released")
                     .withStyle(ChatFormatting.GRAY), true);
             return false;
         }
@@ -564,7 +565,7 @@ public final class ArchiveEncounterManager {
                 0.04D);
         level.playSound(null, position, SoundEvents.CHEST_OPEN, SoundSource.BLOCKS, 1.0F, 0.65F);
         level.playSound(null, position, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 1.1F, 0.82F);
-        player.displayClientMessage(Component.literal("ARCHIVE CACHE - Recollection released")
+        player.displayClientMessage(Component.translatable("message.tbos.archive.cache.released")
                 .withStyle(ChatFormatting.AQUA), true);
         return true;
     }
@@ -574,14 +575,14 @@ public final class ArchiveEncounterManager {
         ArchiveRun run = storage.findByMember(player.getUUID()).orElse(null);
         if (run == null || run.status() != ArchiveRunStatus.ACTIVE
                 || run.sharedRevives() >= ArchiveRun.MAX_SHARED_REVIVES) {
-            player.displayClientMessage(Component.literal("RECALLED HOUR - Shared revives are already stable")
+            player.displayClientMessage(Component.translatable("message.tbos.archive.revive.stable")
                     .withStyle(ChatFormatting.GRAY), true);
             return false;
         }
         ArchiveRun restored = run.restoreRevive();
         storage.replace(restored);
-        announce(player.level().getServer(), restored, Component.literal(
-                        "RECALLED HOUR - " + restored.sharedRevives() + " shared revives")
+        announce(player.level().getServer(), restored, Component.translatable(
+                        "message.tbos.archive.revive.restored", restored.sharedRevives())
                 .withStyle(ChatFormatting.AQUA));
         return true;
     }
@@ -631,7 +632,9 @@ public final class ArchiveEncounterManager {
                                 ArchiveFloorPresentation.displayFloor(complete.floor()))
                         .withStyle(ChatFormatting.AQUA));
             } else {
-                announce(server, complete, Component.literal(encounterTitle(kind, complete.floor()) + " - Path recorded")
+                announce(server, complete, Component.translatable(
+                                "message.tbos.archive.encounter.recorded",
+                                encounterTitle(kind, complete.floor()))
                         .withStyle(ChatFormatting.AQUA));
             }
             return;
@@ -649,8 +652,11 @@ public final class ArchiveEncounterManager {
         ArchiveRun started = run.withRoomEncounterState(roomIndex, current.startWave(1));
         storage.replace(started);
         spawnWave(level, started, roomIndex, 1);
-        announce(server, started, Component.literal(encounterTitle(kind, started.floor())
-                        + " - Wave 1/" + totalWaves(kind))
+        announce(server, started, Component.translatable(
+                        "message.tbos.archive.encounter.wave",
+                        encounterTitle(kind, started.floor()),
+                        1,
+                        totalWaves(kind))
                 .withStyle(kind == ArchiveEncounterKind.BOSS ? ChatFormatting.DARK_PURPLE : ChatFormatting.GOLD));
     }
 
@@ -669,11 +675,10 @@ public final class ArchiveEncounterManager {
             ArchiveRun updated = run.withRoomEncounterState(roomIndex, nextBatch);
             storage.replace(updated);
             spawnWave(level, updated, roomIndex, state.wave());
-            announce(server, updated, Component.literal(
-                            "OMINOUS \u00d710 - Reinforcement "
-                                    + (nextBatch.reinforcementBatch() + 1)
-                                    + "/"
-                                    + OMINOUS_BATCHES)
+            announce(server, updated, Component.translatable(
+                            "message.tbos.archive.ominous.reinforcement",
+                            nextBatch.reinforcementBatch() + 1,
+                            OMINOUS_BATCHES)
                     .withStyle(ChatFormatting.DARK_RED));
             return;
         }
@@ -701,9 +706,11 @@ public final class ArchiveEncounterManager {
             storage.replace(updated);
             spawnWave(level, updated, roomIndex, nextWave);
             if (kind != ArchiveEncounterKind.HALL) {
-                announce(server, updated, Component.literal(
-                                encounterTitle(kind, updated.floor())
-                                        + " - Wave " + nextWave + "/" + totalWaves)
+                announce(server, updated, Component.translatable(
+                                "message.tbos.archive.encounter.wave",
+                                encounterTitle(kind, updated.floor()),
+                                nextWave,
+                                totalWaves)
                         .withStyle(ChatFormatting.GOLD));
             }
             return;
@@ -718,10 +725,13 @@ public final class ArchiveEncounterManager {
         spawnDirectLoot(level, complete, roomIndex);
         playRoomClearCue(level, complete, roomIndex, kind);
         if (kind != ArchiveEncounterKind.HALL) {
-            announce(server, complete, Component.literal(kind == ArchiveEncounterKind.BOSS
-                            ? bossDisplayName(complete.floor()).toUpperCase(java.util.Locale.ROOT)
-                                    + " DEFEATED - The Last Recollection is open"
-                            : encounterTitle(kind, complete.floor()) + " - Cleared; path opened")
+            announce(server, complete, Component.translatable(
+                            kind == ArchiveEncounterKind.BOSS
+                                    ? "message.tbos.archive.encounter.boss_defeated"
+                                    : "message.tbos.archive.encounter.cleared",
+                            kind == ArchiveEncounterKind.BOSS
+                                    ? Component.translatable(bossTranslationKey(complete.floor()))
+                                    : encounterTitle(kind, complete.floor()))
                     .withStyle(ChatFormatting.AQUA));
         }
     }
@@ -750,8 +760,9 @@ public final class ArchiveEncounterManager {
                             rewardSeed,
                             true)
                     .forEach(stack -> giveOrDrop(player, stack));
-            player.displayClientMessage(Component.literal(
-                            "FLOOR " + run.floor() + " REWARD - Recollection secured")
+            player.displayClientMessage(Component.translatable(
+                            "message.tbos.archive.floor_reward",
+                            ArchiveFloorPresentation.displayFloor(run.floor()))
                     .withStyle(ChatFormatting.GOLD), true);
         }
     }
@@ -867,7 +878,7 @@ public final class ArchiveEncounterManager {
         announce(
                 level.getServer(),
                 after,
-                Component.literal("ARCHIVE BOSS GATE RECONSTRUCTED - Final boss room open")
+                Component.translatable("message.tbos.archive.boss_gate.open")
                         .withStyle(ChatFormatting.GOLD));
     }
 
@@ -920,7 +931,7 @@ public final class ArchiveEncounterManager {
         announce(
                 level.getServer(),
                 updated,
-                Component.literal("OMINOUS \u00d710 - The Archive sends another guard")
+                Component.translatable("message.tbos.archive.ominous.guard")
                         .withStyle(ChatFormatting.DARK_RED));
         return true;
     }
@@ -954,6 +965,20 @@ public final class ArchiveEncounterManager {
             case INDEX_WIGHT -> "Index Wight";
             case HOUR_CANTOR -> "Hour Cantor";
             case HOUR_HAND_WRAITH -> "Hour-Hand Wraith";
+            default -> throw new IllegalStateException("Archive theme selected a non-boss enemy");
+        };
+    }
+
+    private static String bossTranslationKey(long floorIndex) {
+        return switch (finalBossKind(floorIndex)) {
+            case WAKE_CUTTER -> "entity.tbos.wake_cutter";
+            case NULL_PORTRAIT -> "entity.tbos.null_portrait";
+            case GNOMON_KNIGHT -> "entity.tbos.gnomon_knight";
+            case DUST_CANTORILE -> "entity.tbos.dust_cantorile";
+            case PRISM_STALKER -> "entity.tbos.prism_stalker";
+            case INDEX_WIGHT -> "entity.tbos.index_wight";
+            case HOUR_CANTOR -> "entity.tbos.hour_cantor";
+            case HOUR_HAND_WRAITH -> "entity.tbos.hour_hand_wraith";
             default -> throw new IllegalStateException("Archive theme selected a non-boss enemy");
         };
     }
@@ -1632,7 +1657,7 @@ public final class ArchiveEncounterManager {
             }
             dropAtCache((ServerLevel) player.level(), cachePosition, player, stack);
         }
-        player.displayClientMessage(Component.literal("ARCHIVE CACHE - Recollection recovered")
+        player.displayClientMessage(Component.translatable("message.tbos.archive.cache.recovered")
                 .withStyle(ChatFormatting.AQUA), true);
         if (debugEnabled()) {
             Yesterglass.LOGGER.info("Archive loot roll {} room {} marker {} seed {} tables {}",
@@ -1732,24 +1757,29 @@ public final class ArchiveEncounterManager {
     }
 
     private static Component roomIntro(ArchiveRun run, int roomIndex) {
-        ArchiveRoomPlan room = run.rooms().get(roomIndex);
-        return Component.literal("LEVEL " + (room.level() + 1) + " - ROOM "
-                        + (roomIndex + 1) + "/" + run.rooms().size() + " - "
-                        + run.dungeonGraph().room(roomIndex).category().name().replace('_', ' '))
+        return Component.translatable(
+                        "message.tbos.archive.room_intro",
+                        ArchiveFloorPresentation.displayFloor(run.floor()),
+                        roomIndex + 1,
+                        run.rooms().size(),
+                        Component.translatable(
+                                "room.tbos.category."
+                                        + run.dungeonGraph().room(roomIndex).category().name().toLowerCase(
+                                                java.util.Locale.ROOT)))
                 .withStyle(ChatFormatting.AQUA);
     }
 
-    private static String encounterTitle(ArchiveEncounterKind kind, long floorIndex) {
+    private static Component encounterTitle(ArchiveEncounterKind kind, long floorIndex) {
         return switch (kind) {
-            case EXPLORATION -> "ECHO CHAMBER";
-            case REWARD -> "RECOLLECTION";
-            case TRAP -> "ANCIENT TRAP";
-            case SKIRMISH -> "FRACTURE";
-            case HUNT -> "PARALLAX HUNT";
-            case GUARDIAN -> "MERIDIAN GUARDIAN";
-            case HALL -> "HALL ALIGNMENT";
-            case CHOIR -> "CHOIR";
-            case BOSS -> bossDisplayName(floorIndex).toUpperCase(java.util.Locale.ROOT);
+            case EXPLORATION -> Component.translatable("encounter.tbos.exploration");
+            case REWARD -> Component.translatable("encounter.tbos.reward");
+            case TRAP -> Component.translatable("encounter.tbos.trap");
+            case SKIRMISH -> Component.translatable("encounter.tbos.skirmish");
+            case HUNT -> Component.translatable("encounter.tbos.hunt");
+            case GUARDIAN -> Component.translatable("encounter.tbos.guardian");
+            case HALL -> Component.translatable("encounter.tbos.hall");
+            case CHOIR -> Component.translatable("encounter.tbos.choir");
+            case BOSS -> Component.translatable(bossTranslationKey(floorIndex));
         };
     }
 

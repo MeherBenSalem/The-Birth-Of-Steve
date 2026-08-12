@@ -108,7 +108,12 @@ no GameTest triggers.
 | Creative tab lists every block and item, in the same order on both loaders | unverified | unverified |
 | `/tbos dungeon validate_templates` passes | unverified | unverified |
 | Right-clicking the Archivist's Journal opens the quest screen (not the vanilla book) | unverified | unverified |
+| Journal detail pane shows both the operational description and a flavor recollection | unverified | unverified |
+| Right-clicking Last Archivist's Notes opens six localizable pages | unverified | unverified |
 | Quest HUD, puzzle HUD and floor intro draw above the hotbar | unverified | unverified |
+| Floor intro subtitle is a per-floor blurb (or ominous line), not a debug LEVEL label | unverified | unverified |
+| Archive cache and encounter overlays are translatable English, not `ARCHIVE CACHE -` / `LEVEL` | unverified | unverified |
+| A bed in the Fractured Archive shows `message.tbos.archive.no_sleep` | unverified | unverified |
 | `J` toggles the objectives HUD | unverified | unverified |
 | Entering the Fractured Archive generates a floor and syncs the quest payload | unverified | unverified |
 | Breaking a protected Archive block is denied and the block resyncs | unverified | unverified |
@@ -125,11 +130,22 @@ a crash.
 ## Onboarding and shrine worldgen manual matrix
 
 - Create a fresh world. Confirm the Archivist's Journal is granted once and the
-  welcome and shrine hint appear in chat.
+  welcome and shrine hint appear in chat. The Last Archivist's Notes must not be
+  granted on join.
+- Approach a Fracture Shrine for the first time. Confirm a one-shot overlay names
+  the variant (Observatory, Curator Workshop, or Evacuation Gate) and that walking
+  away and back does not repeat it.
+- Open a Fracture Coffer. Confirm the overlay is variant-aware, the loot includes
+  the Last Archivist's Notes after the Survey Map, and a second open says the
+  coffer was already recalled.
+- Right-click the Notes. Confirm six pages turn with a page-turn cue, use journal
+  parchment sprites, and are not a vanilla book.
 - Right-click the Journal. The quest screen must open directly, with a bronze
   frame, both tabs, quest seals and item icons rendering — no magenta, and no
   missing-sprite warnings in the log. Shift+right-click must open the same screen;
-  the vanilla book interface should be unreachable by any input.
+  the vanilla book interface should be unreachable by any input. Hover a quest row
+  and confirm the detail pane shows both the operational description and a softer
+  flavor recollection.
 - Click between the Story and Run tabs. The active tab must read as joined to the
   panel and the inactive one as sunk, with a page-turn cue on each change. Hover
   each quest row and confirm the detail pane follows the pointer, then returns to
@@ -532,6 +548,27 @@ Recorded on Gradle 9.5.0 after moving the mod into `shared/` and adding the
   `minecraft:item/handheld` parent.
 - The final GameTest server run shut down cleanly while a separate development
   client remained open.
+
+## Automated results — 2026-08-12 (0.6.0 The Archive Speaks)
+
+Command lines exactly as run, from the repository root, after wiping
+`26.1.2/neoforge/run/gametestserver`.
+
+**Green:**
+
+- `gradlew.bat -p 26.1.2 :common:compileJava --offline`: PASS.
+- `gradlew.bat -p 26.1.2 :neoforge:compileJava :fabric:compileJava --offline`: PASS.
+- `gradlew.bat -p 26.2 :common:compileJava --offline`: PASS.
+- `gradlew.bat -p 26.2 :neoforge:compileJava :fabric:compileJava --offline`: PASS.
+- `gradlew.bat -p 1.20.1 :common:compileJava --offline`: PASS.
+- `gradlew.bat -p 1.21.1 :common:compileJava --offline`: PASS.
+- `gradlew.bat -p 26.1.2 :neoforge:runGameTestServer --offline`: PASS —
+  **all 59 required tests** in 40.54 s, including
+  `fractureShrinesDistributeAdventureItems` after the coffer loot-list change
+  (Notes at index 2, plates at 3–4, repair kit at 5–7).
+
+Manual rows for journal flavor, shrine overlay, Notes pages, dungeon overlays,
+and `no_sleep` stay unverified until a client session records them.
 
 ## Automated results — 2026-08-09 (Blockbench creature import)
 
