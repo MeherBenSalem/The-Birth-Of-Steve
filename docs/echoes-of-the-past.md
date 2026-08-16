@@ -19,9 +19,9 @@ state. Construction rejects non-cardinal edges, non-reciprocal doors, overlappin
 room volumes, invalid mandatory-room indices, and any node unreachable from the
 start.
 
-The default generator produces 14–20 rooms. It always creates a start room, places
-the final boss on a distant starting-floor branch, and seals a distinct reward
-room behind that boss. Normal expansion may branch north, south, east, west, up,
+The default generator produces 14–20 rooms. It always creates a start room, a
+mandatory **Waystone** chamber attached to that start, places the final boss on a
+distant starting-floor branch, and seals a distinct reward room behind that boss. Normal expansion may branch north, south, east, west, up,
 or down. It supports dead ends and loops while enforcing horizontal, vertical,
 depth, and above/below-count limits.
 
@@ -84,6 +84,14 @@ connections begin as cracked walls.
     after deletion completes.
 12. Normal floor victory never returns players to the Overworld. Only failure,
     abandonment, or explicit operator removal ends an endless run.
+13. Each floor generates exactly one Waystone in the `recall_meridian` chamber
+    off the start room. Right-clicking it binds that floor for the using player
+    and sends them to their Overworld return point; the run stays `ACTIVE`.
+    Right-clicking any Waystone in the Overworld resumes that player at the
+    bound dungeon Waystone. Generated Waystones cannot be broken; crafted
+    Overworld copies can. A new floor clears the bind until its own Waystone is
+    used. Death still returns to the last visited-room checkpoint, not the
+    Waystone, unless the player bound there.
 
 All world mutations, entity spawns, loot rolls, door changes, and SavedData writes
 occur on the server thread. No global "current dungeon" singleton exists; runtime

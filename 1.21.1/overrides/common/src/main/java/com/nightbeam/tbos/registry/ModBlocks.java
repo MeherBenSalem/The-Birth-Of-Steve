@@ -13,6 +13,7 @@ import com.nightbeam.tbos.block.MeridianRelayBlock;
 import com.nightbeam.tbos.block.ResonantBellBlock;
 import com.nightbeam.tbos.block.RiftThresholdBlock;
 import com.nightbeam.tbos.block.ThemeHazardBlock;
+import com.nightbeam.tbos.block.WaystoneBlock;
 import com.nightbeam.tbos.platform.registry.ModRegistries;
 import com.nightbeam.tbos.platform.registry.RegistryEntry;
 import java.util.ArrayList;
@@ -73,6 +74,14 @@ public final class ModBlocks {
                     .mapColor(MapColor.COLOR_CYAN)
                     .strength(3.0F, 9.0F)
                     .lightLevel(state -> 7)
+                    .noOcclusion());
+    public static final RegistryEntry<WaystoneBlock> WAYSTONE = ModRegistries.BLOCKS.registerBlock(
+            "waystone",
+            WaystoneBlock::new,
+            properties -> properties
+                    .mapColor(MapColor.COLOR_CYAN)
+                    .strength(3.0F, 9.0F)
+                    .lightLevel(state -> 8)
                     .noOcclusion());
     public static final RegistryEntry<Block> PHASE_PLATFORM = ModRegistries.BLOCKS.registerSimpleBlock(
             "phase_platform", properties -> properties.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(2.0F, 6.0F).lightLevel(state -> 4));

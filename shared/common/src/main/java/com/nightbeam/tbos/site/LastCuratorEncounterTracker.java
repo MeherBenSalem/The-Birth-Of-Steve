@@ -41,6 +41,8 @@ public final class LastCuratorEncounterTracker {
     public static final String CURATOR_TAG = "tbos.last_curator";
     private static final int MAX_PENDING_ATTACKS = 6;
     private static final int MAX_AFTERIMAGES = 12;
+    private static final int PHASE_SHIELD_TICKS = 60;
+    private static final int AFTERIMAGE_DETONATE_DELAY = 80;
     private static final Map<Key, Runtime> ACTIVE = new HashMap<>();
 
     private LastCuratorEncounterTracker() {
@@ -136,17 +138,14 @@ public final class LastCuratorEncounterTracker {
     }
 
     private static boolean tickEncounter(ServerLevel level, TemporalSite site, Runtime runtime) {
-        PhoenixGuardianEntity curator = findCurator(level, site).orElse(null);
-        if (curator == null) {
-            curator = spawnCurator(level, site);
-        }
+        PhoenixGuardianEntity curator = resolveCurator(level, site, runtime);
         if (curator == null) {
             return true;
         }
 
-        boolean vulnerable = LastCuratorProgress.isVulnerable(site.progressFlags(), site.state());
+        boolean shielded = isShielded(level, runtime);
         if (!curator.isAlive() || curator.getHealth() <= 0.0F) {
-            if (vulnerable) {
+            if (!shielded) {
                 defeat(level, site, curator, runtime);
                 return false;
             }
@@ -157,7 +156,7 @@ public final class LastCuratorEncounterTracker {
         int storedHealth = LastCuratorProgress.health(site.progressFlags());
         int observedHealth = Math.max(1, (int) Math.ceil(curator.getHealth()));
         if (observedHealth < storedHealth) {
-            if (vulnerable) {
+            if (!shielded) {
                 TemporalSite updated = site.withProgressFlags(
                         LastCuratorProgress.recordHealth(site.progressFlags(), observedHealth));
                 TemporalSiteManager.data(level).replace(updated);
@@ -172,9 +171,16 @@ public final class LastCuratorEncounterTracker {
         }
 
         LastCuratorProgress.Phase phase = LastCuratorProgress.phase(site.progressFlags());
-        applyFormAndVulnerability(level, site, curator, phase);
+        if (runtime.lastPhase != null && runtime.lastPhase != phase) {
+            runtime.invulnerableUntilTick = level.getGameTime() + PHASE_SHIELD_TICKS;
+            shielded = true;
+            TemporalSiteManager.notifyNearby(
+                    level, site, Component.translatable("message.tbos.curator.core_sealed"));
+        }
+        applyFormAndVulnerability(level, site, curator, phase, shielded);
         updateBossBar(level, site, curator, runtime, phase);
         announcePhaseChange(level, site, runtime, phase);
+        announceShieldEnd(level, site, runtime, shielded);
         handleStateChange(level, site, runtime);
         tickHalo(level, site, curator);
 
@@ -186,6 +192,7 @@ public final class LastCuratorEncounterTracker {
             curator.setTarget(nearest);
             leashToArena(site, curator);
             processPendingAttacks(level, players, runtime);
+            tickAfterimages(level, site, players, runtime);
             if (!site.isTransitioning()) {
                 scheduleAttacks(level, site, players, runtime, phase);
             }
@@ -193,6 +200,42 @@ public final class LastCuratorEncounterTracker {
             curator.setTarget(null);
         }
         return true;
+    }
+
+    private static PhoenixGuardianEntity resolveCurator(
+            ServerLevel level, TemporalSite site, Runtime runtime) {
+        PhoenixGuardianEntity curator = findCurator(level, site).orElse(null);
+        if (curator == null && runtime.curatorId != null) {
+            if (level.getEntity(runtime.curatorId) instanceof PhoenixGuardianEntity existing && existing.isAlive()) {
+                curator = existing;
+            }
+        }
+        if (curator == null) {
+            curator = spawnCurator(level, site);
+        }
+        if (curator != null) {
+            runtime.curatorId = curator.getUUID();
+            discardExtraCurators(level, site, curator);
+        }
+        return curator;
+    }
+
+    public static int curatorCount(ServerLevel level, TemporalSite site) {
+        return level.getEntities(
+                        EntityTypeTest.forClass(PhoenixGuardianEntity.class),
+                        bounds(site),
+                        entity -> true)
+                .size();
+    }
+
+    private static void discardExtraCurators(
+            ServerLevel level, TemporalSite site, PhoenixGuardianEntity keep) {
+        for (PhoenixGuardianEntity extra : level.getEntities(
+                EntityTypeTest.forClass(PhoenixGuardianEntity.class),
+                bounds(site),
+                entity -> entity != keep)) {
+            extra.discard();
+        }
     }
 
     private static PhoenixGuardianEntity spawnCurator(ServerLevel level, TemporalSite site) {
@@ -206,31 +249,53 @@ public final class LastCuratorEncounterTracker {
         curator.addTag(CURATOR_TAG);
         curator.setSiteManaged(true);
         curator.setPersistenceRequired();
+        curator.setSilent(true);
         curator.setCustomNameVisible(true);
         AttributeInstance maxHealth = curator.getAttribute(Attributes.MAX_HEALTH);
         if (maxHealth != null) {
             maxHealth.setBaseValue(LastCuratorProgress.MAX_HEALTH);
         }
-        curator.setHealth(LastCuratorProgress.health(site.progressFlags()));
-        level.addFreshEntity(curator);
+        curator.setHealth(Math.max(1.0F, LastCuratorProgress.health(site.progressFlags())));
+        if (!level.addFreshEntity(curator)) {
+            return null;
+        }
         return curator;
+    }
+
+    private static boolean isShielded(ServerLevel level, Runtime runtime) {
+        return level.getGameTime() < runtime.invulnerableUntilTick;
+    }
+
+    private static void announceShieldEnd(
+            ServerLevel level, TemporalSite site, Runtime runtime, boolean shielded) {
+        if (runtime.lastShielded && !shielded) {
+            TemporalSiteManager.notifyNearby(
+                    level, site, Component.translatable("message.tbos.curator.core_exposed"));
+        }
+        runtime.lastShielded = shielded;
     }
 
     private static void applyFormAndVulnerability(
             ServerLevel level,
             TemporalSite site,
             PhoenixGuardianEntity curator,
-            LastCuratorProgress.Phase phase) {
+            LastCuratorProgress.Phase phase,
+            boolean shielded) {
         boolean remembered = site.state().targetStableState() == TemporalState.REMEMBERED;
-        boolean vulnerable = LastCuratorProgress.isVulnerable(site.progressFlags(), site.state());
-        curator.setInvulnerable(!vulnerable);
-        curator.setGlowingTag(remembered);
-        curator.setCustomName(Component.translatable(
+        curator.setInvulnerable(shielded);
+        // Glowing outlines the whole Blockbench mesh a second time. On 26.x that
+        // outline pass has been observed to kill the integrated client the moment
+        // the remembered form is exposed. The halo particles already carry the tell.
+        curator.setGlowingTag(false);
+        Component name = Component.translatable(
                 "boss.tbos.last_curator.name",
                 phaseComponent(phase),
                 Component.translatable(remembered
                         ? "boss.tbos.last_curator.form.remembered"
-                        : "boss.tbos.last_curator.form.ruin")));
+                        : "boss.tbos.last_curator.form.ruin"));
+        if (!name.equals(curator.getCustomName())) {
+            curator.setCustomName(name);
+        }
         AttributeInstance movement = curator.getAttribute(Attributes.MOVEMENT_SPEED);
         if (movement != null) {
             movement.setBaseValue(switch (phase) {
@@ -299,19 +364,31 @@ public final class LastCuratorEncounterTracker {
             return;
         }
         runtime.lastStableState = site.state();
-        if (!runtime.afterimages.isEmpty()) {
-            List<BlockPos> cells = runtime.afterimages.stream().map(Afterimage::position).toList();
-            detonate(level, playersInArena(level, site), new PendingAttack(cells, 0L, 7.0F));
-            runtime.afterimages.clear();
-            TemporalSiteManager.notifyNearbyOverlay(
-                    level,
-                    site,
-                    Component.translatable("message.tbos.curator.afterimages_detonate"));
+        detonateAfterimages(level, site, playersInArena(level, site), runtime);
+    }
+
+    private static void tickAfterimages(
+            ServerLevel level, TemporalSite site, List<ServerPlayer> players, Runtime runtime) {
+        if (runtime.afterimages.isEmpty() || runtime.nextAfterimageDetonateTick == 0L) {
+            return;
         }
-        TemporalSiteManager.notifyNearby(level, site, Component.translatable(
-                LastCuratorProgress.isVulnerable(site.progressFlags(), site.state())
-                        ? "message.tbos.curator.core_exposed"
-                        : "message.tbos.curator.core_sealed"));
+        if (level.getGameTime() < runtime.nextAfterimageDetonateTick) {
+            return;
+        }
+        detonateAfterimages(level, site, players, runtime);
+    }
+
+    private static void detonateAfterimages(
+            ServerLevel level, TemporalSite site, List<ServerPlayer> players, Runtime runtime) {
+        if (runtime.afterimages.isEmpty()) {
+            return;
+        }
+        List<BlockPos> cells = runtime.afterimages.stream().map(Afterimage::position).toList();
+        detonate(level, players, new PendingAttack(cells, 0L, 7.0F));
+        runtime.afterimages.clear();
+        runtime.nextAfterimageDetonateTick = 0L;
+        TemporalSiteManager.notifyNearbyOverlay(
+                level, site, Component.translatable("message.tbos.curator.afterimages_detonate"));
     }
 
     private static void scheduleAttacks(
@@ -360,9 +437,8 @@ public final class LastCuratorEncounterTracker {
                         site,
                         Component.translatable("message.tbos.curator.telegraph_erasure"));
                 runtime.nextAttackTick = gameTime + 55L;
-                if (!site.isTransitioning() && gameTime >= runtime.nextAutomaticShiftTick) {
-                    TemporalSiteManager.beginAutomaticCuratorTransition(level, site);
-                    runtime.nextAutomaticShiftTick = gameTime + 140L;
+                if (runtime.nextAfterimageDetonateTick == 0L) {
+                    runtime.nextAfterimageDetonateTick = gameTime + AFTERIMAGE_DETONATE_DELAY;
                 }
             }
         }
@@ -452,7 +528,7 @@ public final class LastCuratorEncounterTracker {
             return;
         }
         boolean remembered = site.state().targetStableState() == TemporalState.REMEMBERED;
-        int points = remembered ? 8 : 4;
+        int points = remembered ? 4 : 2;
         for (int index = 0; index < points; index++) {
             double angle = Math.PI * 2.0D * index / 8.0D + level.getGameTime() * 0.04D;
             double x = curator.getX() + Math.cos(angle) * 1.45D;
@@ -589,8 +665,11 @@ public final class LastCuratorEncounterTracker {
         private TemporalState lastStableState;
         private LastCuratorProgress.Phase lastPhase;
         private long nextAttackTick;
-        private long nextAutomaticShiftTick;
+        private long nextAfterimageDetonateTick;
+        private long invulnerableUntilTick;
+        private boolean lastShielded;
         private int arcStep;
+        private UUID curatorId;
 
         private Runtime(TemporalSite site) {
             UUID barId = UUID.nameUUIDFromBytes(
@@ -600,11 +679,10 @@ public final class LastCuratorEncounterTracker {
                     Component.translatable("boss.tbos.last_curator.title"),
                     BossEvent.BossBarColor.WHITE,
                     BossEvent.BossBarOverlay.NOTCHED_10);
-            bossBar.setDarkenScreen(true);
-            bossBar.setCreateWorldFog(true);
+            bossBar.setDarkenScreen(false);
+            bossBar.setCreateWorldFog(false);
             bossBar.setVisible(true);
             lastStableState = site.state().isStable() ? site.state() : site.state().previousStableState();
-            nextAutomaticShiftTick = site.transitionStartTick() + 140L;
         }
     }
 }

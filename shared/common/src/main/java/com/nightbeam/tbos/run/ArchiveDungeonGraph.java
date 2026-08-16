@@ -17,8 +17,9 @@ public record ArchiveDungeonGraph(
         List<ArchiveRoomNode> rooms,
         int startingRoom,
         int bossRoom,
-        int rewardRoom) {
-    public static final int SCHEMA_REVISION = 2;
+        int rewardRoom,
+        int waystoneRoom) {
+    public static final int SCHEMA_REVISION = 3;
     public static final int GRID_SPACING_XZ = 34;
     public static final int GRID_SPACING_Y = 16;
 
@@ -29,7 +30,8 @@ public record ArchiveDungeonGraph(
             ArchiveRoomNode.CODEC.listOf().fieldOf("rooms").forGetter(ArchiveDungeonGraph::rooms),
             Codec.INT.optionalFieldOf("starting_room", 0).forGetter(ArchiveDungeonGraph::startingRoom),
             Codec.INT.fieldOf("boss_room").forGetter(ArchiveDungeonGraph::bossRoom),
-            Codec.INT.fieldOf("reward_room").forGetter(ArchiveDungeonGraph::rewardRoom)
+            Codec.INT.fieldOf("reward_room").forGetter(ArchiveDungeonGraph::rewardRoom),
+            Codec.INT.optionalFieldOf("waystone_room", -1).forGetter(ArchiveDungeonGraph::waystoneRoom)
     ).apply(instance, ArchiveDungeonGraph::new));
 
     public ArchiveDungeonGraph {
@@ -83,6 +85,26 @@ public record ArchiveDungeonGraph(
                 throw new IllegalArgumentException("Archive mandatory room indices do not match their categories");
             }
         }
+        if (schemaRevision >= 3) {
+            requireIndex("waystone", waystoneRoom, rooms.size());
+            if (Set.of(startingRoom, bossRoom, rewardRoom, waystoneRoom).size() != 4) {
+                throw new IllegalArgumentException(
+                        "Procedural start, waystone, boss, and reward rooms must be distinct");
+            }
+            if (rooms.get(waystoneRoom).category() != ArchiveRoomCategory.WAYSTONE) {
+                throw new IllegalArgumentException("Archive mandatory room indices do not match their categories");
+            }
+        }
+    }
+
+    public ArchiveDungeonGraph(
+            int schemaRevision,
+            long seed,
+            List<ArchiveRoomNode> rooms,
+            int startingRoom,
+            int bossRoom,
+            int rewardRoom) {
+        this(schemaRevision, seed, rooms, startingRoom, bossRoom, rewardRoom, -1);
     }
 
     public ArchiveRoomNode room(int index) {
@@ -273,7 +295,8 @@ public record ArchiveDungeonGraph(
     }
 
     private ArchiveDungeonGraph copy(List<ArchiveRoomNode> updated) {
-        return new ArchiveDungeonGraph(schemaRevision, seed, updated, startingRoom, bossRoom, rewardRoom);
+        return new ArchiveDungeonGraph(
+                schemaRevision, seed, updated, startingRoom, bossRoom, rewardRoom, waystoneRoom);
     }
 
     private static Set<Integer> reachableIndices(List<ArchiveRoomNode> nodes, int start) {

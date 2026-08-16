@@ -345,7 +345,13 @@ public final class ModGameTests {
         helper.assertTrue(
                 seedEleven.room(seedEleven.startingRoom()).category() == ArchiveRoomCategory.STARTING
                         && seedEleven.room(seedEleven.bossRoom()).category() == ArchiveRoomCategory.FINAL_BOSS
-                        && seedEleven.room(seedEleven.rewardRoom()).category() == ArchiveRoomCategory.EXIT_REWARD,
+                        && seedEleven.room(seedEleven.rewardRoom()).category() == ArchiveRoomCategory.EXIT_REWARD
+                        && seedEleven.waystoneRoom() >= 0
+                        && seedEleven.room(seedEleven.waystoneRoom()).category() == ArchiveRoomCategory.WAYSTONE
+                        && seedEleven.rooms().stream()
+                                        .filter(room -> room.category() == ArchiveRoomCategory.WAYSTONE)
+                                        .count()
+                                == 1,
                 "Generated archive graph omitted a mandatory room category");
         helper.assertTrue(
                 seedEleven.room(seedEleven.bossRoom()).graphDepth()
@@ -580,6 +586,14 @@ public final class ModGameTests {
             helper.assertTrue(
                     graph.rooms().stream().filter(room -> room.category() == ArchiveRoomCategory.MINI_BOSS).count() == 1,
                     "Seven-room generation did not guarantee exactly one lesser boss");
+            helper.assertTrue(
+                    graph.waystoneRoom() >= 0
+                            && graph.room(graph.waystoneRoom()).category() == ArchiveRoomCategory.WAYSTONE
+                            && graph.rooms().stream()
+                                            .filter(room -> room.category() == ArchiveRoomCategory.WAYSTONE)
+                                            .count()
+                                    == 1,
+                    "Seven-room generation did not guarantee exactly one waystone room");
             helper.assertTrue(
                     graph.rooms().stream().filter(room -> room.placement().coordinates().y() > 0).count()
                             <= minimumSettings.maximumRoomsAbove(),
@@ -2320,8 +2334,9 @@ public final class ModGameTests {
                 "Full health did not begin the Catalogue phase");
         helper.assertTrue(
                 LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED)
-                        && !LastCuratorProgress.isVulnerable(flags, TemporalState.RUIN),
-                "Catalogue vulnerability was not exclusive to Remembered");
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.RUIN)
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.TRANSITION_TO_REMEMBERED),
+                "Catalogue was not damageable regardless of arena state");
 
         flags = LastCuratorProgress.recordHealth(flags, 200);
         helper.assertTrue(
@@ -2329,8 +2344,8 @@ public final class ModGameTests {
                 "The 200-health threshold did not begin Revision");
         helper.assertTrue(
                 LastCuratorProgress.isVulnerable(flags, TemporalState.RUIN)
-                        && !LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED),
-                "Revision vulnerability was not exclusive to Ruin");
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED),
+                "Revision was not damageable regardless of arena state");
 
         flags = LastCuratorProgress.recordHealth(flags, 100);
         helper.assertTrue(
@@ -2338,11 +2353,9 @@ public final class ModGameTests {
                 "The 100-health threshold did not begin Erasure");
         helper.assertTrue(
                 LastCuratorProgress.isVulnerable(flags, TemporalState.RUIN)
-                        && LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED),
-                "Erasure was not vulnerable in both stable states");
-        helper.assertTrue(
-                !LastCuratorProgress.isVulnerable(flags, TemporalState.TRANSITION_TO_REMEMBERED),
-                "A transitioning arena exposed the Curator");
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED)
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.TRANSITION_TO_REMEMBERED),
+                "Erasure was not damageable regardless of arena state");
 
         flags = LastCuratorProgress.recordHealth(flags, 0);
         helper.assertTrue(LastCuratorProgress.isDefeated(flags), "Zero health did not persist defeat");

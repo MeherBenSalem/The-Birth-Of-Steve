@@ -97,6 +97,8 @@ public final class PhoenixGuardianEntity extends Monster {
     public PhoenixGuardianEntity(EntityType<? extends PhoenixGuardianEntity> entityType, Level level) {
         super(entityType, level);
         this.xpReward = 75;
+        bossEvent.setCreateWorldFog(false);
+        bossEvent.setDarkenScreen(false);
     }
 
     @Override
@@ -129,7 +131,9 @@ public final class PhoenixGuardianEntity extends Monster {
     @Override
     protected void customServerAiStep(ServerLevel level) {
         super.customServerAiStep(level);
-        bossEvent.setProgress(getHealth() / getMaxHealth());
+        if (!siteManaged) {
+            bossEvent.setProgress(getHealth() / getMaxHealth());
+        }
 
         if (rebirthTicks > 0) {
             tickRebirth(level);
@@ -221,10 +225,12 @@ public final class PhoenixGuardianEntity extends Monster {
             victim.igniteForSeconds(BURST_FIRE_SECONDS);
         }
 
+        int flameCount = siteManaged ? 16 : 90;
+        int smokeCount = siteManaged ? 6 : 40;
         level.sendParticles(
-                ParticleTypes.FLAME, getX(), getY() + 1.5D, getZ(), 90, 1.6D, 0.9D, 1.6D, 0.14D);
+                ParticleTypes.FLAME, getX(), getY() + 1.5D, getZ(), flameCount, 1.6D, 0.9D, 1.6D, 0.14D);
         level.sendParticles(
-                ParticleTypes.LARGE_SMOKE, getX(), getY() + 1.2D, getZ(), 40, 1.4D, 0.6D, 1.4D, 0.05D);
+                ParticleTypes.LARGE_SMOKE, getX(), getY() + 1.2D, getZ(), smokeCount, 1.4D, 0.6D, 1.4D, 0.05D);
         level.playSound(
                 null, getX(), getY(), getZ(),
                 SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.5F, 0.9F);
@@ -359,7 +365,7 @@ public final class PhoenixGuardianEntity extends Monster {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return SoundEvents.BLAZE_AMBIENT;
+        return siteManaged ? null : SoundEvents.BLAZE_AMBIENT;
     }
 
     @Override

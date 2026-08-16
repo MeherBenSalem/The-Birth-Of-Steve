@@ -1,0 +1,220 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": true,
+  "gui_light": "front",
+  "textures": {
+    "particle": "tbos:block/waystone",
+    "stone": "tbos:block/waystone",
+    "bronze": "tbos:block/waystone_bronze",
+    "rune": "tbos:block/waystone_rune",
+    "crystal": "tbos:block/waystone_crystal"
+  },
+  "elements": [
+    {
+      "__comment": "slate footing",
+      "from": [1, 0, 1],
+      "to": [15, 2, 15],
+      "faces": {
+        "north": {"uv": [1, 14, 15, 16], "texture": "#stone"},
+        "east": {"uv": [1, 14, 15, 16], "texture": "#stone"},
+        "south": {"uv": [1, 14, 15, 16], "texture": "#stone"},
+        "west": {"uv": [1, 14, 15, 16], "texture": "#stone"},
+        "up": {"uv": [1, 1, 15, 15], "texture": "#stone"},
+        "down": {"uv": [1, 1, 15, 15], "texture": "#stone", "cullface": "down"}
+      }
+    },
+    {
+      "__comment": "stepped plinth",
+      "from": [3, 2, 3],
+      "to": [13, 4, 13],
+      "faces": {
+        "north": {"uv": [3, 12, 13, 14], "texture": "#stone"},
+        "east": {"uv": [3, 12, 13, 14], "texture": "#stone"},
+        "south": {"uv": [3, 12, 13, 14], "texture": "#stone"},
+        "west": {"uv": [3, 12, 13, 14], "texture": "#stone"},
+        "up": {"uv": [3, 3, 13, 13], "texture": "#stone"},
+        "down": {"uv": [3, 3, 13, 13], "texture": "#stone"}
+      }
+    },
+    {
+      "__comment": "bronze collar",
+      "from": [4, 4, 4],
+      "to": [12, 5, 12],
+      "faces": {
+        "north": {"uv": [0, 7, 16, 9], "texture": "#bronze"},
+        "east": {"uv": [0, 7, 16, 9], "texture": "#bronze"},
+        "south": {"uv": [0, 7, 16, 9], "texture": "#bronze"},
+        "west": {"uv": [0, 7, 16, 9], "texture": "#bronze"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#bronze"},
+        "down": {"uv": [0, 0, 16, 16], "texture": "#bronze"}
+      }
+    },
+    {
+      "__comment": "standing slate pillar",
+      "from": [5, 5, 5],
+      "to": [11, 13, 11],
+      "faces": {
+        "north": {"uv": [5, 3, 11, 11], "texture": "#stone"},
+        "east": {"uv": [5, 3, 11, 11], "texture": "#stone"},
+        "south": {"uv": [5, 3, 11, 11], "texture": "#stone"},
+        "west": {"uv": [5, 3, 11, 11], "texture": "#stone"},
+        "up": {"uv": [5, 5, 11, 11], "texture": "#stone"},
+        "down": {"uv": [5, 5, 11, 11], "texture": "#stone"}
+      }
+    },
+    {
+      "__comment": "north-west bronze brace",
+      "from": [4.5, 5, 4.5],
+      "to": [5, 13, 5],
+      "faces": {
+        "north": {"uv": [0, 0, 1, 8], "texture": "#bronze"},
+        "east": {"uv": [0, 0, 1, 8], "texture": "#bronze"},
+        "south": {"uv": [0, 0, 1, 8], "texture": "#bronze"},
+        "west": {"uv": [0, 0, 1, 8], "texture": "#bronze"},
+        "up": {"uv": [0, 0, 1, 1], "texture": "#bronze"},
+        "down": {"uv": [0, 0, 1, 1], "texture": "#bronze"}
+      }
+    },
+    {
+      "__comment": "north-east bronze brace",
+      "from": [11, 5, 4.5],
+      "to": [11.5, 13, 5],
+      "faces": {
+        "north": {"uv": [15, 0, 16, 8], "texture": "#bronze"},
+        "east": {"uv": [15, 0, 16, 8], "texture": "#bronze"},
+        "south": {"uv": [15, 0, 16, 8], "texture": "#bronze"},
+        "west": {"uv": [15, 0, 16, 8], "texture": "#bronze"},
+        "up": {"uv": [15, 0, 16, 1], "texture": "#bronze"},
+        "down": {"uv": [15, 0, 16, 1], "texture": "#bronze"}
+      }
+    },
+    {
+      "__comment": "south-west bronze brace",
+      "from": [4.5, 5, 11],
+      "to": [5, 13, 11.5],
+      "faces": {
+        "north": {"uv": [0, 0, 1, 8], "texture": "#bronze"},
+        "east": {"uv": [0, 0, 1, 8], "texture": "#bronze"},
+        "south": {"uv": [0, 0, 1, 8], "texture": "#bronze"},
+        "west": {"uv": [0, 0, 1, 8], "texture": "#bronze"},
+        "up": {"uv": [0, 15, 1, 16], "texture": "#bronze"},
+        "down": {"uv": [0, 15, 1, 16], "texture": "#bronze"}
+      }
+    },
+    {
+      "__comment": "south-east bronze brace",
+      "from": [11, 5, 11],
+      "to": [11.5, 13, 11.5],
+      "faces": {
+        "north": {"uv": [15, 0, 16, 8], "texture": "#bronze"},
+        "east": {"uv": [15, 0, 16, 8], "texture": "#bronze"},
+        "south": {"uv": [15, 0, 16, 8], "texture": "#bronze"},
+        "west": {"uv": [15, 0, 16, 8], "texture": "#bronze"},
+        "up": {"uv": [15, 15, 16, 16], "texture": "#bronze"},
+        "down": {"uv": [15, 15, 16, 16], "texture": "#bronze"}
+      }
+    },
+    {
+      "__comment": "north rune plate",
+      "from": [5, 6, 4.75],
+      "to": [11, 12.5, 5],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": "#rune"},
+        "east": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "south": {"uv": [0, 0, 16, 16], "texture": "#rune"},
+        "west": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "up": {"uv": [0, 6, 16, 7], "texture": "#rune"},
+        "down": {"uv": [0, 6, 16, 7], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "south rune plate",
+      "from": [5, 6, 11],
+      "to": [11, 12.5, 11.25],
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": "#rune"},
+        "east": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "south": {"uv": [0, 0, 16, 16], "texture": "#rune"},
+        "west": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "up": {"uv": [0, 6, 16, 7], "texture": "#rune"},
+        "down": {"uv": [0, 6, 16, 7], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "west rune plate",
+      "from": [4.75, 6, 5],
+      "to": [5, 12.5, 11],
+      "faces": {
+        "north": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "east": {"uv": [0, 0, 16, 16], "texture": "#rune"},
+        "south": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "west": {"uv": [0, 0, 16, 16], "texture": "#rune"},
+        "up": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "down": {"uv": [6, 0, 7, 16], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "east rune plate",
+      "from": [11, 6, 5],
+      "to": [11.25, 12.5, 11],
+      "faces": {
+        "north": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "east": {"uv": [0, 0, 16, 16], "texture": "#rune"},
+        "south": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "west": {"uv": [0, 0, 16, 16], "texture": "#rune"},
+        "up": {"uv": [6, 0, 7, 16], "texture": "#rune"},
+        "down": {"uv": [6, 0, 7, 16], "texture": "#rune"}
+      }
+    },
+    {
+      "__comment": "bronze cap",
+      "from": [4, 13, 4],
+      "to": [12, 14.5, 12],
+      "faces": {
+        "north": {"uv": [0, 6, 16, 9], "texture": "#bronze"},
+        "east": {"uv": [0, 6, 16, 9], "texture": "#bronze"},
+        "south": {"uv": [0, 6, 16, 9], "texture": "#bronze"},
+        "west": {"uv": [0, 6, 16, 9], "texture": "#bronze"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#bronze"},
+        "down": {"uv": [0, 0, 16, 16], "texture": "#bronze"}
+      }
+    },
+    {
+      "__comment": "crystal seat",
+      "from": [6, 14.5, 6],
+      "to": [10, 15.5, 10],
+      "shade": false,
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "east": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "south": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "west": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "down": {"uv": [0, 0, 16, 16], "texture": "#crystal"}
+      }
+    },
+    {
+      "__comment": "crystal finial",
+      "from": [7, 15.5, 7],
+      "to": [9, 16, 9],
+      "shade": false,
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "east": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "south": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "west": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#crystal"},
+        "down": {"uv": [0, 0, 16, 16], "texture": "#crystal"}
+      }
+    }
+  ],
+  "display": {
+    "gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.625, 0.625, 0.625]},
+    "ground": {"translation": [0, 3, 0], "scale": [0.25, 0.25, 0.25]},
+    "fixed": {"rotation": [0, 180, 0], "scale": [0.5, 0.5, 0.5]},
+    "thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.375, 0.375, 0.375]},
+    "thirdperson_lefthand": {"rotation": [75, 225, 0], "translation": [0, 2.5, 0], "scale": [0.375, 0.375, 0.375]},
+    "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 1, 0], "scale": [0.4, 0.4, 0.4]},
+    "firstperson_lefthand": {"rotation": [0, 225, 0], "translation": [0, 1, 0], "scale": [0.4, 0.4, 0.4]}
+  }
+}

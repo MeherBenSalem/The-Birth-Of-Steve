@@ -27,7 +27,7 @@ public final class ArchiveRunProtection {
                 return Decision.ROOM_CACHE;
             }
         }
-        if (state.is(ModBlocks.RIFT_THRESHOLD.get())) {
+        if (state.is(ModBlocks.RIFT_THRESHOLD.get()) || state.is(ModBlocks.WAYSTONE.get())) {
             return Decision.DENY;
         }
         if (ModBlocks.ARCHIVE_CRATES.stream().anyMatch(crate -> state.is(crate.get()))

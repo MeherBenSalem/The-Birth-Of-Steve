@@ -137,6 +137,18 @@ public final class ArchiveRunGenerator {
         nodes.add(start);
         occupied.put(start.position, 0);
 
+        Frontier waystoneFrontier = chooseMandatoryFrontier(start, occupied, settings, true, random);
+        ArchiveRoomTemplate waystoneTemplate = singleTemplate(ArchiveRoomCategory.WAYSTONE, settings);
+        MutableNode waystone = new MutableNode(
+                nodes.size(),
+                waystoneTemplate,
+                waystoneFrontier.position,
+                randomTransform(waystoneTemplate, random),
+                1);
+        connect(start, waystone, waystoneFrontier.direction, false);
+        nodes.add(waystone);
+        occupied.put(waystone.position, waystone.index);
+
         int regularTarget = targetRooms - 2;
         int lesserBossTarget = lesserBossCountFor(targetRooms);
         int lesserBosses = 0;
@@ -246,7 +258,8 @@ public final class ArchiveRunGenerator {
                 immutable,
                 0,
                 boss.index,
-                reward.index);
+                reward.index,
+                waystone.index);
     }
 
     public static int lesserBossCountFor(int totalRooms) {
@@ -594,6 +607,7 @@ public final class ArchiveRunGenerator {
         }
         for (ArchiveRoomCategory mandatory : List.of(
                 ArchiveRoomCategory.STARTING,
+                ArchiveRoomCategory.WAYSTONE,
                 ArchiveRoomCategory.FINAL_BOSS,
                 ArchiveRoomCategory.EXIT_REWARD)) {
             if (ArchiveRoomTemplates.forCategory(mandatory).stream()

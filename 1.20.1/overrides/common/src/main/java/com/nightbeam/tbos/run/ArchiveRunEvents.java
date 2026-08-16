@@ -261,7 +261,14 @@ public final class ArchiveRunEvents {
                 .findByMember(player.getUUID())
                 .orElse(null);
         if (run != null && run.status() == ArchiveRunStatus.ACTIVE) {
-            boolean outsideCurrentFloor = !player.level().dimension().equals(ArchiveDimensions.FRACTURED_ARCHIVE)
+            ArchiveRunMember member = run.member(player.getUUID()).orElse(null);
+            boolean inArchive = ArchiveDimensions.isFracturedArchive(player.level());
+            // A waystone bind is an intentional leave. The run stays ACTIVE so an
+            // Overworld waystone can resume it; do not yank the player back.
+            if (member != null && member.waystoneBound() && !inArchive) {
+                return;
+            }
+            boolean outsideCurrentFloor = !inArchive
                     || !ArchiveInstanceLayout.boundsForSlot(run.instanceSlot()).isInside(player.blockPosition());
             if ((reconnecting || outsideCurrentFloor) && ArchiveRunManager.teleportToCheckpoint(player)) {
                 ModAdvancements.awardEnterFracturedArchive(player);

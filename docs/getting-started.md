@@ -62,6 +62,12 @@ boss-gate progress. Normal dungeon blocks cannot be broken or placed. Archive
 caches are the exception: clear their room first, then **break the cache** to
 claim its loot. Right-clicking a cache only reads its seal.
 
+Each floor has a **Waystone** in a side chamber off the start. Right-click it to
+save that floor and return to the Overworld. Right-click a Waystone in the
+Overworld — including one you craft from Archive Stone, Chronicle Bronze, and
+Lenswork Crystal — to resume at the last floor you bound. Dungeon Waystones
+cannot be broken; the ones you place can.
+
 ## Multiplayer notes
 
 Each party member keeps their own checkpoint and cache claim state. Doors wait

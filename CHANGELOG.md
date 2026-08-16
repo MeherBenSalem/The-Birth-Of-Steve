@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+## 0.7.0 - 2026-08-16
+
+### Waystones
+
+- **Waystones save a Fractured Archive floor.** Each generated floor has exactly
+  one Waystone chamber off the start. Right-click it to leave for the Overworld
+  without ending the run; right-click any Waystone outside to return to that
+  floor. Generated copies cannot be broken. Crafted copies (Archive Stone,
+  Chronicle Bronze, Lenswork Crystal) can be placed and broken in the Overworld.
+- **Dungeon Waystones always return to the Overworld.** Using one inside the
+  Fractured Archive no longer teleports you to the same floor, and the run no
+  longer yanks you back after you leave.
+
+### The Last Curator
+
+- **The Last Curator no longer locks its core behind Memory Anchors.** Crossing
+  200 or 100 health seals it for three seconds, then it takes damage again.
+- **The Curator fight no longer kills the 26.x client** when the core is exposed
+  or the fight moves into Revision.
+
 ## 0.6.0 - 2026-08-12
 
 ### The Archive Speaks

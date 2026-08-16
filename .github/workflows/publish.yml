@@ -1,10 +1,8 @@
 # Dual-publish NightBeam mods/plugins to Modrinth + CurseForge on version tags.
 #
-# This repository builds several Minecraft versions from one source tree (see
-# settings.gradle), so each tag produces one release *per* Minecraft version:
-# 0.4.0+mc26.1.2 and 0.4.0+mc26.2, each carrying only its own game version and
-# its own two loader jars. A player on 26.1.2 is therefore never served the
-# 26.2 jar.
+# Each loader jar is its own Modrinth version:
+#   version_number: 0.6.0+mc26.1.2+fabric
+# Never attach multiple loader jars to one Modrinth version.
 #
 # Org/repo secrets:
 #   MODRINTH_TOKEN
@@ -121,16 +119,6 @@ jobs:
           printf '%s\n' "${JARS[@]}" >> "$GITHUB_OUTPUT"
           echo "$EOF" >> "$GITHUB_OUTPUT"
 
-      # Read the target game version from the single place that defines it
-      # rather than pattern-matching it out of a jar filename.
-      - name: Resolve Minecraft version
-        id: mc
-        shell: bash
-        run: |
-          MC=$(grep -E '^minecraft_version=' "${{ matrix.minecraft }}/gradle.properties" | cut -d= -f2)
-          test -n "$MC"
-          echo "version=$MC" >> "$GITHUB_OUTPUT"
-
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -145,94 +133,8 @@ jobs:
           CURSEFORGE_ID: ${{ vars.CURSEFORGE_ID }}
           VERSION: ${{ needs.plan.outputs.version }}
           JAR_LIST: ${{ steps.jars.outputs.list }}
-          MC_VERSION: ${{ steps.mc.outputs.version }}
         shell: bash
         run: |
           set -euo pipefail
           test -n "${MODRINTH_ID:-}" && test -n "${CURSEFORGE_ID:-}"
-          node <<'NODE'
-          const fs = require('fs');
-          const path = require('path');
-          const version = process.env.VERSION;
-          const mcVersion = process.env.MC_VERSION;
-          const jars = process.env.JAR_LIST.split(/\n/).map(s => s.trim()).filter(Boolean);
-
-          // CurseForge wants a loader tag per file; Modrinth wants the union.
-          const loaderOf = (jar) => {
-            const n = path.basename(jar).toLowerCase();
-            if (n.includes('neoforge')) return 'neoforge';
-            if (n.includes('quilt')) return 'quilt';
-            if (n.includes('fabric')) return 'fabric';
-            if (n.includes('forge')) return 'forge';
-            return 'fabric';
-          };
-          const loaders = [...new Set(jars.map(loaderOf))];
-
-          (async () => {
-            const fileParts = jars.map((_, i) => `file_${i}`);
-            const body = {
-              // Unique per Minecraft version: Modrinth rejects a duplicate
-              // version_number within a project.
-              name: `${version} for Minecraft ${mcVersion}`,
-              version_number: `${version}+mc${mcVersion}`,
-              changelog: `Release ${version} for Minecraft ${mcVersion}`,
-              dependencies: [],
-              game_versions: [mcVersion],
-              version_type: 'release',
-              loaders,
-              featured: false,
-              status: 'listed',
-              project_id: process.env.MODRINTH_ID,
-              file_parts: fileParts,
-              primary_file: fileParts[0],
-            };
-            const form = new FormData();
-            form.append('data', JSON.stringify(body));
-            for (let i = 0; i < jars.length; i++) {
-              form.append(fileParts[i], new Blob([fs.readFileSync(jars[i])]), path.basename(jars[i]));
-            }
-            const mrRes = await fetch('https://api.modrinth.com/v2/version', {
-              method: 'POST',
-              headers: { Authorization: process.env.MODRINTH_TOKEN },
-              body: form,
-            });
-            const mrText = await mrRes.text();
-            if (!mrRes.ok) throw new Error('Modrinth ' + mrRes.status + ' ' + mrText.slice(0, 500));
-            console.log('Modrinth OK', mrText.slice(0, 180));
-
-            const gvRes = await fetch('https://api.curseforge.com/v1/games/432/versions', {
-              headers: { 'x-api-key': process.env.CURSEFORGE_API_KEY },
-            });
-            const gvJson = await gvRes.json();
-            const flat = [];
-            for (const g of gvJson.data || []) for (const v of g.versions || []) flat.push(v);
-            const idOf = (want) => {
-              const hit = flat.find((v) => v.name.toLowerCase() === want.toLowerCase());
-              if (!hit) throw new Error('No CF game version for ' + want);
-              return hit.id;
-            };
-            const gameVersionId = idOf(mcVersion);
-
-            for (const jar of jars) {
-              const meta = {
-                changelog: `Release ${version} for Minecraft ${mcVersion}`,
-                changelogType: 'markdown',
-                displayName: path.basename(jar),
-                // Without the loader tag CurseForge lists the file under every
-                // loader, which is wrong once two loaders ship per version.
-                gameVersions: [gameVersionId, idOf(loaderOf(jar))],
-                releaseType: 1,
-              };
-              const cfForm = new FormData();
-              cfForm.append('metadata', JSON.stringify(meta));
-              cfForm.append('file', new Blob([fs.readFileSync(jar)]), path.basename(jar));
-              const cfRes = await fetch(
-                `https://minecraft.curseforge.com/api/projects/${process.env.CURSEFORGE_ID}/upload-file`,
-                { method: 'POST', headers: { 'X-Api-Token': process.env.CURSEFORGE_TOKEN }, body: cfForm },
-              );
-              const cfText = await cfRes.text();
-              if (!cfRes.ok) throw new Error('CurseForge ' + cfRes.status + ' ' + cfText.slice(0, 500));
-              console.log('CurseForge OK', path.basename(jar), cfText.slice(0, 180));
-            }
-          })().catch((e) => { console.error(e); process.exit(1); });
-          NODE
+          node tools/publish-local.mjs "$GITHUB_WORKSPACE" "$VERSION"

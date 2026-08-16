@@ -18,6 +18,10 @@ public final class ArchiveDimensions {
     public static final ResourceKey<LevelStem> FRACTURED_ARCHIVE_STEM =
             ResourceKey.create(Registries.LEVEL_STEM, ID);
 
+    public static boolean isFracturedArchive(Level level) {
+        return FRACTURED_ARCHIVE.equals(level.dimension()) || ID.equals(level.dimension().location());
+    }
+
     private ArchiveDimensions() {
     }
 }

@@ -70,7 +70,7 @@ public record ArchiveRoomNode(
 
     public ArchiveEncounterKind encounterKind() {
         return switch (category) {
-            case STARTING, SANCTUARY, LORE, MERCHANT, VERTICAL_SHAFT, ANCIENT_LIBRARY -> ArchiveEncounterKind.EXPLORATION;
+            case STARTING, SANCTUARY, WAYSTONE, LORE, MERCHANT, VERTICAL_SHAFT, ANCIENT_LIBRARY -> ArchiveEncounterKind.EXPLORATION;
             case TREASURE, SECRET, EXIT_REWARD -> ArchiveEncounterKind.REWARD;
             case TRAP -> ArchiveEncounterKind.TRAP;
             case PUZZLE -> templateId.getPath().contains("choir") ? ArchiveEncounterKind.CHOIR : ArchiveEncounterKind.HALL;

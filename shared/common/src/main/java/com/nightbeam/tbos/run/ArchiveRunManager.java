@@ -384,7 +384,7 @@ public final class ArchiveRunManager {
             MinecraftServer server, ArchiveReturnPoint returnPoint) {
         ResourceKey<Level> destinationKey = ResourceKey.create(Registries.DIMENSION, returnPoint.dimension());
         ServerLevel destination = server.getLevel(destinationKey);
-        if (destination != null) {
+        if (destination != null && !ArchiveDimensions.isFracturedArchive(destination)) {
             return new ReturnDestination(
                     destination,
                     returnPoint.position(),
@@ -427,6 +427,101 @@ public final class ArchiveRunManager {
             return false;
         }
         storage.replace(run.checkpoint(player.getUUID(), roomIndex));
+        return true;
+    }
+
+    public static boolean useWaystone(ServerPlayer player) {
+        if (isStandingInArchive(player)) {
+            return leaveViaWaystone(player);
+        }
+        return resumeViaWaystone(player);
+    }
+
+    public static boolean isStandingInArchive(ServerPlayer player) {
+        MinecraftServer server = player.level().getServer();
+        ServerLevel overworld = server.overworld();
+        if (player.level() != overworld) {
+            return true;
+        }
+        ArchiveRun run = ArchiveRunSavedData.get(server).findByMember(player.getUUID()).orElse(null);
+        return run != null
+                && run.status() == ArchiveRunStatus.ACTIVE
+                && ArchiveInstanceLayout.boundsForSlot(run.instanceSlot()).isInside(player.blockPosition());
+    }
+
+    public static boolean leaveViaWaystone(ServerPlayer player) {
+        MinecraftServer server = player.level().getServer();
+        ServerLevel overworld = server.overworld();
+        ArchiveRunSavedData storage = ArchiveRunSavedData.get(server);
+        ArchiveRun run = storage.findByMember(player.getUUID()).orElse(null);
+        if (run != null
+                && run.status() == ArchiveRunStatus.ACTIVE
+                && run.dungeonGraph().waystoneRoom() >= 0) {
+            storage.replace(run.bindWaystone(player.getUUID()));
+            run = storage.find(run.runId()).orElse(run);
+        }
+        ReturnDestination destination = overworldHome(overworld);
+        if (run != null) {
+            ArchiveRunMember member = run.member(player.getUUID()).orElse(null);
+            if (member != null) {
+                ReturnDestination preferred = resolveReturnDestination(server, member.returnPoint());
+                if (preferred.level() == overworld) {
+                    destination = preferred;
+                }
+            }
+        }
+        overworld.getChunkAt(destination.position());
+        ServerPlayer arrived = player.teleport(new TeleportTransition(
+                overworld,
+                Vec3.atBottomCenterOf(destination.position()),
+                Vec3.ZERO,
+                destination.yRot(),
+                destination.xRot(),
+                TeleportTransition.DO_NOTHING));
+        if (arrived == null) {
+            return false;
+        }
+        arrived.resetFallDistance();
+        arrived.clearFire();
+        arrived.sendSystemMessage(Component.translatable("message.tbos.waystone.saved"));
+        arrived.sendOverlayMessage(Component.translatable("message.tbos.waystone.saved"));
+        return true;
+    }
+
+    private static ReturnDestination overworldHome(ServerLevel overworld) {
+        var respawn = overworld.getRespawnData();
+        return new ReturnDestination(overworld, respawn.pos(), respawn.yaw(), respawn.pitch());
+    }
+
+    public static boolean resumeViaWaystone(ServerPlayer player) {
+        ArchiveRunSavedData storage = ArchiveRunSavedData.get(player.level().getServer());
+        ArchiveRun run = storage.findByMember(player.getUUID()).orElse(null);
+        if (run == null || run.status() != ArchiveRunStatus.ACTIVE || !run.geometryPlaced()) {
+            player.sendOverlayMessage(Component.translatable("message.tbos.waystone.no_checkpoint"));
+            return false;
+        }
+        ArchiveRunMember member = run.member(player.getUUID()).orElse(null);
+        if (member == null || !member.waystoneBound() || run.dungeonGraph().waystoneRoom() < 0) {
+            player.sendOverlayMessage(Component.translatable("message.tbos.waystone.no_checkpoint"));
+            return false;
+        }
+        ServerLevel archive = player.level().getServer().getLevel(ArchiveDimensions.FRACTURED_ARCHIVE);
+        if (archive == null) {
+            player.sendOverlayMessage(Component.translatable("message.tbos.waystone.no_checkpoint"));
+            return false;
+        }
+        BlockPos spawn = ArchiveRoomPlacer.waystoneSpawn(run);
+        archive.getChunkAt(spawn);
+        player.teleport(new TeleportTransition(
+                archive,
+                Vec3.atBottomCenterOf(spawn),
+                Vec3.ZERO,
+                0.0F,
+                0.0F,
+                TeleportTransition.DO_NOTHING));
+        player.resetFallDistance();
+        player.clearFire();
+        player.sendOverlayMessage(Component.translatable("message.tbos.waystone.resumed"));
         return true;
     }
 

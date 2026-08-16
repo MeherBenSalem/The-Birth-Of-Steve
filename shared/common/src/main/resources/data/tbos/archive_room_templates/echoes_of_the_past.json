@@ -18,6 +18,7 @@
     { "id": "tbos:chronicle_stack", "category": "ancient_library", "variant": "collapsed_archive" },
     { "id": "tbos:sealed_reliquary", "category": "treasure", "variant": "burial_cache" },
     { "id": "tbos:quiet_ossuary", "category": "sanctuary", "variant": "resting_guardians" },
+    { "id": "tbos:recall_meridian", "category": "waystone", "variant": "floor_checkpoint" },
     { "id": "tbos:annalist_vigil", "category": "lore", "variant": "memory_tablets" },
     { "id": "tbos:veiled_broker", "category": "merchant", "variant": "mysterious_trader" },
     { "id": "tbos:meridian_drop", "category": "vertical_shaft", "variant": "phase_stair" },

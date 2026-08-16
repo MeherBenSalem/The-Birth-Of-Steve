@@ -122,6 +122,7 @@ public final class ModItems {
     public static final RegistryEntry<BlockItem> YESTERGLASS =
             ModRegistries.ITEMS.registerSimpleBlockItem("yesterglass", ModBlocks.YESTERGLASS);
     public static final RegistryEntry<BlockItem> MEMORY_ANCHOR = ModRegistries.ITEMS.registerSimpleBlockItem("memory_anchor", ModBlocks.MEMORY_ANCHOR);
+    public static final RegistryEntry<BlockItem> WAYSTONE = ModRegistries.ITEMS.registerSimpleBlockItem("waystone", ModBlocks.WAYSTONE);
     public static final RegistryEntry<BlockItem> PHASE_PLATFORM = ModRegistries.ITEMS.registerSimpleBlockItem("phase_platform", ModBlocks.PHASE_PLATFORM);
     public static final RegistryEntry<BlockItem> RESONANCE_LAMP =
             ModRegistries.ITEMS.registerSimpleBlockItem("resonance_lamp", ModBlocks.RESONANCE_LAMP);

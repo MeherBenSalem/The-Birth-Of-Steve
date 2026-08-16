@@ -14,6 +14,7 @@ public enum ArchiveRoomCategory {
     TRAP,
     PUZZLE,
     SANCTUARY,
+    WAYSTONE,
     LORE,
     MERCHANT,
     VERTICAL_SHAFT,
@@ -34,7 +35,7 @@ public enum ArchiveRoomCategory {
             category -> category.name().toLowerCase(Locale.ROOT));
 
     public boolean mandatory() {
-        return this == STARTING || this == FINAL_BOSS || this == EXIT_REWARD;
+        return this == STARTING || this == WAYSTONE || this == FINAL_BOSS || this == EXIT_REWARD;
     }
 
     public boolean combat() {

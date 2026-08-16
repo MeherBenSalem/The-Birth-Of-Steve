@@ -499,6 +499,28 @@ public record ArchiveRun(
                 updated);
     }
 
+    public ArchiveRun bindWaystone(UUID playerId) {
+        requireStatus(ArchiveRunStatus.ACTIVE);
+        int roomIndex = dungeonGraph.waystoneRoom();
+        if (roomIndex < 0 || roomIndex >= rooms.size()) {
+            throw new IllegalArgumentException("Archive graph has no waystone room to bind");
+        }
+        boolean found = false;
+        List<ArchiveRunMember> updated = new java.util.ArrayList<>(members.size());
+        for (ArchiveRunMember member : members) {
+            if (member.playerId().equals(playerId)) {
+                found = true;
+                updated.add(member.checkpoint(roomIndex).bindWaystone());
+            } else {
+                updated.add(member);
+            }
+        }
+        if (!found) {
+            throw new IllegalArgumentException("Player is not a member of archive run " + runId + ": " + playerId);
+        }
+        return copyWithMembers(updated);
+    }
+
     public ArchiveRun consumeRevive() {
         requireStatus(ArchiveRunStatus.ACTIVE);
         if (sharedRevives == 0) {

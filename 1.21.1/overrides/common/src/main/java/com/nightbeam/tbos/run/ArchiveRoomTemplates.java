@@ -32,6 +32,7 @@ public final class ArchiveRoomTemplates {
             template("chronicle_stack", ArchiveRoomCategory.ANCIENT_LIBRARY, STANDARD, 55),
             template("sealed_reliquary", ArchiveRoomCategory.TREASURE, STANDARD, 45),
             template("quiet_ossuary", ArchiveRoomCategory.SANCTUARY, STANDARD, 45),
+            template("recall_meridian", ArchiveRoomCategory.WAYSTONE, STANDARD, 100),
             template("annalist_vigil", ArchiveRoomCategory.LORE, STANDARD, 45),
             template("veiled_broker", ArchiveRoomCategory.MERCHANT, STANDARD, 30),
             template("meridian_drop", ArchiveRoomCategory.VERTICAL_SHAFT, SHAFT, 75),

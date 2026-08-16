@@ -1,4 +1,4 @@
-.gradle/
+﻿.gradle/
 build/
 out/
 # Dev game directories: NeoForge's gameTestServer uses <module>/run, the named
@@ -25,3 +25,4 @@ graphify-out/
 **/src/generated/resources/.cache/
 __pycache__/
 /tools
+!/tools/publish-local.mjs

@@ -58,15 +58,12 @@ public final class LastCuratorProgress {
         return Phase.ERASURE;
     }
 
+    /**
+     * Arena state no longer gates the core. Timed seals live on the encounter
+     * runtime so a phase change is a brief pause, not a puzzle.
+     */
     public static boolean isVulnerable(int flags, TemporalState state) {
-        if (!isStarted(flags) || isDefeated(flags) || !state.isStable()) {
-            return false;
-        }
-        return switch (phase(flags)) {
-            case CATALOGUE -> state == TemporalState.REMEMBERED;
-            case REVISION -> state == TemporalState.RUIN;
-            case ERASURE -> true;
-        };
+        return isStarted(flags) && !isDefeated(flags);
     }
 
     private static int setHealth(int flags, int health) {

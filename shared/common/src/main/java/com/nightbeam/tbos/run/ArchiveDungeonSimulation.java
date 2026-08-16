@@ -52,6 +52,14 @@ public final class ArchiveDungeonSimulation {
                 if (!bossGateLocked || ArchiveQuestProgress.from(graph).complete()) {
                     questGateViolations++;
                 }
+                long waystones = graph.rooms().stream()
+                        .filter(room -> room.category() == ArchiveRoomCategory.WAYSTONE)
+                        .count();
+                if (graph.waystoneRoom() < 0
+                        || waystones != 1
+                        || graph.room(graph.waystoneRoom()).category() != ArchiveRoomCategory.WAYSTONE) {
+                    throw new IllegalStateException("Generated archive graph is missing its waystone room");
+                }
                 generationNanos += metrics.generationNanos();
                 maximumNanos = Math.max(maximumNanos, metrics.generationNanos());
             } catch (RuntimeException exception) {

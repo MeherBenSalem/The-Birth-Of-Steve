@@ -206,6 +206,10 @@ public final class ModGameTests {
             ModRegistries.TEST_FUNCTIONS.register("archive_encounter_state", () -> ModGameTests::archiveEncounterStatePersistsProgress);
     private static final RegistryEntry<Consumer<GameTestHelper>> ARCHIVE_DUNGEON_CONTRACT =
             ModRegistries.TEST_FUNCTIONS.register("archive_dungeon_contract", () -> ModGameTests::archiveDungeonContractIsComplete);
+    private static final RegistryEntry<Consumer<GameTestHelper>> WAYSTONE_ROOM_PRESENT =
+            ModRegistries.TEST_FUNCTIONS.register("waystone_room_present", () -> ModGameTests::waystoneRoomPresent);
+    private static final RegistryEntry<Consumer<GameTestHelper>> WAYSTONE_BIND_ROUNDTRIP =
+            ModRegistries.TEST_FUNCTIONS.register("waystone_bind_roundtrip", () -> ModGameTests::waystoneBindRoundtrip);
     private static final RegistryEntry<Consumer<GameTestHelper>> MEMORY_LEECH_POUNCE =
             ModRegistries.TEST_FUNCTIONS.register("memory_leech_pounce", () -> ModGameTests::memoryLeechPounceSiphonsOnce);
     private static final RegistryEntry<Consumer<GameTestHelper>> FRACTURE_SHRINE_MIN_HEIGHT =
@@ -476,7 +480,13 @@ public final class ModGameTests {
         helper.assertTrue(
                 seedEleven.room(seedEleven.startingRoom()).category() == ArchiveRoomCategory.STARTING
                         && seedEleven.room(seedEleven.bossRoom()).category() == ArchiveRoomCategory.FINAL_BOSS
-                        && seedEleven.room(seedEleven.rewardRoom()).category() == ArchiveRoomCategory.EXIT_REWARD,
+                        && seedEleven.room(seedEleven.rewardRoom()).category() == ArchiveRoomCategory.EXIT_REWARD
+                        && seedEleven.waystoneRoom() >= 0
+                        && seedEleven.room(seedEleven.waystoneRoom()).category() == ArchiveRoomCategory.WAYSTONE
+                        && seedEleven.rooms().stream()
+                                        .filter(room -> room.category() == ArchiveRoomCategory.WAYSTONE)
+                                        .count()
+                                == 1,
                 "Generated archive graph omitted a mandatory room category");
         helper.assertTrue(
                 seedEleven.room(seedEleven.bossRoom()).graphDepth()
@@ -697,6 +707,54 @@ public final class ModGameTests {
         helper.succeed();
     }
 
+    private static void waystoneRoomPresent(GameTestHelper helper) {
+        ArchiveDungeonGraph graph = ArchiveRunGenerator.generateDungeon(11L, ArchiveDungeonSettings.DEFAULT);
+        helper.assertTrue(
+                graph.waystoneRoom() >= 0
+                        && graph.room(graph.waystoneRoom()).category() == ArchiveRoomCategory.WAYSTONE
+                        && graph.rooms().stream()
+                                        .filter(room -> room.category() == ArchiveRoomCategory.WAYSTONE)
+                                        .count()
+                                == 1,
+                "Generated archive graph did not contain exactly one waystone room");
+        helper.assertTrue(
+                graph.room(graph.startingRoom()).connections().stream()
+                        .anyMatch(connection -> connection.targetRoom() == graph.waystoneRoom()),
+                "Waystone room was not attached to the starting room");
+        helper.assertTrue(
+                java.util.Set.of(
+                                graph.startingRoom(),
+                                graph.bossRoom(),
+                                graph.rewardRoom(),
+                                graph.waystoneRoom())
+                        .size()
+                        == 4,
+                "Waystone room collided with another mandatory room");
+        helper.succeed();
+    }
+
+    private static void waystoneBindRoundtrip(GameTestHelper helper) {
+        ArchiveDungeonGraph graph = ArchiveRunGenerator.generateDungeon(11L, ArchiveDungeonSettings.DEFAULT);
+        UUID player = UUID.fromString("00000000-0000-0000-0000-000000000071");
+        ArchiveReturnPoint home = new ArchiveReturnPoint(
+                Identifier.withDefaultNamespace("overworld"), new BlockPos(0, 72, 0), 0.0F, 0.0F);
+        ArchiveRun run = ArchiveRun.create(
+                        UUID.fromString("10000000-0000-0000-0000-000000000071"),
+                        11L,
+                        0,
+                        List.of(new ArchiveRunMember(player, home)),
+                        graph)
+                .markGeometryPlaced()
+                .activate()
+                .bindWaystone(player);
+        ArchiveRunMember member = run.member(player).orElseThrow();
+        helper.assertTrue(member.waystoneBound(), "Binding a waystone did not persist the bind");
+        helper.assertTrue(
+                member.checkpointRoom() == graph.waystoneRoom(),
+                "Binding a waystone did not move the death checkpoint to the waystone room");
+        helper.succeed();
+    }
+
     private static void archiveDungeonContractIsComplete(GameTestHelper helper) {
         ArchiveDungeonSettings minimumSettings = new ArchiveDungeonSettings(
                 7, 7, 4, 2, 8, 0.45D, 0.15D, 0.10D, 0.25D,
@@ -711,6 +769,14 @@ public final class ModGameTests {
             helper.assertTrue(
                     graph.rooms().stream().filter(room -> room.category() == ArchiveRoomCategory.MINI_BOSS).count() == 1,
                     "Seven-room generation did not guarantee exactly one lesser boss");
+            helper.assertTrue(
+                    graph.waystoneRoom() >= 0
+                            && graph.room(graph.waystoneRoom()).category() == ArchiveRoomCategory.WAYSTONE
+                            && graph.rooms().stream()
+                                            .filter(room -> room.category() == ArchiveRoomCategory.WAYSTONE)
+                                            .count()
+                                    == 1,
+                    "Seven-room generation did not guarantee exactly one waystone room");
             helper.assertTrue(
                     graph.rooms().stream().filter(room -> room.placement().coordinates().y() > 0).count()
                             <= minimumSettings.maximumRoomsAbove(),
@@ -886,6 +952,23 @@ public final class ModGameTests {
                                 ModBlocks.ARCHIVE_STONE.get().defaultBlockState())
                         == ArchiveRunProtection.Decision.OUTSIDE,
                 "Archive protection escaped its allocated instance bounds");
+        helper.assertTrue(
+                ArchiveRunProtection.classify(
+                                activeRun,
+                                ArchiveRoomPlacer.waystonePosition(activeRun),
+                                ModBlocks.WAYSTONE.get().defaultBlockState())
+                        == ArchiveRunProtection.Decision.DENY,
+                "A generated dungeon waystone was not protected");
+        helper.assertTrue(
+                ArchiveRunProtection.classify(
+                                activeRun,
+                                new BlockPos(
+                                        ArchiveInstanceLayout.boundsForSlot(activeRun.instanceSlot()).maxX() + 1,
+                                        ArchiveInstanceLayout.BASE_Y,
+                                        ArchiveInstanceLayout.boundsForSlot(activeRun.instanceSlot()).maxZ() + 1),
+                                ModBlocks.WAYSTONE.get().defaultBlockState())
+                        == ArchiveRunProtection.Decision.OUTSIDE,
+                "A waystone outside the instance was treated as a dungeon waystone");
         var vertical = maximum.rooms().stream()
                 .flatMap(room -> room.connections().stream()
                         .filter(connection -> connection.direction().vertical())
@@ -2376,8 +2459,9 @@ public final class ModGameTests {
                 "Full health did not begin the Catalogue phase");
         helper.assertTrue(
                 LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED)
-                        && !LastCuratorProgress.isVulnerable(flags, TemporalState.RUIN),
-                "Catalogue vulnerability was not exclusive to Remembered");
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.RUIN)
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.TRANSITION_TO_REMEMBERED),
+                "Catalogue was not damageable regardless of arena state");
 
         flags = LastCuratorProgress.recordHealth(flags, 200);
         helper.assertTrue(
@@ -2385,8 +2469,8 @@ public final class ModGameTests {
                 "The 200-health threshold did not begin Revision");
         helper.assertTrue(
                 LastCuratorProgress.isVulnerable(flags, TemporalState.RUIN)
-                        && !LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED),
-                "Revision vulnerability was not exclusive to Ruin");
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED),
+                "Revision was not damageable regardless of arena state");
 
         flags = LastCuratorProgress.recordHealth(flags, 100);
         helper.assertTrue(
@@ -2394,11 +2478,9 @@ public final class ModGameTests {
                 "The 100-health threshold did not begin Erasure");
         helper.assertTrue(
                 LastCuratorProgress.isVulnerable(flags, TemporalState.RUIN)
-                        && LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED),
-                "Erasure was not vulnerable in both stable states");
-        helper.assertTrue(
-                !LastCuratorProgress.isVulnerable(flags, TemporalState.TRANSITION_TO_REMEMBERED),
-                "A transitioning arena exposed the Curator");
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.REMEMBERED)
+                        && LastCuratorProgress.isVulnerable(flags, TemporalState.TRANSITION_TO_REMEMBERED),
+                "Erasure was not damageable regardless of arena state");
 
         flags = LastCuratorProgress.recordHealth(flags, 0);
         helper.assertTrue(LastCuratorProgress.isDefeated(flags), "Zero health did not persist defeat");
@@ -2739,6 +2821,12 @@ public final class ModGameTests {
 
         com.nightbeam.tbos.entity.PhoenixGuardianEntity curator =
                 LastCuratorEncounterTracker.findCurator(helper.getLevel(), active).orElseThrow();
+        for (int tick = 0; tick < 20; tick++) {
+            LastCuratorEncounterTracker.tick(helper.getLevel().getServer());
+        }
+        helper.assertTrue(
+                LastCuratorEncounterTracker.curatorCount(helper.getLevel(), active) == 1,
+                "Curator encounter spawned more than one Last Curator");
         helper.assertTrue(curator.getMaxHealth() == 300.0F, "Runtime Curator did not receive its authored health");
         curator.setHealth(195.0F);
         LastCuratorEncounterTracker.tick(helper.getLevel().getServer());

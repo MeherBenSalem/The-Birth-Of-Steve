@@ -14,7 +14,8 @@ public record ArchiveRunMember(
         boolean rewardClaimed,
         List<Integer> claimedContainers,
         int currentRoom,
-        int checkpointRoom) {
+        int checkpointRoom,
+        boolean waystoneBound) {
     public static final Codec<ArchiveRunMember> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.fieldOf("player_id").forGetter(ArchiveRunMember::playerId),
             ArchiveReturnPoint.CODEC.fieldOf("return_point").forGetter(ArchiveRunMember::returnPoint),
@@ -23,20 +24,21 @@ public record ArchiveRunMember(
             Codec.INT.listOf().optionalFieldOf("claimed_containers", List.of())
                     .forGetter(ArchiveRunMember::claimedContainers),
             Codec.INT.optionalFieldOf("current_room", 0).forGetter(ArchiveRunMember::currentRoom),
-            Codec.INT.optionalFieldOf("checkpoint_room", 0).forGetter(ArchiveRunMember::checkpointRoom)
+            Codec.INT.optionalFieldOf("checkpoint_room", 0).forGetter(ArchiveRunMember::checkpointRoom),
+            Codec.BOOL.optionalFieldOf("waystone_bound", false).forGetter(ArchiveRunMember::waystoneBound)
     ).apply(instance, ArchiveRunMember::new));
 
     public ArchiveRunMember(UUID playerId, ArchiveReturnPoint returnPoint) {
-        this(playerId, returnPoint, false, false, List.of(), 0, 0);
+        this(playerId, returnPoint, false, false, List.of(), 0, 0, false);
     }
 
     public ArchiveRunMember(UUID playerId, ArchiveReturnPoint returnPoint, boolean returned) {
-        this(playerId, returnPoint, returned, false, List.of(), 0, 0);
+        this(playerId, returnPoint, returned, false, List.of(), 0, 0, false);
     }
 
     public ArchiveRunMember(
             UUID playerId, ArchiveReturnPoint returnPoint, boolean returned, boolean rewardClaimed) {
-        this(playerId, returnPoint, returned, rewardClaimed, List.of(), 0, 0);
+        this(playerId, returnPoint, returned, rewardClaimed, List.of(), 0, 0, false);
     }
 
     public ArchiveRunMember(
@@ -45,7 +47,18 @@ public record ArchiveRunMember(
             boolean returned,
             boolean rewardClaimed,
             List<Integer> claimedContainers) {
-        this(playerId, returnPoint, returned, rewardClaimed, claimedContainers, 0, 0);
+        this(playerId, returnPoint, returned, rewardClaimed, claimedContainers, 0, 0, false);
+    }
+
+    public ArchiveRunMember(
+            UUID playerId,
+            ArchiveReturnPoint returnPoint,
+            boolean returned,
+            boolean rewardClaimed,
+            List<Integer> claimedContainers,
+            int currentRoom,
+            int checkpointRoom) {
+        this(playerId, returnPoint, returned, rewardClaimed, claimedContainers, currentRoom, checkpointRoom, false);
     }
 
     public ArchiveRunMember {
@@ -62,12 +75,14 @@ public record ArchiveRunMember(
 
     public ArchiveRunMember markReturned() {
         return returned ? this : new ArchiveRunMember(
-                playerId, returnPoint, true, rewardClaimed, claimedContainers, currentRoom, checkpointRoom);
+                playerId, returnPoint, true, rewardClaimed, claimedContainers,
+                currentRoom, checkpointRoom, waystoneBound);
     }
 
     public ArchiveRunMember claimReward() {
         return rewardClaimed ? this : new ArchiveRunMember(
-                playerId, returnPoint, returned, true, claimedContainers, currentRoom, checkpointRoom);
+                playerId, returnPoint, returned, true, claimedContainers,
+                currentRoom, checkpointRoom, waystoneBound);
     }
 
     public boolean hasClaimedContainer(int key) {
@@ -81,7 +96,8 @@ public record ArchiveRunMember(
         java.util.ArrayList<Integer> claims = new java.util.ArrayList<>(claimedContainers);
         claims.add(key);
         return new ArchiveRunMember(
-                playerId, returnPoint, returned, rewardClaimed, claims, currentRoom, checkpointRoom);
+                playerId, returnPoint, returned, rewardClaimed, claims,
+                currentRoom, checkpointRoom, waystoneBound);
     }
 
     public ArchiveRunMember visitRoom(int roomIndex) {
@@ -89,7 +105,7 @@ public record ArchiveRunMember(
                 ? this
                 : new ArchiveRunMember(
                         playerId, returnPoint, returned, rewardClaimed,
-                        claimedContainers, roomIndex, roomIndex);
+                        claimedContainers, roomIndex, roomIndex, waystoneBound);
     }
 
     public ArchiveRunMember checkpoint(int roomIndex) {
@@ -97,11 +113,17 @@ public record ArchiveRunMember(
                 ? this
                 : new ArchiveRunMember(
                         playerId, returnPoint, returned, rewardClaimed,
-                        claimedContainers, currentRoom, roomIndex);
+                        claimedContainers, currentRoom, roomIndex, waystoneBound);
+    }
+
+    public ArchiveRunMember bindWaystone() {
+        return waystoneBound ? this : new ArchiveRunMember(
+                playerId, returnPoint, returned, rewardClaimed,
+                claimedContainers, currentRoom, checkpointRoom, true);
     }
 
     public ArchiveRunMember resetForRegeneration(int startingRoom) {
         return new ArchiveRunMember(
-                playerId, returnPoint, false, false, List.of(), startingRoom, startingRoom);
+                playerId, returnPoint, false, false, List.of(), startingRoom, startingRoom, false);
     }
 }

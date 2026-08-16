@@ -400,6 +400,20 @@ public final class ArchiveRoomPlacer {
                 .toList();
     }
 
+    public static BlockPos waystonePosition(ArchiveRun run) {
+        int roomIndex = run.dungeonGraph().waystoneRoom();
+        if (roomIndex < 0) {
+            throw new IllegalArgumentException("Archive graph has no waystone room");
+        }
+        ArchiveRoomNode room = run.dungeonGraph().room(roomIndex);
+        ArchiveRoomSize size = room.placement().size();
+        return markerToWorld(run, room, new BlockPos(size.width() / 2, 1, size.depth() / 2));
+    }
+
+    public static BlockPos waystoneSpawn(ArchiveRun run) {
+        return waystonePosition(run).above();
+    }
+
     public static BlockPos rewardCachePosition(ArchiveRun run) {
         List<BlockPos> positions = chestPositions(run, run.dungeonGraph().rewardRoom());
         return positions.isEmpty() ? roomSpawn(run, run.dungeonGraph().rewardRoom()) : positions.getFirst();
@@ -560,6 +574,9 @@ public final class ArchiveRoomPlacer {
         }
         placeTemplateMarkers(placements, run, room, template);
         placeThemeHazards(placements, run, room, bounds, palette);
+        if (room.category() == ArchiveRoomCategory.WAYSTONE) {
+            put(placements, waystonePosition(run), ModBlocks.WAYSTONE.get().defaultBlockState());
+        }
     }
 
     private static void placeThemeHazards(
@@ -570,7 +587,8 @@ public final class ArchiveRoomPlacer {
             RoomPalette palette) {
         if (room.category() == ArchiveRoomCategory.FINAL_BOSS
                 || room.category() == ArchiveRoomCategory.EXIT_REWARD
-                || room.category() == ArchiveRoomCategory.STARTING) {
+                || room.category() == ArchiveRoomCategory.STARTING
+                || room.category() == ArchiveRoomCategory.WAYSTONE) {
             return;
         }
         ArchiveFloorTheme theme = ArchiveFloorPresentation.theme(run.floor());
@@ -895,7 +913,7 @@ public final class ArchiveRoomPlacer {
         return switch (category) {
             case TREASURE, ANCIENT_LIBRARY, SECRET, MERCHANT -> 6;
             case MINI_BOSS, FINAL_BOSS -> 4;
-            case STARTING, SANCTUARY, VERTICAL_SHAFT -> 3;
+            case STARTING, SANCTUARY, WAYSTONE, VERTICAL_SHAFT -> 3;
             default -> 5;
         };
     }
@@ -904,7 +922,7 @@ public final class ArchiveRoomPlacer {
         return switch (category) {
             case TREASURE, ANCIENT_LIBRARY, SECRET, MERCHANT -> 9;
             case FINAL_BOSS, MINI_BOSS -> 7;
-            case STARTING, SANCTUARY, VERTICAL_SHAFT -> 5;
+            case STARTING, SANCTUARY, WAYSTONE, VERTICAL_SHAFT -> 5;
             default -> 8;
         };
     }
@@ -1399,7 +1417,7 @@ public final class ArchiveRoomPlacer {
                     Blocks.ANVIL.defaultBlockState(),
                     Blocks.CHISELED_BOOKSHELF.defaultBlockState(),
                     Blocks.CRAFTING_TABLE.defaultBlockState());
-            case SANCTUARY -> List.of(
+            case SANCTUARY, WAYSTONE -> List.of(
                     Blocks.CANDLE.defaultBlockState(),
                     Blocks.LANTERN.defaultBlockState(),
                     Blocks.BOOKSHELF.defaultBlockState(),

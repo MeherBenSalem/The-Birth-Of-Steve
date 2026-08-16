@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": { "item": "tbos:archive_stone" },
+    "B": { "item": "tbos:chronicle_bronze" },
+    "C": { "item": "tbos:lenswork_crystal" }
+  },
+  "pattern": [
+    " B ",
+    "SCS",
+    " S "
+  ],
+  "result": {
+    "item": "tbos:waystone"
+  }
+}
