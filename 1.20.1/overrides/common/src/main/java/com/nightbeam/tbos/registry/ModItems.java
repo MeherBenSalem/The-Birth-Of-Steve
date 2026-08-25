@@ -7,7 +7,6 @@ import com.nightbeam.tbos.item.MemoryPlateItem;
 import com.nightbeam.tbos.item.MemoryScene;
 import com.nightbeam.tbos.item.YesterglassLensItem;
 import com.nightbeam.tbos.item.RecalledHourItem;
-import com.nightbeam.tbos.item.StarterTomeItem;
 import com.nightbeam.tbos.platform.registry.ModRegistries;
 import com.nightbeam.tbos.platform.registry.RegistryEntry;
 import java.util.ArrayList;
@@ -42,10 +41,6 @@ public final class ModItems {
             props -> loreItem(props, "item.tbos.curator_core.tooltip"),
             p -> p.stacksTo(1));
 
-    public static final RegistryEntry<StarterTomeItem> STARTER_TOME = ModRegistries.ITEMS.registerItem(
-            "starter_tome",
-            props -> new StarterTomeItem(props.stacksTo(1)),
-            properties -> properties);
     public static final RegistryEntry<Item> CHRONICLE_SHARD = ModRegistries.ITEMS.registerItem(
             "chronicle_shard",
             props -> loreItem(props, "item.tbos.chronicle_shard.tooltip"),

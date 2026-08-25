@@ -37,11 +37,10 @@ locations scattered 192–640 blocks from world spawn. Their positions do not
 depend on which player joins first, and each shrine is built into the world when
 its own chunk generates, so exploring toward one is what makes it appear.
 The first time you reach a shrine it names itself. Explore for a shrine, open its
-Fracture Coffer, recover the **Cracked Yesterglass Lens**, the **Last Archivist's
-Notes**, and gather its repair materials. Right-click the Notes to read six short
-pages of the day that never ended. Repair the lens, then use the **Archive Survey
-Map** by right-clicking it: it reports the direction, distance, and coordinates of
-the Meridian Archive.
+Fracture Coffer, recover the **Cracked Yesterglass Lens** and the **Archive Survey
+Map**, plus Memory Plates and Lens repair materials. Repair the lens, then use the
+Survey Map by right-clicking it: it reports the direction, distance, and coordinates
+of the Meridian Archive.
 
 Follow the map and play through the authored route:
 

@@ -68,7 +68,6 @@ public final class FractureCofferBlock extends Block {
         return List.of(
                 new ItemStack(ModItems.CRACKED_YESTERGLASS_LENS.get()),
                 new ItemStack(ModItems.ARCHIVE_SURVEY_MAP.get()),
-                new ItemStack(ModItems.STARTER_TOME.get()),
                 MemoryPlateItem.forScene(variant.memoryScenes().get(0)),
                 MemoryPlateItem.forScene(variant.memoryScenes().get(1)),
                 new ItemStack(ModItems.CHRONICLE_SHARD.get(), 3),

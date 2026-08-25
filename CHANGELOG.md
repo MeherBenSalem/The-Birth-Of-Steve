@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.7.1 - 2026-08-25
+
+### Archivist's Journal
+
+- **The Journal is now a 3D book.** It uses the former Notes Blockbench model and
+  atlas; the flat PNG icon is gone.
+- **Last Archivist's Notes removed.** Fracture Coffers no longer drop a second
+  book. Scene lore stays on Memory Plates; the Journal remains the only guide book.
+- Existing inventories that still hold `tbos:starter_tome` will show an unknown
+  item after updating (no datafixer).
+
 ## 0.7.0 - 2026-08-16
 
 ### Waystones

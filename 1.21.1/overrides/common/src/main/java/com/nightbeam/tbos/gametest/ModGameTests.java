@@ -2724,16 +2724,14 @@ public final class ModGameTests {
                     variant + " did not contain a Cracked Lens");
             helper.assertTrue(loot.get(1).is(ModItems.ARCHIVE_SURVEY_MAP.get()),
                     variant + " did not contain an Archive Survey Map");
-            helper.assertTrue(loot.get(2).is(ModItems.STARTER_TOME.get()),
-                    variant + " did not contain the Last Archivist's Notes");
-            helper.assertTrue(loot.get(3).is(ModItems.MEMORY_PLATE.get())
-                            && loot.get(4).is(ModItems.MEMORY_PLATE.get()),
+            helper.assertTrue(loot.get(2).is(ModItems.MEMORY_PLATE.get())
+                            && loot.get(3).is(ModItems.MEMORY_PLATE.get()),
                     variant + " did not contain two Memory Plates");
+            scenes.add(MemoryPlateItem.scene(loot.get(2)));
             scenes.add(MemoryPlateItem.scene(loot.get(3)));
-            scenes.add(MemoryPlateItem.scene(loot.get(4)));
-            helper.assertTrue(loot.get(5).is(ModItems.CHRONICLE_SHARD.get())
-                            && loot.get(6).is(ModItems.YESTERGLASS.get())
-                            && loot.get(7).is(ModItems.LENSWORK_CRYSTAL.get()),
+            helper.assertTrue(loot.get(4).is(ModItems.CHRONICLE_SHARD.get())
+                            && loot.get(5).is(ModItems.YESTERGLASS.get())
+                            && loot.get(6).is(ModItems.LENSWORK_CRYSTAL.get()),
                     variant + " did not contain the custom Lens repair kit");
         }
         helper.assertTrue(scenes.size() == MemoryScene.values().length,

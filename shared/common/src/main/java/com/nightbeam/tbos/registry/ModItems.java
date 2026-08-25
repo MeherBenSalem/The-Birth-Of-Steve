@@ -7,7 +7,6 @@ import com.nightbeam.tbos.item.MemoryPlateItem;
 import com.nightbeam.tbos.item.MemoryScene;
 import com.nightbeam.tbos.item.YesterglassLensItem;
 import com.nightbeam.tbos.item.RecalledHourItem;
-import com.nightbeam.tbos.item.StarterTomeItem;
 import com.nightbeam.tbos.platform.registry.ModRegistries;
 import com.nightbeam.tbos.platform.registry.RegistryEntry;
 import java.util.ArrayList;
@@ -45,14 +44,6 @@ public final class ModItems {
                     .component(
                             DataComponents.LORE,
                             new ItemLore(List.of(Component.translatable("item.tbos.curator_core.tooltip")))));
-    public static final RegistryEntry<StarterTomeItem> STARTER_TOME = ModRegistries.ITEMS.registerItem(
-            "starter_tome",
-            StarterTomeItem::new,
-            properties -> properties
-                    .stacksTo(1)
-                    .component(
-                            DataComponents.LORE,
-                            new ItemLore(List.of(Component.translatable("item.tbos.starter_tome.tooltip")))));
     public static final RegistryEntry<Item> CHRONICLE_SHARD = ModRegistries.ITEMS.registerSimpleItem(
             "chronicle_shard",
             properties -> properties.component(

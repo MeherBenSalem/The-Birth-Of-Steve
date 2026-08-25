@@ -161,7 +161,10 @@ the left, so UP is brightest, DOWN darkest, and the two side faces differ.
 The Archivist's Journal opens one screen, `ArchivistQuestScreen`, on an ordinary
 right-click. It previously had two interfaces — a vanilla `BookViewScreen` of nine
 text pages on right-click and the quest screen behind shift+right-click — and the
-book has been removed outright.
+book has been removed outright. The item uses a 3D Blockbench JSON model with a
+64×64 UV atlas (`models/item/archivists_journal.json`); the old flat PNG icon and
+the separate Last Archivist's Notes item (`starter_tome`) are gone. Scene lore for
+the six Memory Plate subjects lives on the plates themselves.
 
 `tools/textures/archive_gui.py` authors the mod's only GUI sprite family into
 `assets/tbos/textures/gui/sprites/journal/`, on the same palette and the same
@@ -174,12 +177,6 @@ Curator Core — rather than describing it in text.
 Hovering a step shows it in the detail pane rather than raising a tooltip, so the
 pointer never occludes the list it is pointing at. The pane shows the operational
 description first, then a `journal.tbos.quest.N.flavor` recollection in softer ink.
-
-The **Last Archivist's Notes** (`starter_tome`) are a separate readable item found
-in Fracture Coffers, not granted on join. Right-click opens `ArchivistNotesScreen`,
-a read-only parchment that reuses the journal frame and well sprites, with six
-translation-keyed pages matching the Memory Plate scenes. The Journal stays the
-quest ledger; the Notes stay the day that would not end.
 
 ### Archive enemy presentation
 

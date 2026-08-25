@@ -109,7 +109,7 @@ no GameTest triggers.
 | `/tbos dungeon validate_templates` passes | unverified | unverified |
 | Right-clicking the Archivist's Journal opens the quest screen (not the vanilla book) | unverified | unverified |
 | Journal detail pane shows both the operational description and a flavor recollection | unverified | unverified |
-| Right-clicking Last Archivist's Notes opens six localizable pages | unverified | unverified |
+| Archivist's Journal shows the 3D book model in inventory and hand | unverified | unverified |
 | Quest HUD, puzzle HUD and floor intro draw above the hotbar | unverified | unverified |
 | Floor intro subtitle is a per-floor blurb (or ominous line), not a debug LEVEL label | unverified | unverified |
 | Archive cache and encounter overlays are translatable English, not `ARCHIVE CACHE -` / `LEVEL` | unverified | unverified |
@@ -130,16 +130,13 @@ a crash.
 ## Onboarding and shrine worldgen manual matrix
 
 - Create a fresh world. Confirm the Archivist's Journal is granted once and the
-  welcome and shrine hint appear in chat. The Last Archivist's Notes must not be
-  granted on join.
+  welcome and shrine hint appear in chat. No second book item is granted on join.
 - Approach a Fracture Shrine for the first time. Confirm a one-shot overlay names
   the variant (Observatory, Curator Workshop, or Evacuation Gate) and that walking
   away and back does not repeat it.
 - Open a Fracture Coffer. Confirm the overlay is variant-aware, the loot includes
-  the Last Archivist's Notes after the Survey Map, and a second open says the
-  coffer was already recalled.
-- Right-click the Notes. Confirm six pages turn with a page-turn cue, use journal
-  parchment sprites, and are not a vanilla book.
+  the Survey Map after the cracked Lens (then plates and repair kit), and a second
+  open says the coffer was already recalled.
 - Right-click the Journal. The quest screen must open directly, with a bronze
   frame, both tabs, quest seals and item icons rendering — no magenta, and no
   missing-sprite warnings in the log. Shift+right-click must open the same screen;
@@ -565,9 +562,9 @@ Command lines exactly as run, from the repository root, after wiping
 - `gradlew.bat -p 26.1.2 :neoforge:runGameTestServer --offline`: PASS —
   **all 59 required tests** in 40.54 s, including
   `fractureShrinesDistributeAdventureItems` after the coffer loot-list change
-  (Notes at index 2, plates at 3–4, repair kit at 5–7).
+  (plates at index 2–3, repair kit at 4–6).
 
-Manual rows for journal flavor, shrine overlay, Notes pages, dungeon overlays,
+Manual rows for journal flavor, shrine overlay, dungeon overlays,
 and `no_sleep` stay unverified until a client session records them.
 
 ## Automated results — 2026-08-09 (Blockbench creature import)
