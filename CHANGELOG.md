@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 0.8.0 - 2026-08-31
+
+### Texture refresh
+
+- **Archive floor themes have new block textures.** Catalogue, Choir, Descent,
+  Gallery, Labyrinth, Unwritten, Vault, and Wake floors, floor sides, and walls
+  are redrawn.
+- **Key campaign items have new icons.** Archive Survey Map, Cantor Sigil,
+  Chronicle Shard, Yesterglass Lens (intact and cracked), Curator Core, Memory
+  Plate, and Recalled Hour use refreshed item textures.
+
 ## 0.7.1 - 2026-08-25
 
 ### Archivist's Journal
