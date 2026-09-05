@@ -58,6 +58,9 @@ public final class TbosNeoForge {
         MinecraftForge.EVENT_BUS.addListener(TbosNeoForge::onExplosion);
         MinecraftForge.EVENT_BUS.addListener(TbosNeoForge::onChunkLoaded);
         MinecraftForge.EVENT_BUS.addListener(TbosNeoForge::onLivingDeath);
+        MinecraftForge.EVENT_BUS.addListener(TbosNeoForge::memoryIncoming);
+        MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, false,
+                net.minecraftforge.event.entity.living.LivingDamageEvent.class, TbosNeoForge::memoryDamaged);
         MinecraftForge.EVENT_BUS.addListener(TbosNeoForge::onLivingHeal);
     }
 
@@ -148,5 +151,16 @@ public final class TbosNeoForge {
 
     private static void onLivingHeal(LivingHealEvent event) {
         event.setAmount(ArchiveRunEvents.scaleHeal(event.getEntity(), event.getAmount()));
+    }
+
+    private static void memoryIncoming(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if(event.getEntity() instanceof ServerPlayer player) {
+            float amount=com.nightbeam.tbos.memory.MemoryCombat.incoming(player,event.getSource(),event.getAmount());
+            if(amount<=0)event.setCanceled(true);else event.setAmount(amount);
+        }
+    }
+    private static void memoryDamaged(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
+        if(event.getSource().getEntity() instanceof ServerPlayer player)
+            com.nightbeam.tbos.memory.MemoryCombat.successfulAttack(player,event.getEntity(),event.getAmount());
     }
 }

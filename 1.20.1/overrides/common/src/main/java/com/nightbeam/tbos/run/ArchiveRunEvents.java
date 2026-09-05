@@ -60,6 +60,7 @@ public final class ArchiveRunEvents {
         player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         player.resetFallDistance();
         player.clearFire();
+        com.nightbeam.tbos.memory.MemoryCombat.forget(player.getUUID());
         if (result == ArchiveRunManager.DeathResult.REVIVED) {
             PENDING_CHECKPOINT_RECOVERY.put(player.getUUID(), tick + 1L);
         } else if (result == ArchiveRunManager.DeathResult.RUN_FAILED) {
@@ -81,6 +82,8 @@ public final class ArchiveRunEvents {
             return amount;
         }
         java.util.OptionalInt roomIndex = ArchiveRoomPlacer.roomContaining(run, player.blockPosition());
+        if (ArchiveRunSavedData.get(player.level().getServer()).memories(run.runId()) != null
+                && com.nightbeam.tbos.memory.MemoryService.build(player, run).debt == 2) amount *= 0.75F;
         if (roomIndex.isPresent()
                 && run.dungeonGraph().room(roomIndex.getAsInt()).modifiers()
                         .contains(ArchiveRoomModifier.REDUCED_HEALING)) {
@@ -106,6 +109,7 @@ public final class ArchiveRunEvents {
 
         ArchiveRunSavedData storage = ArchiveRunSavedData.get(server);
         ArchiveGenerationQueue.tick(server, storage);
+        com.nightbeam.tbos.memory.MemoryService.tick(server);
         ArchiveDebugOverlay.tick(server, storage, tick);
         for (ArchiveRun run : storage.all()) {
             if (run.status().isReturning()) {
@@ -175,6 +179,7 @@ public final class ArchiveRunEvents {
     }
 
     public static void onPlayerLoggedIn(ServerPlayer player) {
+        com.nightbeam.tbos.memory.MemoryCombat.forget(player.getUUID());
         reconcileActiveMember(player, true);
     }
 
@@ -198,6 +203,7 @@ public final class ArchiveRunEvents {
         if (run == null) {
             return true;
         }
+        if (com.nightbeam.tbos.memory.MemorySockets.protectedCover(level,run,position)) return false;
         BlockState state = level.getBlockState(position);
         ArchiveRunProtection.Decision decision = ArchiveRunProtection.classify(run, position, state);
         if (decision == ArchiveRunProtection.Decision.OUTSIDE
@@ -282,6 +288,7 @@ public final class ArchiveRunEvents {
         PENDING_CHECKPOINT_RECOVERY.clear();
         RETURN_BARS.values().forEach(ServerBossEvent::removeAllPlayers);
         RETURN_BARS.clear();
+        com.nightbeam.tbos.memory.MemoryService.clear();
         ArchiveRunManager.clearRuntimeState();
         ArchiveDebugOverlay.clear();
     }

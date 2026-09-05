@@ -1,6 +1,8 @@
 package com.nightbeam.tbos.neoforge;
 
 import com.nightbeam.tbos.Yesterglass;
+import com.nightbeam.tbos.network.payload.MemoryActionRequest;
+import com.nightbeam.tbos.network.payload.MemorySnapshotPayload;
 import com.nightbeam.tbos.command.YesterglassCommands;
 import com.nightbeam.tbos.neoforge.platform.NeoForgeRegistryHelper;
 import com.nightbeam.tbos.network.YesterglassNetwork;
@@ -60,11 +62,18 @@ public final class TbosNeoForge {
         NeoForge.EVENT_BUS.addListener(TbosNeoForge::onExplosion);
         NeoForge.EVENT_BUS.addListener(TbosNeoForge::onChunkLoaded);
         NeoForge.EVENT_BUS.addListener(TbosNeoForge::onLivingDeath);
+        NeoForge.EVENT_BUS.addListener(TbosNeoForge::memoryIncoming);
+        NeoForge.EVENT_BUS.addListener(TbosNeoForge::memoryDamaged);
         NeoForge.EVENT_BUS.addListener(TbosNeoForge::onLivingHeal);
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(YesterglassNetwork.NETWORK_VERSION);
+        registrar.playToServer(MemoryActionRequest.TYPE,MemoryActionRequest.STREAM_CODEC,(payload,context) -> {
+            if(context.player() instanceof ServerPlayer player) com.nightbeam.tbos.memory.MemoryService.request(player,payload.action(),payload.first(),payload.second());
+        });
+        registrar.playToClient(MemorySnapshotPayload.TYPE,MemorySnapshotPayload.STREAM_CODEC);
+
         registrar.playToServer(
                 LensUseRequest.TYPE, LensUseRequest.STREAM_CODEC, TbosNeoForge::handleLensUse);
         registrar.playToServer(
@@ -172,5 +181,16 @@ public final class TbosNeoForge {
 
     private static void onLivingHeal(LivingHealEvent event) {
         event.setAmount(ArchiveRunEvents.scaleHeal(event.getEntity(), event.getAmount()));
+    }
+
+    private static void memoryIncoming(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+        if(event.getEntity() instanceof ServerPlayer player) {
+            float amount=com.nightbeam.tbos.memory.MemoryCombat.incoming(player,event.getSource(),event.getAmount());
+            if(amount<=0)event.setCanceled(true);else event.setAmount(amount);
+        }
+    }
+    private static void memoryDamaged(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event) {
+        if(event.getSource().getEntity() instanceof ServerPlayer player)
+            com.nightbeam.tbos.memory.MemoryCombat.successfulAttack(player,event.getEntity(),event.getHealthDamage());
     }
 }

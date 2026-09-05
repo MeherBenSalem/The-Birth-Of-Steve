@@ -40,6 +40,9 @@ public final class ModAdvancements {
     private static final AdvancementStep COMPLETE_MEMORY_SCENE =
             new AdvancementStep("story/display_complete_memory_scene", "displayed");
 
+    public static void awardMemoryVictory(ServerPlayer player) {
+        award(player,new AdvancementStep("story/living_memories","completed"));
+    }
     private ModAdvancements() {
     }
 

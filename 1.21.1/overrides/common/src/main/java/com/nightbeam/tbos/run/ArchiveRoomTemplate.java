@@ -59,6 +59,12 @@ public record ArchiveRoomTemplate(
         }
     }
 
+    /** Dedicated inset combat sockets. They never share puzzle/entry/loot markers. */
+    public List<BlockPos> memorySocketMarkers() {
+        if (category == ArchiveRoomCategory.PUZZLE || size.width() < 11 || size.depth() < 11) return List.of();
+        return List.of(new BlockPos(3,1,3),new BlockPos(size.width()-4,1,3),new BlockPos(3,1,size.depth()-4));
+    }
+
     public boolean supports(ArchiveDirection worldDirection, ArchiveTransform transform) {
         return doors.stream().map(transform::apply).anyMatch(worldDirection::equals);
     }

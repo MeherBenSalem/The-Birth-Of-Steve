@@ -24,7 +24,7 @@ public final class YesterglassNetwork {
      * change or an explicit compatibility break. Fabric has no equivalent
      * handshake, so the value is NeoForge-only.
      */
-    public static final String NETWORK_VERSION = "6";
+    public static final String NETWORK_VERSION = "7";
 
     private static final long JOURNAL_REQUEST_INTERVAL_TICKS = 10L;
     private static final Map<UUID, Long> LAST_JOURNAL_REQUEST = new ConcurrentHashMap<>();

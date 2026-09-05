@@ -1,6 +1,9 @@
 package com.nightbeam.tbos.fabric;
 
 import com.nightbeam.tbos.Yesterglass;
+import com.nightbeam.tbos.network.payload.MemoryActionRequest;
+import com.nightbeam.tbos.network.payload.MemorySnapshotPayload;
+import com.nightbeam.tbos.memory.MemoryService;
 import com.nightbeam.tbos.command.YesterglassCommands;
 import com.nightbeam.tbos.fabric.platform.FabricRegistryHelper;
 import com.nightbeam.tbos.network.YesterglassNetwork;
@@ -81,6 +84,11 @@ public final class TbosFabric implements ModInitializer {
     }
 
     private void registerPayloads() {
+        ServerPlayNetworking.registerGlobalReceiver(MemoryActionRequest.ID, (server, player, handler, buf, responseSender) -> {
+            MemoryActionRequest request=MemoryActionRequest.read(buf);
+            server.execute(() -> MemoryService.request(player,request.action(),request.first(),request.second()));
+        });
+
         // Minecraft 1.20.1 Fabric has no payload-type registry; both client-to-
         // server packets carry no data, so classic channel receivers suffice.
         // Both handlers touch server state, so they are scheduled onto the

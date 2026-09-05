@@ -21,6 +21,7 @@ public final class ArchiveQuestHud {
     }
 
     public static void render(GuiGraphics graphics, float partialTick) {
+        MemoryHud.render(graphics);
         Minecraft minecraft = Minecraft.getInstance();
         if (progress == null
                 || minecraft.player == null

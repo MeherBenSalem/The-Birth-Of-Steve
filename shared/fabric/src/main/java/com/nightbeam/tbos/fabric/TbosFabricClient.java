@@ -1,6 +1,7 @@
 package com.nightbeam.tbos.fabric;
 
 import com.nightbeam.tbos.Yesterglass;
+import com.nightbeam.tbos.network.payload.MemorySnapshotPayload;
 import com.nightbeam.tbos.client.ArchiveFloorIntroHud;
 import com.nightbeam.tbos.client.ArchivePuzzleHud;
 import com.nightbeam.tbos.client.ArchiveQuestHud;
@@ -49,6 +50,8 @@ public final class TbosFabricClient implements ClientModInitializer {
         registerClientPayloads();
 
         KeyMappingHelper.registerKeyMapping(ModKeyMappings.TOGGLE_OBJECTIVES);
+        KeyMappingHelper.registerKeyMapping(ModKeyMappings.MEMORY_LOADOUT);
+        for(var key:ModKeyMappings.MEMORY_SLOTS) KeyMappingHelper.registerKeyMapping(key);
 
         YesterglassClient.forEachLayerDefinition(
                 (layer, definition) -> ModelLayerRegistry.registerModelLayer(layer, definition::get));
@@ -73,6 +76,8 @@ public final class TbosFabricClient implements ClientModInitializer {
     }
 
     private static void registerClientPayloads() {
+        ClientPlayNetworking.registerGlobalReceiver(MemorySnapshotPayload.TYPE,(payload,context) -> context.client().execute(
+            () -> com.nightbeam.tbos.client.MemoryClient.accept(payload)));
         ClientPlayNetworking.registerGlobalReceiver(BeginTransitionPayload.TYPE,
                 (payload, context) -> context.client().execute(
                         () -> ClientNetwork.handleBeginTransition(payload)));

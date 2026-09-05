@@ -71,7 +71,7 @@ public final class ArchiveRunManager {
         }
 
         UUID runId = UUID.randomUUID();
-        ArchiveDungeonSettings settings = dungeonSettings();
+        ArchiveDungeonSettings settings = com.nightbeam.tbos.memory.MemoryRules.expedition(dungeonSettings());
         long seed = settings.rules().forcedSeed() == ArchiveDungeonRules.RANDOM_SEED
                 ? mix64(server.overworld().getSeed() ^ thresholdPos.asLong()
                         ^ runId.getMostSignificantBits() ^ runId.getLeastSignificantBits())
@@ -88,6 +88,7 @@ public final class ArchiveRunManager {
                     seed, 0L, settings);
             preparing = ArchiveRun.create(runId, seed, instanceSlot, members, generated.graph(), mode);
             storage.register(preparing);
+            storage.startMemories(preparing);
             ArchiveGenerationQueue.enqueue(preparing);
             if (mode.ominous()) {
                 activator.removeEffect(MobEffects.BAD_OMEN);
@@ -189,7 +190,7 @@ public final class ArchiveRunManager {
         }
         try {
             UUID runId = UUID.randomUUID();
-            ArchiveDungeonGraph graph = ArchiveRunGenerator.generateDungeon(seed, 0L, dungeonSettings());
+            ArchiveDungeonGraph graph = ArchiveRunGenerator.generateDungeon(seed, 0L, com.nightbeam.tbos.memory.MemoryRules.expedition(dungeonSettings()));
             ArchiveRun run = ArchiveRun.create(
                     runId,
                     seed,
@@ -197,6 +198,7 @@ public final class ArchiveRunManager {
                     List.of(new ArchiveRunMember(player.getUUID(), captureReturnPoint(player))),
                     graph);
             storage.register(run);
+            storage.startMemories(run);
             ArchiveGenerationQueue.enqueue(run);
             feedback(player, "message.tbos.archive.preparing");
             return EntryResult.STARTED;
@@ -288,7 +290,7 @@ public final class ArchiveRunManager {
         try {
             ArchiveDungeonGraph graph = null;
             for (int attempt = 0; attempt < 16; attempt++) {
-                graph = ArchiveRunGenerator.generateDungeon(candidateSeed, nextFloor, dungeonSettings());
+                graph = ArchiveRunGenerator.generateDungeon(candidateSeed, nextFloor, storage.memories(run.runId()) == null ? dungeonSettings() : com.nightbeam.tbos.memory.MemoryRules.expedition(dungeonSettings()));
                 if (!sameStructure(run.dungeonGraph(), graph)) {
                     break;
                 }
@@ -340,6 +342,12 @@ public final class ArchiveRunManager {
         ArchiveRoomNode reward = run.dungeonGraph().room(run.dungeonGraph().rewardRoom());
         if (!reward.runtime().completed()) {
             feedback(player, "message.tbos.archive.gateway.locked");
+            return GatewayAdvanceResult.REWARD_LOCKED;
+        }
+        if ((!com.nightbeam.tbos.memory.MemoryService.mayAdvance(storage, run)
+                || (storage.memories(run.runId()) != null && run.floor() >= 2
+                    && run.members().stream().anyMatch(m -> player.level().getServer().getPlayerList().getPlayer(m.playerId()) == null)))) {
+            player.sendSystemMessage(Component.literal("Living Memories: open your loadout (K) at the gateway to extract or vote to continue."));
             return GatewayAdvanceResult.REWARD_LOCKED;
         }
         Optional<ArchiveRun> nextFloor = beginNextFloor(storage, player.getUUID());

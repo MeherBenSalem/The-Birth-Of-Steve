@@ -75,7 +75,9 @@ public final class NeoForgeNetworkHelper implements INetworkHelper {
             if (sender == null) {
                 return;
             }
-            if (packet.id().equals(LensUseRequest.ID)) {
+            if (packet instanceof com.nightbeam.tbos.network.payload.MemoryActionRequest request) {
+                com.nightbeam.tbos.memory.MemoryService.request(sender,request.action(),request.first(),request.second());
+            } else if (packet.id().equals(LensUseRequest.ID)) {
                 YesterglassNetwork.handleLensUse(sender);
             } else if (packet.id().equals(JournalQuestRequest.ID)) {
                 YesterglassNetwork.handleJournalQuestRequest(sender);
@@ -146,7 +148,11 @@ public final class NeoForgeNetworkHelper implements INetworkHelper {
         private static TbosMessage decode(FriendlyByteBuf buffer) {
             ResourceLocation id = buffer.readResourceLocation();
             TbosPacket packet;
-            if (id.equals(LensUseRequest.ID)) {
+            if (id.equals(com.nightbeam.tbos.network.payload.MemoryActionRequest.ID)) {
+                packet=com.nightbeam.tbos.network.payload.MemoryActionRequest.read(buffer);
+            } else if (id.equals(com.nightbeam.tbos.network.payload.MemorySnapshotPayload.ID)) {
+                packet=com.nightbeam.tbos.network.payload.MemorySnapshotPayload.read(buffer);
+            } else if (id.equals(LensUseRequest.ID)) {
                 packet = LensUseRequest.INSTANCE;
             } else if (id.equals(JournalQuestRequest.ID)) {
                 packet = JournalQuestRequest.INSTANCE;

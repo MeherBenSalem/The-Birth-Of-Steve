@@ -421,7 +421,7 @@ public final class ModGameTests {
                     "Archive room blueprint escaped its instance bounds at " + placement.position());
             helper.assertTrue(
                     placement.state().is(ArchiveRoomPlacer.ARCHIVE_RUN_PALETTE),
-                    "Archive room blueprint used an untagged block at " + placement.position());
+                    "Archive room blueprint used an untagged block " + placement.state() + " at " + placement.position());
         }
         for (int roomIndex = 0; roomIndex < run.rooms().size(); roomIndex++) {
             var bounds = ArchiveRoomPlacer.roomBounds(run, roomIndex);
@@ -2484,7 +2484,7 @@ public final class ModGameTests {
                 java.util.List<BlockPos> smallest = components.getFirst();
                 helper.fail("seed " + seed + ": floor is not one connected solid - "
                         + components.size() + " separate pieces, smallest is "
-                        + smallest.size() + " block(s) adrift at " + smallest.getFirst());
+                        + smallest.size() + " block(s) adrift at " + smallest.getFirst() + " state=" + blueprint.placements().stream().filter(p -> p.position().equals(smallest.getFirst())).map(p -> p.state().toString()).toList());
             }
 
             // Every open connection must leave a walkable channel between its two
@@ -2609,6 +2609,7 @@ public final class ModGameTests {
     public static void curatorRuntimePersistsHealthAndReward(GameTestHelper helper) {
         BlockPos origin = helper.absolutePos(new BlockPos(2, 1, 2));
         TemporalSite base = TemporalSiteManager.placeGrandOrrery(helper.getLevel(), origin, Rotation.NONE);
+        setSiteChunksForced(helper,base,true);
         TemporalSite active = base.withProgressFlags(LastCuratorProgress.start(0)).stable(TemporalState.REMEMBERED);
         TemporalSiteManager.data(helper.getLevel()).replace(active);
         TemporalSiteManager.recover(helper.getLevel());
@@ -2632,6 +2633,7 @@ public final class ModGameTests {
 
         TemporalSite ruin = revision.stable(TemporalState.RUIN);
         TemporalSiteManager.data(helper.getLevel()).replace(ruin);
+        helper.runAfterDelay(65L, () -> {
         curator.setHealth(95.0F);
         LastCuratorEncounterTracker.tick(helper.getLevel().getServer());
         TemporalSite erasure = TemporalSiteManager.data(helper.getLevel()).find(active.siteId()).orElseThrow();
@@ -2639,6 +2641,7 @@ public final class ModGameTests {
                 LastCuratorProgress.phase(erasure.progressFlags()) == LastCuratorProgress.Phase.ERASURE,
                 "Ruin damage did not persist the Erasure threshold");
 
+        helper.runAfterDelay(65L, () -> {
         curator.setHealth(0.0F);
         LastCuratorEncounterTracker.tick(helper.getLevel().getServer());
         TemporalSite defeated = TemporalSiteManager.data(helper.getLevel()).find(active.siteId()).orElseThrow();
@@ -2664,7 +2667,10 @@ public final class ModGameTests {
         helper.assertTrue(
                 LastCuratorEncounterTracker.rewardEntityCount(helper.getLevel(), defeated) == 1,
                 "Defeated encounter duplicated its reward after reconciliation");
+        setSiteChunksForced(helper,base,false);
         helper.succeed();
+        });
+        });
     }
 
     @SuppressWarnings("removal")

@@ -1,4 +1,5 @@
 package com.nightbeam.tbos.fabric;
+import com.nightbeam.tbos.network.payload.MemorySnapshotPayload;
 
 import com.nightbeam.tbos.client.ArchiveFloorIntroHud;
 import com.nightbeam.tbos.client.ArchivePuzzleHud;
@@ -97,6 +98,8 @@ public final class TbosFabricClient implements ClientModInitializer {
     }
 
     private static void registerClientPayloads() {
+        ClientPlayNetworking.registerGlobalReceiver(MemorySnapshotPayload.TYPE,(payload,context) -> context.client().execute(
+            () -> com.nightbeam.tbos.client.MemoryClient.accept(payload)));
         ClientPlayNetworking.registerGlobalReceiver(BeginTransitionPayload.TYPE, (payload, context) -> context.client().execute(() -> ClientNetwork.handleBeginTransition(payload)));
         ClientPlayNetworking.registerGlobalReceiver(SiteSnapshotPayload.TYPE, (payload, context) -> context.client().execute(() -> ClientNetwork.handleSiteSnapshot(payload)));
         ClientPlayNetworking.registerGlobalReceiver(ArchiveQuestPayload.TYPE, (payload, context) -> context.client().execute(() -> ClientNetwork.handleArchiveQuest(payload)));

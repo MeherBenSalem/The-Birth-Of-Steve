@@ -35,3 +35,11 @@ artifacts {
     sourceSets.main.java.srcDirs.each { if (it.directory) commonJava it }
     sourceSets.main.resources.srcDirs.each { if (it.directory) commonResources it }
 }
+
+tasks.register('runMemorySimulation', JavaExec) {
+    group = 'verification'
+    dependsOn tasks.named('classes')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.nightbeam.tbos.memory.MemorySimulation'
+}
+tasks.named('check').configure { dependsOn tasks.named('runMemorySimulation') }

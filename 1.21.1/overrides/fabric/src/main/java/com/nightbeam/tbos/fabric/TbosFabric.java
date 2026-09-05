@@ -1,6 +1,9 @@
 package com.nightbeam.tbos.fabric;
 
 import com.nightbeam.tbos.Yesterglass;
+import com.nightbeam.tbos.network.payload.MemoryActionRequest;
+import com.nightbeam.tbos.network.payload.MemorySnapshotPayload;
+import com.nightbeam.tbos.memory.MemoryService;
 import com.nightbeam.tbos.command.YesterglassCommands;
 import com.nightbeam.tbos.fabric.platform.FabricRegistryHelper;
 import com.nightbeam.tbos.network.YesterglassNetwork;
@@ -88,6 +91,11 @@ public final class TbosFabric implements ModInitializer {
     }
 
     private void registerPayloads() {
+        PayloadTypeRegistry.playC2S().register(MemoryActionRequest.TYPE,MemoryActionRequest.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(MemorySnapshotPayload.TYPE,MemorySnapshotPayload.STREAM_CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(MemoryActionRequest.TYPE, (payload,context) -> context.server().execute(
+            () -> MemoryService.request(context.player(),payload.action(),payload.first(),payload.second())));
+
         PayloadTypeRegistry.playC2S().register(LensUseRequest.TYPE, LensUseRequest.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(JournalQuestRequest.TYPE, JournalQuestRequest.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(BeginTransitionPayload.TYPE, BeginTransitionPayload.STREAM_CODEC);

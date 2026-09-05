@@ -3,6 +3,6 @@
   "function": "tbos:curator_runtime",
   "environment": "tbos:default",
   "structure": "minecraft:empty",
-  "max_ticks": 80,
+  "max_ticks": 180,
   "padding": 48
 }

@@ -56,6 +56,7 @@ public final class TbosNeoForgeClient {
     }
 
     private static void registerClientPayloads(RegisterClientPayloadHandlersEvent event) {
+        event.register(com.nightbeam.tbos.network.payload.MemorySnapshotPayload.TYPE,(payload,context) -> com.nightbeam.tbos.client.MemoryClient.accept(payload));
         event.register(BeginTransitionPayload.TYPE,
                 (payload, context) -> ClientNetwork.handleBeginTransition(payload));
         event.register(SiteSnapshotPayload.TYPE,
@@ -73,6 +74,8 @@ public final class TbosNeoForgeClient {
     private static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.registerCategory(ModKeyMappings.CATEGORY);
         event.register(ModKeyMappings.TOGGLE_OBJECTIVES);
+        event.register(ModKeyMappings.MEMORY_LOADOUT);
+        for(var key:ModKeyMappings.MEMORY_SLOTS) event.register(key);
     }
 
     private static void registerGuiLayers(RegisterGuiLayersEvent event) {

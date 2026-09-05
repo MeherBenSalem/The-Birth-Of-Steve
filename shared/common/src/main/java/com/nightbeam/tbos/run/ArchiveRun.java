@@ -557,6 +557,12 @@ public record ArchiveRun(
         throw new IllegalStateException("Only a returning archive run can complete");
     }
 
+    public ArchiveRun removeMemoryMember(UUID player) {
+        requireStatus(ArchiveRunStatus.ACTIVE);
+        if(members.size()<2||!containsMember(player))throw new IllegalArgumentException("Cannot remove last or absent member");
+        return copyWithMembers(members.stream().filter(m->!m.playerId().equals(player)).toList());
+    }
+
     public ArchiveRun markMemberReturned(UUID playerId) {
         if (!status.isTerminal()) {
             throw new IllegalStateException("Members may be marked returned only after terminal state is persisted");

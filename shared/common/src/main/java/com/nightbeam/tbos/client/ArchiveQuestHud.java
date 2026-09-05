@@ -50,6 +50,7 @@ public final class ArchiveQuestHud {
     }
 
     public static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+        MemoryHud.render(graphics);
         Minecraft minecraft = Minecraft.getInstance();
         long now = System.nanoTime();
         if (progress == null

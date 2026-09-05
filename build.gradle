@@ -46,7 +46,7 @@ tasks.register('clean', Delete) {
 tasks.register('gameTest') {
     group = 'verification'
     description = 'Runs the loader GameTest suite on every Minecraft version.'
-    dependsOn versionLoaders.collectMany { version, loaders ->
+    dependsOn versionLoaders.collect { version, loaders ->
         // 1.20.1 gates on Fabric's suite. Its :forge:runGameTestServer works and
         // runs the same 56 shared tests, but 14 of them need
         // GameTestHelper.makeMockServerPlayerInLevel(), which Forge 1.20.1 breaks

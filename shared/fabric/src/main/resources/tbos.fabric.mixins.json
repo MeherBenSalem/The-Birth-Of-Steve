@@ -7,7 +7,8 @@
     "BlockItemMixin",
     "LivingEntityMixin",
     "SavedDataStorageMixin",
-    "ServerExplosionMixin"
+    "ServerExplosionMixin",
+    "MemoryDamageMixin"
   ],
   "client": [],
   "server": [],

@@ -670,7 +670,7 @@ public final class ArchiveEncounterManager {
         ArchiveEncounterState state = run.roomEncounterStates().get(roomIndex);
         if (run.mode().ominous()
                 && kind != ArchiveEncounterKind.BOSS
-                && state.reinforcementBatch() < OMINOUS_BATCHES - 1) {
+                && state.reinforcementBatch() < (storage.memories(run.runId()) == null ? OMINOUS_BATCHES : 3) - 1) {
             ArchiveEncounterState nextBatch = state.nextReinforcementBatch();
             ArchiveRun updated = run.withRoomEncounterState(roomIndex, nextBatch);
             storage.replace(updated);
@@ -1080,7 +1080,8 @@ public final class ArchiveEncounterManager {
                 && kind == ArchiveFloorPresentation.theme(run.floor()).bossKind();
         double reinforcement = modifiers.contains(ArchiveRoomModifier.REINFORCED_ENEMIES) ? 1.35D : 1.0D;
         double lesserBossHealth = lesserBoss ? 1.75D : 1.0D;
-        double finalBossHealth = finalBoss && kind != ArchiveEnemyKind.HOUR_CANTOR ? 4.5D : 1.0D;
+        double finalBossHealth = finalBoss && kind != ArchiveEnemyKind.HOUR_CANTOR
+                ? (ArchiveRunSavedData.get(level.getServer()).memories(run.runId()) == null ? 4.5D : 1.5D) : 1.0D;
         var health = mob.getAttribute(Attributes.MAX_HEALTH);
         if (health != null) {
             health.setBaseValue(

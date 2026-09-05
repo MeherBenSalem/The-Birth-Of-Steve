@@ -24,7 +24,7 @@ import net.minecraft.world.item.ItemStack;
 public final class ArchivistQuestScreen extends Screen {
     private static final int PANEL_WIDTH = 380;
     private static final int PANEL_HEIGHT = 244;
-    private static final int TAB_WIDTH = 104;
+    private int tabWidth() { return (panelWidth() - 36) / 3; }
     private static final int TAB_HEIGHT = 20;
     private static final int ROW_HEIGHT = 22;
     /** Below this pitch the 16px item icon no longer clears its neighbours. */
@@ -89,6 +89,7 @@ public final class ArchivistQuestScreen extends Screen {
     private Tab tab = Tab.STORY;
     private int refreshTicks;
     private static boolean awaitingOpen;
+    private static boolean openingStory=true;
 
     private ArchivistQuestScreen(JournalQuestSnapshotPayload snapshot) {
         super(Component.translatable("journal.tbos.quests.title"));
@@ -112,8 +113,13 @@ public final class ArchivistQuestScreen extends Screen {
     }
 
     public static void requestOpen() {
+        openingStory=true;
         awaitingOpen = true;
         Services.NETWORK.sendToServer(JournalQuestRequest.INSTANCE);
+    }
+
+    public static void requestChapter(boolean story) {
+        requestOpen();openingStory=story;
     }
 
     public static void accept(JournalQuestSnapshotPayload snapshot) {
@@ -125,7 +131,9 @@ public final class ArchivistQuestScreen extends Screen {
             return;
         }
         awaitingOpen = false;
-        ClientCompat.setScreen(MinecraftHolder.instance(), new ArchivistQuestScreen(snapshot));
+        ArchivistQuestScreen opened=new ArchivistQuestScreen(snapshot);
+        opened.tab=openingStory?Tab.STORY:Tab.RUN;
+        ClientCompat.setScreen(MinecraftHolder.instance(),opened);
     }
 
     /*
@@ -182,7 +190,7 @@ public final class ArchivistQuestScreen extends Screen {
     }
 
     private int tabX(Tab which) {
-        return left() + 14 + (which == Tab.STORY ? 0 : TAB_WIDTH + 4);
+        return left() + 14 + which.ordinal() * (tabWidth() + 4);
     }
 
     private int tabY() {
@@ -191,7 +199,7 @@ public final class ArchivistQuestScreen extends Screen {
 
     private boolean overTab(Tab which, double mouseX, double mouseY) {
         int x = tabX(which);
-        return mouseX >= x && mouseX < x + TAB_WIDTH
+        return mouseX >= x && mouseX < x + tabWidth()
                 && mouseY >= tabY() && mouseY < tabY() + TAB_HEIGHT;
     }
 
@@ -207,6 +215,11 @@ public final class ArchivistQuestScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         for (Tab candidate : Tab.values()) {
             if (overTab(candidate, event.x(), event.y())) {
+                if (candidate == Tab.MEMORIES) {
+                    MemoryClient.request(6,0,0);
+                    ClientCompat.setScreen(MinecraftHolder.instance(),new MemoryScreen(this));
+                    return true;
+                }
                 if (candidate != tab) {
                     tab = candidate;
                     minecraft.getSoundManager().play(
@@ -256,14 +269,11 @@ public final class ArchivistQuestScreen extends Screen {
                     active ? TAB_ACTIVE : TAB_IDLE,
                     x,
                     y,
-                    TAB_WIDTH,
+                    tabWidth(),
                     tabHeight);
             boolean hovered = overTab(candidate, mouseX, mouseY);
-            inkCentered(
-                    graphics,
-                    Component.translatable(candidate.key),
-                    x + TAB_WIDTH / 2,
-                    y + tabHeight / 2 - 4,
+            FormattedCharSequence label=fitted(Component.translatable(candidate.key),tabWidth()-8);
+            ink(graphics,label,x+(tabWidth()-font.width(label))/2,y+tabHeight/2-4,
                     active ? INK : (hovered ? TAB_IDLE_HOVER_INK : TAB_IDLE_INK));
         }
     }
@@ -491,9 +501,15 @@ public final class ArchivistQuestScreen extends Screen {
         super.onClose();
     }
 
+    public void openChapter(boolean story) {
+        tab=story?Tab.STORY:Tab.RUN;
+        ClientCompat.setScreen(MinecraftHolder.instance(),this);
+    }
+
     private enum Tab {
         STORY("journal.tbos.quests.tab.story"),
-        RUN("journal.tbos.quests.tab.run");
+        RUN("journal.tbos.quests.tab.run"),
+        MEMORIES("memory.tbos.chapter");
 
         private final String key;
 

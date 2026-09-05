@@ -15,12 +15,14 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 
 /** Server-wide durable storage for archive runs and their exclusive allocations. */
 public final class ArchiveRunSavedData extends SavedData {
-    public static final int SCHEMA_REVISION = 1;
+    public static final int SCHEMA_REVISION = 2;
 
     private static final Codec<ArchiveRunSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.optionalFieldOf("schema_revision", SCHEMA_REVISION).forGetter(data -> SCHEMA_REVISION),
             ArchiveRun.CODEC.listOf().optionalFieldOf("runs", List.of())
-                    .forGetter(data -> List.copyOf(data.runs.values()))
+                    .forGetter(data -> List.copyOf(data.runs.values())),
+            com.nightbeam.tbos.memory.MemoryExpedition.CODEC.listOf().optionalFieldOf("memories", List.of())
+                    .forGetter(data -> List.copyOf(data.memories.values()))
     ).apply(instance, ArchiveRunSavedData::fromCodec));
 
     public static final SavedDataType<ArchiveRunSavedData> TYPE = new SavedDataType<>(
@@ -30,6 +32,13 @@ public final class ArchiveRunSavedData extends SavedData {
             // No DFU schema for modded saved data; see TbosSavedDataStorageMixin
             // on Fabric, which mirrors NeoForge's null-tolerant read path.
             null);
+
+    private final Map<UUID, com.nightbeam.tbos.memory.MemoryExpedition> memories = new LinkedHashMap<>();
+    public com.nightbeam.tbos.memory.MemoryExpedition memories(UUID run) { return memories.get(run); }
+    public void startMemories(ArchiveRun run) {
+        memories.putIfAbsent(run.runId(), new com.nightbeam.tbos.memory.MemoryExpedition(run));
+        setDirty();
+    }
 
     private final Map<UUID, ArchiveRun> runs = new LinkedHashMap<>();
     private final Map<UUID, UUID> activeRunByMember = new LinkedHashMap<>();
@@ -107,6 +116,7 @@ public final class ArchiveRunSavedData extends SavedData {
 
     public Optional<ArchiveRun> remove(UUID runId) {
         ArchiveRun removed = runs.remove(runId);
+        memories.remove(runId);
         if (removed == null) {
             return Optional.empty();
         }
@@ -175,7 +185,7 @@ public final class ArchiveRunSavedData extends SavedData {
         }
     }
 
-    private static ArchiveRunSavedData fromCodec(int schemaRevision, List<ArchiveRun> decodedRuns) {
+    private static ArchiveRunSavedData fromCodec(int schemaRevision, List<ArchiveRun> decodedRuns, List<com.nightbeam.tbos.memory.MemoryExpedition> decodedMemories) {
         if (schemaRevision < 1 || schemaRevision > SCHEMA_REVISION) {
             throw new IllegalArgumentException("Unsupported archive run storage schema revision: " + schemaRevision);
         }
@@ -185,6 +195,12 @@ public final class ArchiveRunSavedData extends SavedData {
             if (previous != null) {
                 throw new IllegalArgumentException("Duplicate archive run ID in saved data: " + run.runId());
             }
+        }
+        for (var memory : decodedMemories) {
+            ArchiveRun owner = data.runs.get(memory.run);
+            if (owner == null || memory.members.stream().anyMatch(b -> !owner.containsMember(b.player))
+                    || data.memories.putIfAbsent(memory.run, memory) != null)
+                throw new IllegalArgumentException("Invalid memory ownership");
         }
         data.rebuildIndexes();
         return data;

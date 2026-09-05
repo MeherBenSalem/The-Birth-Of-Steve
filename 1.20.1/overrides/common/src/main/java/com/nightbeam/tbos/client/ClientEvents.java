@@ -65,6 +65,7 @@ public final class ClientEvents {
     }
 
     public static void onClientTick(Minecraft minecraft) {
+        MemoryClient.tick(minecraft);
         ClientTransitionTracker.tick(minecraft);
         ArchiveFloorIntroHud.tick(minecraft);
         while (ModKeyMappings.TOGGLE_OBJECTIVES.consumeClick()) {

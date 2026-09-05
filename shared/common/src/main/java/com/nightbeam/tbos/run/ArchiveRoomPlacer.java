@@ -65,6 +65,13 @@ public final class ArchiveRoomPlacer {
             }
         }
 
+        // A stair cut can remove the floor under a surface hazard. Drop that hazard,
+        // never refill the cut: restoring its support would obstruct the route.
+        placements.entrySet().removeIf(entry ->
+                (entry.getValue().is(ModBlocks.PARALLAX_PANEL.get())
+                    || entry.getValue().is(ModBlocks.SHATTER_PANE.get())
+                    || entry.getValue().is(ModBlocks.FALSE_SHELF.get()))
+                && !placements.containsKey(entry.getKey().below()));
         List<Placement> immutablePlacements = placements.entrySet().stream()
                 .map(entry -> new Placement(entry.getKey(), entry.getValue()))
                 .toList();
@@ -331,6 +338,12 @@ public final class ArchiveRoomPlacer {
         ArchiveRoomNode node = run.dungeonGraph().room(roomIndex);
         ArchiveRoomTemplate template = ArchiveRoomTemplates.require(node.templateId());
         return template.puzzleMarkers().stream().limit(3).map(marker -> markerToWorld(run, node, marker)).toList();
+    }
+
+    public static List<BlockPos> memorySocketPositions(ArchiveRun run,int roomIndex) {
+        ArchiveRoomNode node=run.dungeonGraph().room(roomIndex);
+        ArchiveRoomTemplate template=ArchiveRoomTemplates.require(node.templateId());
+        return template.memorySocketMarkers().stream().map(marker->markerToWorld(run,node,marker)).toList();
     }
 
     public static List<BlockPos> monsterSpawnPositions(ArchiveRun run, int roomIndex) {
@@ -1466,7 +1479,8 @@ public final class ArchiveRoomPlacer {
                         template.puzzleMarkers(),
                         template.secretWallMarkers(),
                         template.bossMarkers(),
-                        template.playerEntryMarkers())
+                        template.playerEntryMarkers(),
+                        template.memorySocketMarkers())
                 .flatMap(List::stream)
                 .map(marker -> localToWorld(run, room, room.placement().transform().apply(marker, template.size())))
                 .collect(java.util.stream.Collectors.toSet());

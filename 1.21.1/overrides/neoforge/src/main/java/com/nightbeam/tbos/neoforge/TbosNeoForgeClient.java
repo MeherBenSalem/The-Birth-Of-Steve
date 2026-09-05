@@ -63,6 +63,8 @@ public final class TbosNeoForgeClient {
 
     private static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(ModKeyMappings.TOGGLE_OBJECTIVES);
+        event.register(ModKeyMappings.MEMORY_LOADOUT);
+        for(var key:ModKeyMappings.MEMORY_SLOTS) event.register(key);
     }
 
     private static void registerGuiLayers(RegisterGuiLayersEvent event) {

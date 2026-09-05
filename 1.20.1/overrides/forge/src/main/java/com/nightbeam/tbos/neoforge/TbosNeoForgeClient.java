@@ -67,6 +67,8 @@ public final class TbosNeoForgeClient {
     /** Invoked once from {@link TbosNeoForge}'s constructor on the client dist. */
     public static void init() {
         YesterglassClient.init();
+        NeoForgeNetworkHelper.clientDispatch().put(com.nightbeam.tbos.network.payload.MemorySnapshotPayload.ID,
+            packet -> com.nightbeam.tbos.client.MemoryClient.accept((com.nightbeam.tbos.network.payload.MemorySnapshotPayload) packet));
         registerClientDispatch();
     }
 
@@ -99,6 +101,8 @@ public final class TbosNeoForgeClient {
     @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(ModKeyMappings.TOGGLE_OBJECTIVES);
+        event.register(ModKeyMappings.MEMORY_LOADOUT);
+        for(var key:ModKeyMappings.MEMORY_SLOTS) event.register(key);
     }
 
     @SubscribeEvent

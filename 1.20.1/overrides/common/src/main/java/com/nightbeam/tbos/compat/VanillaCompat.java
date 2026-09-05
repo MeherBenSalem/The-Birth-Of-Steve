@@ -59,4 +59,15 @@ public final class VanillaCompat {
                         (packedRgb & 0xFF) / 255.0F),
                 scale);
     }
+
+    public static java.util.Set<String> memoryTags(LivingEntity entity) { return entity.getTags(); }
+    public static boolean memoryDamage(net.minecraft.server.level.ServerLevel level, LivingEntity target,
+            net.minecraft.server.level.ServerPlayer owner, float amount) {
+        var source=owner==null?target.damageSources().magic():target.damageSources().playerAttack(owner);
+        return target.hurt(source,amount);
+    }
+    public static void memoryBurn(LivingEntity target,int seconds) {target.setSecondsOnFire(seconds);}
+    public static net.minecraft.world.entity.Mob memoryTrialMob(net.minecraft.server.level.ServerLevel level,boolean ranged) {
+        return (ranged ? SKELETON : HUSK).create(level);
+    }
 }

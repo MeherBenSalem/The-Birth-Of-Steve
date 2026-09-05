@@ -9,6 +9,12 @@ public final class ModKeyMappings {
     public static final KeyMapping TOGGLE_OBJECTIVES = new KeyMapping(
             "key.tbos.toggle_objectives", GLFW.GLFW_KEY_J, CATEGORY);
 
+    public static final KeyMapping[] MEMORY_SLOTS = {
+        new KeyMapping("key.tbos.memory_1", GLFW.GLFW_KEY_R, CATEGORY),
+        new KeyMapping("key.tbos.memory_2", GLFW.GLFW_KEY_G, CATEGORY),
+        new KeyMapping("key.tbos.memory_3", GLFW.GLFW_KEY_V, CATEGORY)
+    };
+    public static final KeyMapping MEMORY_LOADOUT = new KeyMapping("key.tbos.memory_loadout", GLFW.GLFW_KEY_K, CATEGORY);
     private static boolean objectivesHidden;
 
     private ModKeyMappings() {

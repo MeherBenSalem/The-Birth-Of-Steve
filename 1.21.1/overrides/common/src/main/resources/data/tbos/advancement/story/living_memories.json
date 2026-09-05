@@ -1,0 +1,13 @@
+{
+  "parent": "tbos:story/enter_fractured_archive",
+  "criteria": {
+    "completed": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "completed"
+    ]
+  ]
+}
