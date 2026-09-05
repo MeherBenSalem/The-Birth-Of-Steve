@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 0.9.0 - 2026-09-05
+
+### Living Memories
+
+- **Archive runs now draft a combat memory build.** Clearing rooms offers three
+  choices; equip up to three actives and discover passives that only apply inside
+  the Fractured Archive.
+- **Six actives and twelve artifacts.** Echo Lance, Recall, Parallax Step,
+  Resonant Guard, Reconstruct, and Memory Well, plus prism, conduit, and bulwark
+  artifacts that redirect, transfer, and rebuild cover.
+- **Expedition pacing.** Floor one teaches the build, later floors add sockets,
+  Overwrite temptation, and a climax/extraction choice. Open the Memory screen
+  from the Archivist's Journal or the new keybind.
+
 ## 0.8.0 - 2026-08-31
 
 ### Texture refresh
