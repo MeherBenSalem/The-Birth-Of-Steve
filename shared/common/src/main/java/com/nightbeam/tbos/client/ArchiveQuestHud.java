@@ -77,9 +77,7 @@ public final class ArchiveQuestHud {
         int cyan = 0xFF72D5D2;
         int parchment = 0xFFE2D5B4;
         int gold = 0xFFE0B85B;
-        graphics.fill(x, y, x + width, y + height, 0xD0121822);
-        graphics.outline(x, y, width, height, progress.complete() ? gold : teal);
-        graphics.fill(x + 1, y + 1, x + 4, y + height - 1, progress.complete() ? gold : teal);
+        GreekGui.panel(graphics,GreekGui.HUD,x,y,width,height);
 
         graphics.text(
                 minecraft.font,
@@ -117,8 +115,7 @@ public final class ArchiveQuestHud {
                 : Math.min(
                         barWidth,
                         Math.round(barWidth * progress.roomsCleared() / (float) progress.roomsRequired()));
-        graphics.fill(barX, barY, barX + barWidth, barY + 4, 0xFF252D36);
-        graphics.fill(barX, barY, barX + filled, barY + 4, progress.complete() ? gold : teal);
+        GreekGui.progress(graphics,barX,barY,barWidth,4,filled/(float)barWidth,progress.complete());
         graphics.text(
                 minecraft.font,
                 Component.translatable(progress.complete()
@@ -129,14 +126,6 @@ public final class ArchiveQuestHud {
                 progress.complete() ? gold : 0xFF9CA4AA,
                 false);
 
-        boolean reducedMotion = YesterglassClientConfig.REDUCED_MOTION.getAsBoolean();
-        long elapsed = now - completionStartedNanos;
-        if (!reducedMotion && elapsed >= 0L && elapsed < PULSE_NANOS) {
-            float phase = elapsed / (float) PULSE_NANOS;
-            int sweepX = x + 4 + Math.round((width - 8) * phase);
-            graphics.fill(sweepX, y + 2, Math.min(x + width - 2, sweepX + 8), y + height - 2, 0x48E0B85B);
-            int inset = Math.min(4, Math.round(phase * 5.0F));
-            graphics.outline(x - inset, y - inset, width + inset * 2, height + inset * 2, gold);
-        }
+        if(progress.complete())GreekGui.ornament(graphics,0,x+width-21,y+4,16,16);
     }
 }

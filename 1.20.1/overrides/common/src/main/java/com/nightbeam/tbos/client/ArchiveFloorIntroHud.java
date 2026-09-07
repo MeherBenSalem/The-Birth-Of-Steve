@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 
-/** Four-second floor title treatment, adapted to the 1.20.1 HUD render callback. */
+/** Four-second, non-blocking title treatment shown after each floor teleport. */
 public final class ArchiveFloorIntroHud {
     public static final int DURATION_TICKS = 80;
     private static ArchiveFloorIntroPayload intro;
@@ -31,10 +31,11 @@ public final class ArchiveFloorIntroHud {
     }
 
     public static void tick(Minecraft minecraft) {
-        if (intro == null || ticksRemaining-- <= 0) {
+        if (intro == null || ticksRemaining <= 0) {
             intro = null;
             return;
         }
+        ticksRemaining--;
         particleTick++;
         if (YesterglassClientConfig.REDUCED_MOTION.getAsBoolean()
                 || minecraft.player == null
@@ -42,15 +43,22 @@ public final class ArchiveFloorIntroHud {
                 || (particleTick & 1) != 0) {
             return;
         }
-        double angle = particleTick * 0.28D;
-        minecraft.level.addParticle(
-                ParticleTypes.REVERSE_PORTAL,
-                minecraft.player.getX() + Math.cos(angle) * 0.7D,
-                minecraft.player.getY() + 0.8D,
-                minecraft.player.getZ() + Math.sin(angle) * 0.7D,
-                0.0D,
-                0.02D,
-                0.0D);
+        int count = Math.max(1, YesterglassClientConfig.EFFECT_QUALITY.getAsInt());
+        for (int index = 0; index < count; index++) {
+            double angle = (particleTick * 0.28D) + index * (Math.PI * 2.0D / count);
+            double radius = 0.7D + index * 0.12D;
+            double x = minecraft.player.getX() + Math.cos(angle) * radius;
+            double y = minecraft.player.getY() + 0.4D + (particleTick % 14) * 0.08D;
+            double z = minecraft.player.getZ() + Math.sin(angle) * radius;
+            minecraft.level.addParticle(
+                    (index & 1) == 0 ? ParticleTypes.REVERSE_PORTAL : ParticleTypes.END_ROD,
+                    x,
+                    y,
+                    z,
+                    -Math.cos(angle) * 0.018D,
+                    0.018D,
+                    -Math.sin(angle) * 0.018D);
+        }
     }
 
     public static void render(GuiGraphics graphics, float partialTick) {
@@ -59,16 +67,35 @@ public final class ArchiveFloorIntroHud {
             return;
         }
         float elapsed = DURATION_TICKS - ticksRemaining + partialTick;
-        float alpha = Math.min(Mth.clamp(elapsed / 12.0F, 0.0F, 1.0F), Mth.clamp(ticksRemaining / 18.0F, 0.0F, 1.0F));
+        float fadeIn = Mth.clamp(elapsed / 12.0F, 0.0F, 1.0F);
+        float fadeOut = Mth.clamp(ticksRemaining / 18.0F, 0.0F, 1.0F);
+        float alpha = Math.min(fadeIn, fadeOut);
+        boolean reducedMotion = YesterglassClientConfig.REDUCED_MOTION.getAsBoolean();
         int width = graphics.guiWidth();
         int height = graphics.guiHeight();
         int centerY = height / 2;
-        graphics.fill(0, 0, width, Math.max(24, centerY - 58), Math.round(126.0F * alpha) << 24);
-        graphics.fill(0, Math.min(height, centerY + 54), width, height, Math.round(126.0F * alpha) << 24);
+        int panelWidth=Math.min(360,width-16);
+        int panelX=(width-panelWidth)/2;
+        int reveal=reducedMotion?panelWidth:Math.round(panelWidth*alpha);
+        graphics.enableScissor(width/2-reveal/2,centerY-58,width/2+(reveal+1)/2,centerY+54);
+        GreekGui.panel(graphics,GreekGui.HUD,panelX,centerY-48,panelWidth,96);
+        GreekGui.ornament(graphics,3,width/2-32,centerY-58,64,32);
+        graphics.disableScissor();
+
+        Component number = Component.translatable(
+                "floor.tbos.intro.title",
+                ArchiveFloorPresentation.displayFloor(intro.floorIndex()));
+        Component name = ArchiveFloorPresentation.name(intro.floorIndex());
         int textAlpha = Math.max(4, Math.round(255.0F * alpha));
-        Component number = Component.translatable("floor.tbos.intro.title", ArchiveFloorPresentation.displayFloor(intro.floorIndex()));
-        graphics.drawCenteredString(minecraft.font, number, width / 2, centerY - 24, (textAlpha << 24) | 0xE8D6A7);
-        graphics.drawCenteredString(minecraft.font, ArchiveFloorPresentation.name(intro.floorIndex()), width / 2, centerY + 8, (textAlpha << 24) | 0x74D7D2);
+        int numberColor = (textAlpha << 24) | 0xE8D6A7;
+        int nameColor = (textAlpha << 24) | 0x74D7D2;
+        float scale = reducedMotion ? 1.65F : 1.65F + 0.18F * (1.0F - Mth.clamp(elapsed / 18.0F, 0.0F, 1.0F));
+        graphics.pose().pushPose();
+        graphics.pose().translate(width / 2.0F, centerY - 24.0F, 0.0F);
+        graphics.pose().scale(scale, scale, 1.0F);
+        graphics.drawCenteredString(minecraft.font, number, 0, 0, numberColor);
+        graphics.pose().popPose();
+        graphics.drawCenteredString(minecraft.font, name, width / 2, centerY + 8, nameColor);
         graphics.drawCenteredString(
                 minecraft.font,
                 Component.translatable(intro.ominous()

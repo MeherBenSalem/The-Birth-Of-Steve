@@ -8,15 +8,14 @@ import net.minecraft.network.chat.Component;
 
 /** Shared palette and accessible native buttons for the memory journal. */
 public final class MemoryUi {
-    public static final int PANEL=0xFA101B25, CARD=0xFF192B36, EDGE=0xFF34505B,
-        TEXT=0xFFE7F0ED, MUTED=0xFFACBDBF, CYAN=0xFF96DDD8, GOLD=0xFFEAC17A, VIOLET=0xFFC2A8D8;
+    public static final int PANEL=GreekGui.FRAME, CARD=GreekGui.CARD, EDGE=GreekGui.BRONZE,
+        TEXT=GreekGui.INK, MUTED=GreekGui.MUTED, CYAN=GreekGui.ACCENT, GOLD=GreekGui.BRONZE, VIOLET=0xFF784734;
     private MemoryUi() {}
     public static void frame(GuiGraphics g,int x,int y,int w,int h,int fill,int edge) {
-        g.fill(x,y,x+w,y+h,fill);
-        g.fill(x,y,x+w,y+1,edge);g.fill(x,y+h-1,x+w,y+h,edge);
-        g.fill(x,y,x+1,y+h,edge);g.fill(x+w-1,y,x+w,y+h,edge);
+        GreekGui.panel(g,fill==PANEL?GreekGui.FRAME:GreekGui.CARD,x,y,w,h);
     }
     public static void text(GuiGraphics g,Component text,int x,int y,int width,int color) {
+        if(width<=0)return;
         var font=Minecraft.getInstance().font;
         String value=text.getString();
         if(font.width(value)>width)value=font.plainSubstrByWidth(value,Math.max(0,width-font.width("…")))+"…";
@@ -33,9 +32,8 @@ public final class MemoryUi {
         }
         @Override protected void renderWidget(GuiGraphics g,int mouseX,int mouseY,float partialTick) {
             boolean hover=isHoveredOrFocused();
-            int edge=selected?CYAN:hover&&active?GOLD:EDGE;
-            frame(g,getX(),getY(),getWidth(),getHeight(),hover&&active?0xFF24404B:CARD,edge);
-            if(selected)g.fill(getX()+1,getY()+2,getX()+3,getY()+getHeight()-2,CYAN);
+            int tile=!active?GreekGui.DISABLED:hover?GreekGui.HOVER:selected?GreekGui.SELECTED:GreekGui.BUTTON;
+            GreekGui.panel(g,tile,getX(),getY(),getWidth(),getHeight());
             int size=Math.min(28,getHeight()-4),inset=icon>=0?size+7:7;
             if(icon>=0)MemoryIcons.draw(g,icon,getX()+4,getY()+2,size);
             int y=getY()+(getHeight()-9)/2;

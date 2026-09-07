@@ -12,7 +12,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
@@ -32,35 +31,12 @@ public final class ArchivistQuestScreen extends Screen {
     private static final int FOOTER_HEIGHT = 30;
     private static final int GLYPH = 12;
 
-    private static final ResourceLocation FRAME = sprite("frame");
-    private static final ResourceLocation WELL = sprite("well");
-    private static final ResourceLocation TAB_ACTIVE = sprite("tab_active");
-    private static final ResourceLocation TAB_IDLE = sprite("tab_idle");
-    private static final ResourceLocation BAR_TRACK = sprite("bar_track");
-    private static final ResourceLocation BAR_FILL = sprite("bar_fill");
-    private static final ResourceLocation STEP_DONE = sprite("step_done");
-    private static final ResourceLocation STEP_ACTIVE = sprite("step_active");
-    private static final ResourceLocation STEP_LOCKED = sprite("step_locked");
 
-    /*
-     * Ink is chosen against the sprite it lands on, not against the page as a
-     * whole: the frame reads #D4C5A2, the well #ECE0C2 and the active tab
-     * #CDBD99, but the idle tab is a dark #6B6456. Dark ink on the idle tab is
-     * invisible, so it gets its own light pair. Nothing on this screen draws a
-     * drop shadow — see ink()/inkCentered()/inkWrapped().
-     */
-    private static final int INK = 0xFF2E2216;
-    private static final int INK_SOFT = 0xFF5D442D;
-    private static final int INK_TEAL = 0xFF1E5E60;
-    private static final int INK_DONE = 0xFF2F6A57;
-    private static final int INK_LOCKED = 0xFF6A5940;
-    private static final int TAB_IDLE_INK = 0xFFF2E8CC;
-    private static final int TAB_IDLE_HOVER_INK = 0xFFFFF6DE;
-    private static final int RULE = 0xFF8A6033;
-    private static final int ROW_ACTIVE = 0x33236E70;
-    private static final int ROW_HOVER = 0x1A5D442D;
-    private static final int PLATE_FILL = 0x1A3A2716;
-    private static final int PLATE_RULE = 0x338A6033;
+
+    // Dark, shadow-free text is legible against the ivory panel surfaces.
+    private static final int INK=GreekGui.INK, INK_SOFT=GreekGui.MUTED,
+            INK_TEAL=GreekGui.ACCENT, INK_DONE=0xFF315B43, INK_LOCKED=GreekGui.MUTED,
+            TAB_IDLE_INK=GreekGui.INK, TAB_IDLE_HOVER_INK=GreekGui.ACCENT;
 
     /**
      * One entry per Story step, in order: the advancement bits that complete it
@@ -94,9 +70,6 @@ public final class ArchivistQuestScreen extends Screen {
         this.snapshot = snapshot;
     }
 
-    private static ResourceLocation sprite(String name) {
-        return ResourceLocation.fromNamespaceAndPath(Yesterglass.MOD_ID, "journal/" + name);
-    }
 
     private static ItemStack icon(int step) {
         return switch (step) {
@@ -209,65 +182,49 @@ public final class ArchivistQuestScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        for (Tab candidate : Tab.values()) {
-            if (overTab(candidate, mouseX, mouseY)) {
-                if (candidate == Tab.MEMORIES) {
+    protected void init() {
+        clearWidgets();
+        for(Tab candidate:Tab.values()) {
+            MemoryUi.Action button=new MemoryUi.Action(tabX(candidate),tabY(),tabWidth(),TAB_HEIGHT,
+                    Component.translatable(candidate.key),null,-1,candidate==tab,true,()->{
+                if(candidate==Tab.MEMORIES) {
                     MemoryClient.request(6,0,0);
                     ClientCompat.setScreen(MinecraftHolder.instance(),new MemoryScreen(this));
-                    return true;
+                } else if(candidate!=tab) {
+                    tab=candidate;
+                    minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN,1.0F));
+                    init();
                 }
-                if (candidate != tab) {
-                    tab = candidate;
-                    minecraft.getSoundManager().play(
-                            SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
-                }
-                return true;
-            }
+            },Component.translatable(candidate.key));
+            addRenderableWidget(button);
+            if(candidate==tab)setFocused(button);
         }
-        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // In 1.21.1 Screen.render() applies the world blur. It must run before
-        // the journal is composed; calling it afterward blurs the parchment,
-        // text, icons, and progress bars along with the world behind them.
-        super.render(graphics, mouseX, mouseY, partialTick);
+        renderBackground(graphics,mouseX,mouseY,partialTick);
         int panelWidth = panelWidth();
         int panelHeight = panelHeight();
         int panelLeft = left();
         int panelTop = top();
-        graphics.blitSprite(FRAME, panelLeft, panelTop, panelWidth, panelHeight);
+        GreekGui.panel(graphics,GreekGui.FRAME,panelLeft,panelTop,panelWidth,panelHeight);
         inkCentered(graphics, title, width / 2, panelTop + 10, INK);
 
-        drawTabs(graphics, mouseX, mouseY);
+
 
         int wellX = panelLeft + 12;
         int wellY = tabY() + TAB_HEIGHT;
         int wellWidth = panelWidth - 24;
         int wellHeight = panelHeight - (wellY - panelTop) - 12;
-        graphics.blitSprite(WELL, wellX, wellY, wellWidth, wellHeight);
+        GreekGui.panel(graphics,GreekGui.WELL,wellX,wellY,wellWidth,wellHeight);
 
         if (tab == Tab.STORY) {
             drawStory(graphics, mouseX, mouseY, wellX, wellY, wellWidth, wellHeight);
         } else {
             drawRun(graphics, wellX, wellY, wellWidth, wellHeight);
         }
-    }
-
-    private void drawTabs(GuiGraphics graphics, int mouseX, int mouseY) {
-        for (Tab candidate : Tab.values()) {
-            boolean active = candidate == tab;
-            int x = tabX(candidate);
-            int y = tabY() + (active ? 0 : 2);
-            int tabHeight = TAB_HEIGHT - (active ? 0 : 2);
-            graphics.blitSprite(active ? TAB_ACTIVE : TAB_IDLE, x, y, tabWidth(), tabHeight);
-            boolean hovered = overTab(candidate, mouseX, mouseY);
-            FormattedCharSequence label=fitted(Component.translatable(candidate.key),tabWidth()-8);
-            ink(graphics,label,x+(tabWidth()-font.width(label))/2,y+tabHeight/2-4,
-                    active ? INK : (hovered ? TAB_IDLE_HOVER_INK : TAB_IDLE_INK));
-        }
+        for(var child:children())if(child instanceof net.minecraft.client.gui.components.Renderable widget)widget.render(graphics,mouseX,mouseY,partialTick);
     }
 
     private void drawStory(
@@ -313,15 +270,9 @@ public final class ArchivistQuestScreen extends Screen {
                 hoveredStep = index;
             }
             if (active || hovered) {
-                graphics.fill(listX - 5, y - 3, listX + listWidth, y + GLYPH + 3,
-                        active ? ROW_ACTIVE : ROW_HOVER);
+                GreekGui.panel(graphics,active?GreekGui.SELECTED:GreekGui.HOVER,listX-5,y-3,listWidth+5,GLYPH+6);
             }
-            graphics.blitSprite(
-                    complete ? STEP_DONE : active ? STEP_ACTIVE : STEP_LOCKED,
-                    listX,
-                    y,
-                    GLYPH,
-                    GLYPH);
+            GreekGui.ornament(graphics,complete?0:active?1:2,listX,y,GLYPH,GLYPH);
             if (showIcons) {
                 graphics.renderItem(icon(index), listX + GLYPH + 4, y - 2);
             }
@@ -342,7 +293,7 @@ public final class ArchivistQuestScreen extends Screen {
 
         int detailX = wellX + wellWidth / 2 + 4;
         int detailWidth = wellWidth / 2 - 16;
-        graphics.vLine(detailX - 10, listY - 4, listBottom, RULE);
+        GreekGui.material(graphics,GreekGui.GOLD,detailX-10,listY-4,1,listBottom-listY+4);
         int detail = hoveredStep >= 0 ? hoveredStep : current;
         ink(
                 graphics,
@@ -350,6 +301,7 @@ public final class ArchivistQuestScreen extends Screen {
                 detailX,
                 listY,
                 INK_TEAL);
+        graphics.enableScissor(detailX,listY+16,detailX+detailWidth,listY+49);
         inkWrapped(
                 graphics,
                 Component.translatable("journal.tbos.quest." + (detail + 1) + ".description"),
@@ -357,6 +309,8 @@ public final class ArchivistQuestScreen extends Screen {
                 listY + 18,
                 detailWidth,
                 INK);
+        graphics.disableScissor();
+        graphics.enableScissor(detailX,listY+51,detailX+detailWidth,listBottom);
         inkWrapped(
                 graphics,
                 Component.translatable("journal.tbos.quest." + (detail + 1) + ".flavor"),
@@ -365,6 +319,7 @@ public final class ArchivistQuestScreen extends Screen {
                 detailWidth,
                 INK_SOFT);
 
+        graphics.disableScissor();
         int barX = wellX + 8;
         int barY = wellY + wellHeight - 16;
         int barWidth = wellWidth - 16;
@@ -387,8 +342,7 @@ public final class ArchivistQuestScreen extends Screen {
             // inside the well rather than clear a footer.
             int plateTop = y + 16;
             int plateBottom = Math.min(plateTop + 72, wellY + wellHeight - 8);
-            graphics.fill(x, plateTop, wellX + wellWidth - 12, plateBottom, 0x26F4E5BC);
-            graphics.hLine(x, wellX + wellWidth - 12, plateBottom, PLATE_RULE);
+            GreekGui.panel(graphics,GreekGui.CARD,x,plateTop,wellX+wellWidth-12-x,plateBottom-plateTop);
             inkCentered(
                     graphics,
                     Component.translatable("journal.tbos.run.inactive"),
@@ -456,25 +410,15 @@ public final class ArchivistQuestScreen extends Screen {
             Component value) {
         int rule = y + pitch - 7;
         int valueX = x + Math.min(132, width - 60);
-        graphics.fill(x - 4, y - 3, x + width, rule, PLATE_FILL);
-        graphics.hLine(x - 4, x + width, rule, PLATE_RULE);
+        GreekGui.panel(graphics,GreekGui.CARD,x-4,y-3,width+4,Math.max(12,pitch-2));
         ink(graphics, fitted(Component.translatable(key), valueX - 4 - x), x, y, INK_SOFT);
-        ink(graphics, value, valueX, y, INK_TEAL);
+        ink(graphics, fitted(value,x+width-valueX-4), valueX, y, INK_TEAL);
         return y + pitch;
     }
 
-    /**
-     * Draws the track, then the fill clipped to its fraction. The fill sprite is
-     * nine-sliced, so a zero-width blit would smear its own borders; below one
-     * full sprite width the track is left bare instead.
-     */
-    private void progressBar(GuiGraphics graphics, int x, int y, int width, float fraction) {
-        int height = 8;
-        graphics.blitSprite(BAR_TRACK, x, y, width, height);
-        int filled = Math.round(width * Mth.clamp(fraction, 0.0F, 1.0F));
-        if (filled >= height) {
-            graphics.blitSprite(BAR_FILL, x, y, filled, height);
-        }
+    /** Progress geometry uses the track and fill materials, including tiny fractions. */
+    private void progressBar(GuiGraphics graphics,int x,int y,int width,float fraction) {
+        GreekGui.progress(graphics,x,y,width,6,fraction,fraction>=1.0F);
     }
 
     private boolean isComplete(int index) {

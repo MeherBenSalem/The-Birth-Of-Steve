@@ -1,66 +1,130 @@
 package com.nightbeam.tbos.client;
 
+import com.nightbeam.tbos.config.YesterglassClientConfig;
 import com.nightbeam.tbos.network.payload.ArchiveQuestPayload;
 import com.nightbeam.tbos.run.ArchiveDimensions;
 import net.minecraft.client.Minecraft;
+import java.util.UUID;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
-/** Top-left Cantor Seal card using 1.20.1's immediate GuiGraphics API. */
+/** Top-left objective card for the run-wide Cantor Seal gate. */
 public final class ArchiveQuestHud {
     private static final long STALE_NANOS = 3_000_000_000L;
+    private static final long PULSE_NANOS = 3_200_000_000L;
     private static ArchiveQuestPayload progress;
     private static long receivedAtNanos;
+    private static long completionStartedNanos = Long.MIN_VALUE;
+    private static boolean celebrating;
+    private static UUID retiredRun;
 
     private ArchiveQuestHud() {
     }
 
     public static void accept(ArchiveQuestPayload payload) {
+        long now = System.nanoTime();
+        receivedAtNanos = now;
+        if (payload.runId().equals(retiredRun)) {
+            dismiss();
+            return;
+        }
+        boolean sameRun = progress != null && progress.runId().equals(payload.runId());
+        if (payload.complete()) {
+            if (!sameRun) {
+                retiredRun = payload.runId();
+                dismiss();
+                return;
+            }
+            if (!progress.complete()) {
+                completionStartedNanos = now;
+                celebrating = true;
+            }
+        }
         progress = payload;
-        receivedAtNanos = System.nanoTime();
+    }
+
+    private static void dismiss() {
+        progress = null;
+        celebrating = false;
     }
 
     public static void render(GuiGraphics graphics, float partialTick) {
         MemoryHud.render(graphics);
         Minecraft minecraft = Minecraft.getInstance();
+        long now = System.nanoTime();
         if (progress == null
                 || minecraft.player == null
                 || minecraft.level == null
                 || !minecraft.level.dimension().equals(ArchiveDimensions.FRACTURED_ARCHIVE)
-                || System.nanoTime() - receivedAtNanos > STALE_NANOS
+                || now - receivedAtNanos > STALE_NANOS
                 || ClientCompat.isHudHidden(minecraft)
                 || ModKeyMappings.objectivesHidden()) {
             return;
         }
+        if (progress.complete()
+                && (!celebrating || now - completionStartedNanos >= PULSE_NANOS)) {
+            retiredRun = progress.runId();
+            dismiss();
+            return;
+        }
+
         int x = 8;
         int y = 8;
         int width = 172;
         int height = 61;
-        int accent = progress.complete() ? 0xFFE0B85B : 0xFF397F80;
-        graphics.fill(x, y, x + width, y + height, 0xD0121822);
-        graphics.renderOutline(x, y, width, height, accent);
-        graphics.fill(x + 1, y + 1, x + 4, y + height - 1, accent);
-        graphics.drawString(minecraft.font, Component.translatable("quest.tbos.cantor_seal"), x + 9, y + 6, 0xFFE2D5B4, true);
+        int teal = 0xFF397F80;
+        int cyan = 0xFF72D5D2;
+        int parchment = 0xFFE2D5B4;
+        int gold = 0xFFE0B85B;
+        GreekGui.panel(graphics,GreekGui.HUD,x,y,width,height);
+
         graphics.drawString(
                 minecraft.font,
-                Component.translatable("quest.tbos.cantor_seal.rooms", progress.roomsCleared(), progress.roomsRequired()),
+                Component.translatable("quest.tbos.cantor_seal"),
                 x + 9,
-                y + 20,
-                0xFF72D5D2,
+                y + 6,
+                progress.complete() ? gold : parchment,
+                true);
+        graphics.drawString(
+                minecraft.font,
+                Component.translatable(
+                        "quest.tbos.cantor_seal.rooms",
+                        progress.roomsCleared(),
+                        progress.roomsRequired()),
+                x + 9,
+                y + 19,
+                cyan,
                 false);
         graphics.drawString(
                 minecraft.font,
                 Component.translatable(
-                        "quest.tbos.cantor_seal.wardens", progress.lesserBossesDefeated(), progress.lesserBossesTotal()),
+                        "quest.tbos.cantor_seal.wardens",
+                        progress.lesserBossesDefeated(),
+                        progress.lesserBossesTotal()),
                 x + 9,
-                y + 32,
-                0xFF72D5D2,
+                y + 30,
+                cyan,
                 false);
+
+        int barX = x + 9;
+        int barY = y + 43;
         int barWidth = 96;
         int filled = progress.roomsRequired() == 0
                 ? barWidth
-                : Math.min(barWidth, Math.round(barWidth * progress.roomsCleared() / (float) progress.roomsRequired()));
-        graphics.fill(x + 9, y + 45, x + 9 + barWidth, y + 49, 0xFF252D36);
-        graphics.fill(x + 9, y + 45, x + 9 + filled, y + 49, accent);
+                : Math.min(
+                        barWidth,
+                        Math.round(barWidth * progress.roomsCleared() / (float) progress.roomsRequired()));
+        GreekGui.progress(graphics,barX,barY,barWidth,4,filled/(float)barWidth,progress.complete());
+        graphics.drawString(
+                minecraft.font,
+                Component.translatable(progress.complete()
+                        ? "quest.tbos.cantor_seal.open"
+                        : "quest.tbos.cantor_seal.locked"),
+                x + 111,
+                y + 40,
+                progress.complete() ? gold : 0xFF9CA4AA,
+                false);
+
+        if(progress.complete())GreekGui.ornament(graphics,0,x+width-21,y+4,16,16);
     }
 }

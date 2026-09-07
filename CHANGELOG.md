@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.10.0 - 2026-09-07
+
+### Greek GUI
+
+- **Archive and Memory UI use a shared Greek marble atlas.** Journal, quest HUD,
+  floor intro, puzzle HUD, and Memory screens draw from panels, ornaments, and
+  ability icon atlases instead of flat color fills and old journal sprites.
+- **Living Memory ability icons are atlas-backed.** Actives and artifacts sample
+  the Greek icon sheet for a consistent bronze-on-ivory look.
+
 ## 0.9.0 - 2026-09-05
 
 ### Living Memories

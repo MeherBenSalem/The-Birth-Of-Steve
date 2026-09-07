@@ -26,6 +26,10 @@ public final class MemoryScreen extends Screen {
     }
     private int panelWidth() { return Math.min(380,width-12); }
     private int panelHeight() { return Math.min(244,height-12); }
+    private int contentHeight() { return panelHeight()-104; }
+    private int artifactPitch() { return Math.max(18,contentHeight()/6); }
+    private int rewardPitch() { return Math.max(29,Math.min(37,contentHeight()/3)); }
+    private int statPitch() { return Math.max(22,contentHeight()/5); }
     private int left() { return (width-panelWidth())/2; }
     private int top() { return (height-panelHeight())/2; }
     private void page(int value) { page=value;stateHash=Integer.MIN_VALUE;refresh(); }
@@ -61,7 +65,7 @@ public final class MemoryScreen extends Screen {
             if(i==3&&b!=null&&!b.offers.isEmpty())label=label.copy().append(" •");
             action(x+i*(tabWidth+3),y+49,tabWidth,18,label,null,-1,page==i||(page==4&&i==1),true,()->page(value),null);
         }
-        int body=y+76, row=Math.max(18,Math.min(28,(panelHeight()-146)/2));
+        int body=y+72, row=Math.max(18,Math.min(28,(panelHeight()-146)/2));
         if(b!=null&&page==0) {
             for(int i=0;i<3;i++) {
                 int slot=i,id=b.slots.get(i);
@@ -72,7 +76,7 @@ public final class MemoryScreen extends Screen {
                 int ability=id;
                 boolean owned=b.owns(id);
                 Component label=owned?MemoryClient.name(id):tr("memory.tbos.undiscovered");
-                action(x+(id%3)*(third+3),body+43+(id/3)*(row+3),third,row,label,null,owned?id:-1,b.slots.get(selectedSlot)==id,owned&&MemoryClient.safe,
+                action(x+(id%3)*(third+3),body+39+(id/3)*(row+3),third,row,label,null,owned?id:-1,b.slots.get(selectedSlot)==id,owned&&MemoryClient.safe,
                     ()->MemoryClient.request(1,selectedSlot,ability),owned?abilityHint(id):tr("memory.tbos.discovery_hint"));
             }
         } else if(b!=null&&page==1) {
@@ -81,12 +85,12 @@ public final class MemoryScreen extends Screen {
                 int choice=id;
                 boolean enhanced=(b.enhanced&(1<<(id-6)))!=0;
                 Component label=MemoryClient.name(id).copy().append(enhanced?" +":"");
-                action(x+(n%2)*(half+4),body+(n/2)*20,half,18,label,null,id,false,true,()->{artifact=choice;page(4);},tr(key(id)+".description"));n++;
+                action(x+(n%2)*(half+4),body+(n/2)*artifactPitch(),half,artifactPitch()-2,label,null,id,false,true,()->{artifact=choice;page(4);},tr(key(id)+".description"));n++;
             }
         } else if(b!=null&&page==3) {
             for(int i=0;i<b.offers.size();i++) {
                 int choice=b.offers.get(i),revision=b.draft;
-                action(x,body+i*37,w,34,MemoryClient.name(choice),tr(key(choice)+".description"),choice,false,true,
+                action(x,body+i*rewardPitch(),w,rewardPitch()-3,MemoryClient.name(choice),tr(key(choice)+".description"),choice,false,true,
                     ()->MemoryClient.request(2,revision,choice),MemoryClient.name(choice).copy().append("\n").append(tr(key(choice)+".description")));
             }
         } else if(b!=null&&page==4&&artifact>=6) {
@@ -104,9 +108,10 @@ public final class MemoryScreen extends Screen {
     public static String key(int id) { return id<6?MemoryAbility.values()[id].key():MemoryArtifact.values()[id-6].key(); }
     private void line(GuiGraphics g,Component value,int x,int y,int w,int color) { MemoryUi.text(g,value,x,y,w,color); }
     @Override public void render(GuiGraphics g,int mouseX,int mouseY,float partialTick) {
-        int x=left(),y=top(),w=panelWidth(),h=panelHeight(),body=y+76;
+        renderBackground(g,mouseX,mouseY,partialTick);
+        int x=left(),y=top(),w=panelWidth(),h=panelHeight(),body=y+72;
         MemoryUi.frame(g,x,y,w,h,MemoryUi.PANEL,MemoryUi.EDGE);
-        g.fill(x+12,y+8,x+15,y+17,MemoryUi.GOLD);
+        GreekGui.ornament(g,1,x+10,y+6,14,14);
         line(g,tr("journal.tbos.quests.title"),x+22,y+9,w-36,MemoryUi.GOLD);
         var b=MemoryClient.build;
         if(page==2)drawStats(g,x+12,body,w-24,b);
@@ -115,7 +120,7 @@ public final class MemoryScreen extends Screen {
             line(g,tr("memory.tbos.outside"),x+18,body+59,w-36,MemoryUi.TEXT);
             line(g,tr("memory.tbos.outside_hint"),x+18,body+75,w-36,MemoryUi.MUTED);
         } else if(page==0) {
-            line(g,tr(MemoryClient.safe?"memory.tbos.equip":"memory.tbos.combat_locked",selectedSlot+1),x+12,body+32,w-24,MemoryUi.MUTED);
+            line(g,tr(MemoryClient.safe?"memory.tbos.equip":"memory.tbos.combat_locked",selectedSlot+1),x+12,body+30,w-24,MemoryUi.MUTED);
         } else if(page==1&&b.artifacts==0) {
             MemoryIcons.draw(g,6,x+w/2-20,body+8,40);
             line(g,tr("memory.tbos.artifacts_empty"),x+18,body+58,w-36,MemoryUi.TEXT);
@@ -128,7 +133,7 @@ public final class MemoryScreen extends Screen {
             String reason=b.overwritten?"memory.tbos.overwrite_used":(b.enhanced&(1<<(artifact-6)))!=0?"memory.tbos.already_enhanced":!MemoryClient.station?"memory.tbos.station_required":"memory.tbos.debt.duration";
             line(g,tr(reason),x+16,body+50,w-32,MemoryUi.VIOLET);
         }
-        super.render(g,mouseX,mouseY,partialTick);
+        for(var child:children())if(child instanceof net.minecraft.client.gui.components.Renderable widget)widget.render(g,mouseX,mouseY,partialTick);
     }
     private void drawStats(GuiGraphics g,int x,int y,int w,MemoryBuild b) {
         var player=Minecraft.getInstance().player;if(player==null)return;
@@ -139,10 +144,10 @@ public final class MemoryScreen extends Screen {
             b!=null&&b.debt==1?"125%":"100%",b!=null&&b.debt==2?"75%":"100%",b!=null&&b.debt==3?"120%":"100%",b==null?"0":Integer.toString(Integer.bitCount(b.enhanced))};
         int half=(w-5)/2;
         for(int i=0;i<values.length;i++) {
-            int cx=x+i%2*(half+5),cy=y+i/2*24;
-            MemoryUi.frame(g,cx,cy,half,23,MemoryUi.CARD,MemoryUi.EDGE);
+            int cx=x+i%2*(half+5),cy=y+i/2*statPitch();
+            MemoryUi.frame(g,cx,cy,half,statPitch()-2,MemoryUi.CARD,MemoryUi.EDGE);
             line(g,tr("memory.tbos.stat."+i),cx+6,cy+3,half-12,MemoryUi.MUTED);
-            line(g,Component.literal(values[i]),cx+6,cy+13,half-12,MemoryUi.CYAN);
+            line(g,Component.literal(values[i]),cx+6,cy+12,half-12,MemoryUi.CYAN);
         }
     }
 }

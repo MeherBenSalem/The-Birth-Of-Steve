@@ -75,29 +75,13 @@ public final class ArchiveFloorIntroHud {
         int width = graphics.guiWidth();
         int height = graphics.guiHeight();
         int centerY = height / 2;
-        int darkAlpha = Math.round(126.0F * alpha);
-
-        graphics.fill(0, 0, width, Math.max(24, centerY - 58), darkAlpha << 24);
-        graphics.fill(0, Math.min(height, centerY + 54), width, height, darkAlpha << 24);
-        graphics.fillGradient(
-                0,
-                centerY - 58,
-                width,
-                centerY + 54,
-                (Math.round(58.0F * alpha) << 24) | 0x07131A,
-                (Math.round(76.0F * alpha) << 24) | 0x160D20);
-
-        int edgeAlpha = Math.round(220.0F * alpha);
-        int teal = (edgeAlpha << 24) | 0x4FAEAA;
-        int gold = (edgeAlpha << 24) | 0xD7A94A;
-        graphics.horizontalLine(0, width, centerY - 38, teal);
-        graphics.horizontalLine(0, width, centerY + 36, gold);
-        if (!reducedMotion) {
-            float sweepProgress = Mth.clamp(elapsed / 38.0F, 0.0F, 1.0F);
-            int sweepX = Math.round((width + 64) * sweepProgress) - 64;
-            graphics.fill(sweepX, centerY - 37, sweepX + 42, centerY + 36, 0x284FAEAA);
-            graphics.fill(sweepX + 42, centerY - 37, sweepX + 48, centerY + 36, 0x50D7A94A);
-        }
+        int panelWidth=Math.min(360,width-16);
+        int panelX=(width-panelWidth)/2;
+        int reveal=reducedMotion?panelWidth:Math.round(panelWidth*alpha);
+        graphics.enableScissor(width/2-reveal/2,centerY-58,width/2+(reveal+1)/2,centerY+54);
+        GreekGui.panel(graphics,GreekGui.HUD,panelX,centerY-48,panelWidth,96);
+        GreekGui.ornament(graphics,3,width/2-32,centerY-58,64,32);
+        graphics.disableScissor();
 
         Component number = Component.translatable(
                 "floor.tbos.intro.title",

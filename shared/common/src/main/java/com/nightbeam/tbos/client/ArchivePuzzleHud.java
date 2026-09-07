@@ -97,10 +97,8 @@ public final class ArchivePuzzleHud {
         boolean combat = puzzle.state() == ArchivePuzzlePayload.PuzzleState.COMBAT;
         int accent = complete ? gold : combat ? danger : teal;
 
-        graphics.fill(x, y, x + width, y + height, ink);
-        graphics.outline(x, y, width, height, accent);
-        graphics.fill(x + 1, y + 1, x + 4, y + height - 1, accent);
-        graphics.fill(x + 8, y + 25, x + width - 8, y + 26, 0x66397F80);
+        GreekGui.panel(graphics,GreekGui.HUD,x,y,width,height);
+        GreekGui.material(graphics,GreekGui.GOLD,x+8,y+26,width-16,1);
 
         graphics.text(
                 minecraft.font,
@@ -133,20 +131,14 @@ public final class ArchivePuzzleHud {
         for (int index = 0; index < puzzle.glyphs().size(); index++) {
             int glyphX = x + 9 + index * (glyphSize + gap);
             boolean lit = index < puzzle.progress() || complete;
-            graphics.fill(
-                    glyphX,
-                    glyphY,
-                    glyphX + glyphSize,
-                    glyphY + glyphSize,
-                    lit ? 0xCC2B595B : 0xCC202832);
-            graphics.outline(glyphX, glyphY, glyphSize, glyphSize, lit ? gold : teal);
+            GreekGui.panel(graphics,lit?GreekGui.SELECTED:GreekGui.DISABLED,glyphX,glyphY,glyphSize,glyphSize);
             String symbol = glyph(puzzle.kind(), puzzle.glyphs().get(index));
             graphics.text(
                     minecraft.font,
                     Component.literal(symbol),
                     glyphX + (glyphSize - minecraft.font.width(symbol)) / 2,
                     glyphY + 5,
-                    lit ? 0xFFFFFFFF : 0xFF9CA4AA,
+                    lit ? GreekGui.ACCENT : GreekGui.MUTED,
                     false);
         }
 
@@ -170,20 +162,10 @@ public final class ArchivePuzzleHud {
                     false);
         }
 
-        boolean reducedMotion = YesterglassClientConfig.REDUCED_MOTION.getAsBoolean();
-        if (!reducedMotion) {
-            long failureElapsed = now - failureStartedNanos;
-            if (failureElapsed >= 0L && failureElapsed < FEEDBACK_NANOS) {
-                int pulse = Math.max(0, 70 - Math.round(70.0F * failureElapsed / FEEDBACK_NANOS));
-                graphics.fill(x + 2, y + 2, x + width - 2, y + height - 2, (pulse << 24) | 0x00C95763);
-            }
-            long completionElapsed = now - completionStartedNanos;
-            if (completionElapsed >= 0L && completionElapsed < COMPLETE_NANOS) {
-                float phase = completionElapsed / (float) COMPLETE_NANOS;
-                int sweepX = x + 4 + Math.round((width - 8) * phase);
-                graphics.fill(sweepX, y + 2, Math.min(x + width - 2, sweepX + 10), y + height - 2, 0x55E0B85B);
-            }
-        }
+        long failureElapsed=now-failureStartedNanos;
+        if(failureElapsed>=0L&&failureElapsed<FEEDBACK_NANOS)
+            GreekGui.material(graphics,GreekGui.WARNING,x+8,y+height-5,width-16,2);
+        if(complete)GreekGui.ornament(graphics,0,x+width-21,y+4,16,16);
     }
 
     private static String glyph(ArchivePuzzlePayload.PuzzleKind kind, int glyph) {
