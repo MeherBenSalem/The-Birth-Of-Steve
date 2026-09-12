@@ -25,7 +25,7 @@ unexpected entry means a shared file is silently not compiling somewhere.
 Run the GameTest suite on both loaders. The 26.x targets use common
 `data/tbos/test_instance/` definitions. Minecraft 1.21.1 predates that
 `TEST_FUNCTION` registry, so its target-local Fabric and NeoForge annotation
-bridges invoke the same 57 common bodies and use an isolated `tbos:empty`
+bridges invoke the same 60 common bodies and use an isolated `tbos:empty`
 template. A green run therefore exercises the shared behaviors and the loader
 registration path; the manual matrix below still covers interactive parity.
 
