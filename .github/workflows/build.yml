@@ -64,7 +64,12 @@ jobs:
       # the test functions and their datapack instances are common code, so a
       # green run here covers the Fabric jar's tests too.
       - name: GameTests
-        run: ./gradlew -p ${{ matrix.minecraft }} :neoforge:runGameTestServer --stacktrace --console=plain
+        run: |
+          LOADER=neoforge
+          if [ "${{ matrix.minecraft }}" = "1.20.1" ]; then
+            LOADER=forge
+          fi
+          ./gradlew -p ${{ matrix.minecraft }} :${LOADER}:runGameTestServer --stacktrace --console=plain
 
       # Catches an override that no longer shadows anything, or one added by
       # accident to the mainline target.

@@ -51,7 +51,7 @@ public final class FractureShrineQueue {
     public static void enqueueAlreadyLoaded(ServerLevel level) {
         for (FractureShrinePlan plan : AdventureWorldManager.unbuiltShrines(level)) {
             ChunkPos chunk = plan.chunk();
-            if (level.hasChunk(chunk.getX(), chunk.getZ())) {
+            if (level.hasChunk(chunk.x(), chunk.z())) {
                 enqueue(level, plan);
             }
         }
