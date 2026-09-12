@@ -2921,7 +2921,7 @@ public final class ModGameTests {
         if (missedLoadEvent) {
             FractureShrineQueue.enqueueAlreadyLoaded(level);
         } else {
-            FractureShrineQueue.onChunkLoaded(level, net.minecraft.world.level.ChunkPos.containing(target));
+            FractureShrineQueue.onChunkLoaded(level, new net.minecraft.world.level.ChunkPos(target));
         }
         helper.assertTrue(
                 FractureShrineQueue.drain(level),
