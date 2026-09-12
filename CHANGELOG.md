@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Existing worlds
+
+- **Fracture Shrines now appear in already-created Overworlds.** The plan was
+  already seed-derived and built on chunk load, but chunks that were already
+  resident when a world first saw the mod could miss that callback. Startup now
+  scans loaded Overworld chunks and queues any unbuilt shrine already in memory.
+  Distant shrines still wait until you travel to them; nothing force-loads the
+  192–640 ring. Backup first: a shrine carves a small ruin, and the Meridian
+  Archive is still placed only when you use the Survey Map.
+
 ## 0.10.0 - 2026-09-07
 
 ### Greek GUI

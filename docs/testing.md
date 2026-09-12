@@ -25,7 +25,7 @@ unexpected entry means a shared file is silently not compiling somewhere.
 Run the GameTest suite on both loaders. The 26.x targets use common
 `data/tbos/test_instance/` definitions. Minecraft 1.21.1 predates that
 `TEST_FUNCTION` registry, so its target-local Fabric and NeoForge annotation
-bridges invoke the same 56 common bodies and use an isolated `tbos:empty`
+bridges invoke the same 60 common bodies and use an isolated `tbos:empty`
 template. A green run therefore exercises the shared behaviors and the loader
 registration path; the manual matrix below still covers interactive parity.
 
@@ -160,8 +160,13 @@ a crash.
   back. None of these may grant a second Journal or repeat the welcome.
 - Run `/tbos shrine list` in the fresh world: three shrines, all `PENDING`.
   Travel to one reported target and confirm the shrine builds as its chunk
-  generates, with no visible tick spike or login stall, then that `list` reports
+  loads, with no visible tick spike or login stall, then that `list` reports
   it `GENERATED` and `/tbos shrine locate` gives a correct bearing.
+- Add the JAR to a backup of an already-explored Overworld. Confirm first join
+  grants the Journal once, `/tbos shrine list` reports the same three seed-derived
+  targets, travelling into an already-generated target chunk builds that shrine,
+  and standing in a target chunk at login builds it without a reload. The
+  Survey Map must still wait to place the Meridian Archive.
 - Run `/tbos shrine place curator_workshop`, confirm it builds at your feet, is
   discoverable, and that repeating it moves rather than duplicates the shrine.
 - Use the Archive Survey Map in a world where no shrine has generated. It must

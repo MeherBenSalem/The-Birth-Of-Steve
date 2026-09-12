@@ -29,8 +29,11 @@ player in overworld SavedData, not on the item, so a player who loses or drops t
 Journal is not re-greeted and can recover one with `/tbos debug give_journal`.
 
 Fracture Shrines are planned from the world seed but constructed only when their
-own chunk generates. Discovery is therefore an act of travel rather than a
-world-load side effect, and no login forces three distant regions into existence.
+own chunk loads, including already-generated terrain in an existing save.
+Discovery is therefore an act of travel rather than a world-load side effect, and
+no login force-loads three distant regions. Chunks that are already resident when
+the plan is first created — typical after adding the mod to an existing world —
+are scanned once so a shrine you are already standing on still appears.
 
 ### Utility block presentation
 

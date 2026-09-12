@@ -41,6 +41,22 @@ public final class FractureShrineQueue {
         }
     }
 
+    /**
+     * Queues unbuilt shrines whose chunks are already resident.
+     *
+     * <p>Existing worlds load spawn and logout chunks before {@code SERVER_STARTED},
+     * so those load events can miss the first shrine plan. This never loads new
+     * chunks; travel still materializes distant shrines through {@link #onChunkLoaded}.
+     */
+    public static void enqueueAlreadyLoaded(ServerLevel level) {
+        for (FractureShrinePlan plan : AdventureWorldManager.unbuiltShrines(level)) {
+            ChunkPos chunk = plan.chunk();
+            if (level.hasChunk(chunk.x(), chunk.z())) {
+                enqueue(level, plan);
+            }
+        }
+    }
+
     /** Builds at most one queued shrine. Returns true when a shrine was built. */
     public static boolean drain(ServerLevel level) {
         FractureShrinePlan plan = poll(level);
@@ -55,6 +71,12 @@ public final class FractureShrineQueue {
     public static synchronized void clear() {
         PENDING.clear();
         PENDING_CHUNKS.clear();
+    }
+
+    /** Drops queued work for one dimension. Tests use this to isolate fixtures. */
+    public static synchronized void clear(ServerLevel level) {
+        PENDING.remove(level.dimension());
+        PENDING_CHUNKS.remove(level.dimension());
     }
 
     private static synchronized void enqueue(ServerLevel level, FractureShrinePlan plan) {

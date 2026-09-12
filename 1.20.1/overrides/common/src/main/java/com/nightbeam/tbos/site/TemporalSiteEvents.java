@@ -59,7 +59,11 @@ public final class TemporalSiteEvents {
 
     public static void onServerStarted(MinecraftServer server) {
         server.getAllLevels().forEach(TemporalSiteManager::recover);
-        AdventureWorldManager.plannedShrines(server.overworld());
+        ServerLevel overworld = server.overworld();
+        AdventureWorldManager.plannedShrines(overworld);
+        // Existing worlds already have spawn and logout chunks resident. Scan
+        // those without force-loading the 192-640 shrine ring.
+        FractureShrineQueue.enqueueAlreadyLoaded(overworld);
     }
 
     public static void onServerStopped(MinecraftServer server) {
