@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.1 - 2026-09-12
+
 ### Existing worlds
 
 - **Fracture Shrines now appear in already-created Overworlds.** The plan was
