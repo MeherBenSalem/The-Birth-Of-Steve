@@ -66,7 +66,7 @@ import com.nightbeam.tbos.world.AdventureWorldManager;
 import com.nightbeam.tbos.world.FractureShrinePlacement;
 import com.nightbeam.tbos.world.FractureShrinePlan;
 import com.nightbeam.tbos.world.FractureShrineQueue;
-import com.nightbeam.tbos.world.FractureShrineVariant
+import com.nightbeam.tbos.world.FractureShrineVariant;
 import com.nightbeam.tbos.blockentity.AlignmentDialBlockEntity;
 import com.nightbeam.tbos.blockentity.ArchiveCoreBlockEntity;
 import com.nightbeam.tbos.block.AlignmentDialBlock;
