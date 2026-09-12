@@ -133,6 +133,10 @@ public final class TbosNeoForgeGameTests {
         ModGameTests.fractureShrinePlanIsStableAndBuildsOnce(helper);
     }
     @GameTest(template = "empty", batch = "tbos", timeoutTicks = 1000)
+    public void existingWorldBuildsShrineInResidentChunk(GameTestHelper helper) {
+        ModGameTests.existingWorldBuildsShrineInResidentChunk(helper);
+    }
+    @GameTest(template = "empty", batch = "tbos", timeoutTicks = 1000)
     public void fractureShrinesDistributeAdventureItems(GameTestHelper helper) {
         ModGameTests.fractureShrinesDistributeAdventureItems(helper);
     }

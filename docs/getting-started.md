@@ -16,9 +16,14 @@ or cheats to begin the adventure.
    the same pattern. The jar refuses to load on the wrong Minecraft version
    rather than misbehaving, so if the game reports a version mismatch you have
    the other one.
-3. Launch the game and create or open an Overworld save. For multiplayer, put
-   the same JAR on both the server and every client.
-4. Because this is an alpha, make a backup before updating an existing world.
+3. Launch the game and create or open an Overworld save. Existing worlds work:
+   the first join still grants the Archivist's Journal, and Fracture Shrines
+   appear when their planned chunk is loaded — including terrain that already
+   existed before the mod was installed. For multiplayer, put the same JAR on
+   both the server and every client.
+4. Because this is an alpha, make a backup before adding the mod to an existing
+   world. A shrine carves a small 9×9 ruin into whatever is there; the Meridian
+   Archive is placed later, when you use the Archive Survey Map.
 
 On NeoForge no other mod is required. On Fabric you also need **Fabric API**;
 the 1.21.1 build is tested with Fabric Loader 0.16.9 and Fabric API
@@ -34,8 +39,11 @@ from the last archivist.
 
 Each world plans three Fracture Shrine variants at persistent, world-seeded
 locations scattered 192–640 blocks from world spawn. Their positions do not
-depend on which player joins first, and each shrine is built into the world when
-its own chunk generates, so exploring toward one is what makes it appear.
+depend on which player joins first, and each shrine is built when its own chunk
+is loaded — new terrain or already-generated chunks in an existing save. Exploring
+toward one is what makes it appear. Already-loaded spawn or logout chunks are
+scanned once when the world starts, so a shrine you are already standing on does
+not wait for a reload.
 The first time you reach a shrine it names itself. Explore for a shrine, open its
 Fracture Coffer, recover the **Cracked Yesterglass Lens** and the **Archive Survey
 Map**, plus Memory Plates and Lens repair materials. Repair the lens, then use the
@@ -125,8 +133,10 @@ alter a run can spoil or remove live player progress.
 ## Quick fixes
 
 - **I cannot find a shrine:** reread the Archivist's Journal, or ask an operator
-  to run `/tbos shrine locate`. A shrine only appears once its chunk generates,
-  so keep travelling toward the reported coordinates.
+  to run `/tbos shrine locate`. A shrine only appears once its chunk is loaded,
+  so keep travelling toward the reported coordinates even in an already-explored
+  existing world. Operators can force every planned shrine with
+  `/tbos shrine place_all`.
 - **I cannot find the Archive:** right-click the Archive Survey Map again; it
   reports its coordinates in chat.
 - **A cache will not open:** that is expected—clear the room and break the

@@ -124,6 +124,10 @@ public final class TbosFabricGameTests implements FabricGameTest {
         ModGameTests.fractureShrinePlanIsStableAndBuildsOnce(helper);
     }
     @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void existingWorldBuildsShrineInResidentChunk(GameTestHelper helper) {
+        ModGameTests.existingWorldBuildsShrineInResidentChunk(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
     public void fractureShrinesDistributeAdventureItems(GameTestHelper helper) {
         ModGameTests.fractureShrinesDistributeAdventureItems(helper);
     }

@@ -65,7 +65,8 @@ import com.nightbeam.tbos.run.ArchiveFloorTheme;
 import com.nightbeam.tbos.world.AdventureWorldManager;
 import com.nightbeam.tbos.world.FractureShrinePlacement;
 import com.nightbeam.tbos.world.FractureShrinePlan;
-import com.nightbeam.tbos.world.FractureShrineVariant;
+import com.nightbeam.tbos.world.FractureShrineQueue;
+import com.nightbeam.tbos.world.FractureShrineVariant
 import com.nightbeam.tbos.blockentity.AlignmentDialBlockEntity;
 import com.nightbeam.tbos.blockentity.ArchiveCoreBlockEntity;
 import com.nightbeam.tbos.block.AlignmentDialBlock;
@@ -2883,6 +2884,58 @@ public final class ModGameTests {
             data.setFractureShrines(saved);
         }
         helper.succeed();
+    }
+
+    public static void existingWorldBuildsShrineInResidentChunk(GameTestHelper helper) {
+        net.minecraft.server.level.ServerLevel level = helper.getLevel();
+        TemporalSiteSavedData data = TemporalSiteManager.data(level);
+        List<FractureShrinePlacement> savedPlacements = List.copyOf(data.fractureShrines());
+        List<FractureShrinePlan> savedPlans = List.copyOf(data.plannedShrines());
+        FractureShrineVariant variant = FractureShrineVariant.OBSERVATORY;
+        BlockPos target = helper.absolutePos(new BlockPos(8, 2, 8));
+        try {
+            assertResidentChunkBuildsShrine(helper, level, data, variant, target, true);
+            data.setFractureShrines(List.of());
+            FractureShrineQueue.clear(level);
+            assertResidentChunkBuildsShrine(helper, level, data, variant, target, false);
+        } finally {
+            data.setFractureShrines(savedPlacements);
+            data.setPlannedShrines(savedPlans);
+            FractureShrineQueue.clear(level);
+        }
+        helper.succeed();
+    }
+
+    private static void assertResidentChunkBuildsShrine(
+            GameTestHelper helper,
+            net.minecraft.server.level.ServerLevel level,
+            TemporalSiteSavedData data,
+            FractureShrineVariant variant,
+            BlockPos target,
+            boolean missedLoadEvent) {
+        data.setFractureShrines(List.of());
+        data.setPlannedShrines(List.of(new FractureShrinePlan(variant, target)));
+        FractureShrineQueue.clear(level);
+        helper.assertTrue(!AdventureWorldManager.isShrineBuilt(level, variant),
+                "The existing-world fixture started with a shrine already recorded");
+        if (missedLoadEvent) {
+            FractureShrineQueue.enqueueAlreadyLoaded(level);
+        } else {
+            FractureShrineQueue.onChunkLoaded(level, net.minecraft.world.level.ChunkPos.containing(target));
+        }
+        helper.assertTrue(
+                FractureShrineQueue.drain(level),
+                missedLoadEvent
+                        ? "An already-loaded existing-world chunk did not build its shrine"
+                        : "Reloading an already-generated shrine chunk did not build it");
+        helper.assertTrue(AdventureWorldManager.isShrineBuilt(level, variant),
+                "The existing-world shrine was not recorded after drain");
+        FractureShrinePlacement placement = data.fractureShrines().get(0);
+        helper.assertTrue(
+                level.getBlockState(placement.origin().offset(0, 0, 2)).is(ModBlocks.FRACTURE_COFFER.get()),
+                "The existing-world shrine did not place its Fracture Coffer");
+        helper.assertTrue(!FractureShrineQueue.drain(level),
+                "The existing-world path queued a second shrine build");
     }
 
     public static void forcedShrineRegistersForDiscovery(GameTestHelper helper) {
