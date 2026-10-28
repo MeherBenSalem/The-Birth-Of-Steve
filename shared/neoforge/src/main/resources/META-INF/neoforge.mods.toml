@@ -8,6 +8,7 @@ version = "${version}"
 displayName = "${mod_name}"
 authors = "${mod_author}"
 credits = "${credits}"
+logoFile = "logo.png"
 description = '''${description}'''
 
 [[dependencies.${mod_id}]]

@@ -760,6 +760,8 @@ public final class Expeditions {
         int keyTier = Math.min(RpgConfig.get().expeditions.maxTier, state.key.tier() + state.floorsCleared + state.hourglassWins
                 + Profiles.get(server, viewer).rank(Insight.KEYMAKER));
         body.addProperty("next_key", state.floorsCleared > 0 ? keyTier : 0);
+        body.addProperty("reroll", Profiles.get(server, viewer).rank(Insight.SECOND_DRAFT) > 0
+                && !state.rerollUsed.contains(viewer));
         JsonArray party = new JsonArray();
         state.pools.keySet().forEach(id -> {
             JsonObject member = new JsonObject();

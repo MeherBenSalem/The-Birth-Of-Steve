@@ -95,6 +95,10 @@ public final class RpgCommands {
                     Expeditions.prompt(player(context));
                     return 1;
                 }))
+                .then(Commands.literal("reroll").executes(context -> {
+                    Expeditions.reroll(player(context));
+                    return 1;
+                }))
                 .then(Commands.literal("key").requires(RpgCompat.operator())
                         .then(Commands.argument("tier", IntegerArgumentType.integer(1, 50))
                                 .executes(context -> giveKey(context, ""))

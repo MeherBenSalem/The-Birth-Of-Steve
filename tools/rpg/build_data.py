@@ -202,6 +202,8 @@ def language() -> dict:
     lang = {
         'itemGroup.tbos.yesterglass': 'Remnants: Roguelite Dungeons',
         'key.tbos.codex': 'Open Archive Codex',
+        'memory.tbos.reroll': 'Rewrite Draft',
+        'memory.tbos.reroll.description': 'Second Draft: replace these choices with a fresh draft, once per floor.',
         'item.tbos.memory_key': 'Memory Key',
         'item.tbos.memory_key.tiered_name': 'Memory Key · Tier %s',
         'item.tbos.memory_key.weekly_name': 'Weekly Memory Key · Tier %s',

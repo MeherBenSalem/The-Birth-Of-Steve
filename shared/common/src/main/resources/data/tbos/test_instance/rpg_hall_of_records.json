@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:rpg_hall_of_records",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 20,
+  "padding": 48
+}

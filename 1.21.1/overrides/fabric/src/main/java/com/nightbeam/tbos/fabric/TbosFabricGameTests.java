@@ -60,6 +60,30 @@ public final class TbosFabricGameTests implements FabricGameTest {
         ModGameTests.archiveRoomBlueprintIsBoundedAndWalkable(helper);
     }
     @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void rpgKeyRoundTrip(GameTestHelper helper) {
+        com.nightbeam.tbos.gametest.RpgGameTests.keyRoundTrip(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void rpgWeeklyDeterminism(GameTestHelper helper) {
+        com.nightbeam.tbos.gametest.RpgGameTests.weeklyIsDeterministic(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void rpgRelicGeneration(GameTestHelper helper) {
+        com.nightbeam.tbos.gametest.RpgGameTests.relicGeneration(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void rpgRenownCurve(GameTestHelper helper) {
+        com.nightbeam.tbos.gametest.RpgGameTests.renownCurve(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void rpgHallOfRecords(GameTestHelper helper) {
+        com.nightbeam.tbos.gametest.RpgGameTests.hallOfRecords(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
+    public void rpgDistortionMask(GameTestHelper helper) {
+        com.nightbeam.tbos.gametest.RpgGameTests.distortionMask(helper);
+    }
+    @GameTest(template = "tbos:empty", batch = "tbos", timeoutTicks = 1000)
     public void archiveRunCodecRoundTrip(GameTestHelper helper) {
         ModGameTests.archiveRunCodecRoundTrip(helper);
     }

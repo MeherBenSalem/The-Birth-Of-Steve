@@ -188,6 +188,18 @@ public final class ModGameTests {
             ModRegistries.TEST_FUNCTIONS.register("adventure_world_metadata", () -> ModGameTests::adventureWorldMetadataPersistsCoordinates);
     private static final RegistryEntry<Consumer<GameTestHelper>> FRACTURED_ARCHIVE_DIMENSION =
             ModRegistries.TEST_FUNCTIONS.register("fractured_archive_dimension", () -> ModGameTests::fracturedArchiveDimensionLoads);
+    private static final RegistryEntry<Consumer<GameTestHelper>> RPG_KEY_ROUND_TRIP =
+            ModRegistries.TEST_FUNCTIONS.register("rpg_key_round_trip", () -> RpgGameTests::keyRoundTrip);
+    private static final RegistryEntry<Consumer<GameTestHelper>> RPG_WEEKLY_DETERMINISM =
+            ModRegistries.TEST_FUNCTIONS.register("rpg_weekly_determinism", () -> RpgGameTests::weeklyIsDeterministic);
+    private static final RegistryEntry<Consumer<GameTestHelper>> RPG_RELIC_GENERATION =
+            ModRegistries.TEST_FUNCTIONS.register("rpg_relic_generation", () -> RpgGameTests::relicGeneration);
+    private static final RegistryEntry<Consumer<GameTestHelper>> RPG_RENOWN_CURVE =
+            ModRegistries.TEST_FUNCTIONS.register("rpg_renown_curve", () -> RpgGameTests::renownCurve);
+    private static final RegistryEntry<Consumer<GameTestHelper>> RPG_HALL_OF_RECORDS =
+            ModRegistries.TEST_FUNCTIONS.register("rpg_hall_of_records", () -> RpgGameTests::hallOfRecords);
+    private static final RegistryEntry<Consumer<GameTestHelper>> RPG_DISTORTION_MASK =
+            ModRegistries.TEST_FUNCTIONS.register("rpg_distortion_mask", () -> RpgGameTests::distortionMask);
     private static final RegistryEntry<Consumer<GameTestHelper>> ARCHIVE_RUN_CODEC =
             ModRegistries.TEST_FUNCTIONS.register("archive_run_codec", () -> ModGameTests::archiveRunCodecRoundTrip);
     private static final RegistryEntry<Consumer<GameTestHelper>> ARCHIVE_RUN_STORAGE =

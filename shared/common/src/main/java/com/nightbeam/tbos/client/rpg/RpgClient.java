@@ -29,6 +29,11 @@ public final class RpgClient {
     private RpgClient() {
     }
 
+    /** Second Draft is learned and unspent on this floor. */
+    public static boolean rerollAvailable() {
+        return expedition != null && Json.bool(expedition, "reroll", false);
+    }
+
     public static void send(String action, JsonObject body) {
         body.addProperty("a", action);
         Services.NETWORK.sendToServer(new RpgActionPayload(body.toString()));
@@ -62,7 +67,12 @@ public final class RpgClient {
                 codex = body;
             }
             case "open_codex" -> Canvas.open(new CodexScreen(Json.integer(body, "tab", 0)));
-            case "exp" -> expedition = Json.bool(body, "none", false) ? null : body;
+            case "exp" -> {
+                expedition = Json.bool(body, "none", false) ? null : body;
+                if (Canvas.current() instanceof com.nightbeam.tbos.client.MemoryScreen screen) {
+                    screen.refresh();
+                }
+            }
             case "party" -> party = Json.arr(body, "members").isEmpty() ? null : body;
             case "attune" -> {
                 attune = body;

@@ -51,7 +51,8 @@ public final class MemoryScreen extends Screen {
         MemoryBuild b=MemoryClient.build;
         int hash=Objects.hash(b==null?0:b.slots,b==null?0:b.offers,b==null?0:b.draft,b==null?0:b.abilities,
             b==null?0:b.artifacts,b==null?0:b.enhanced,b!=null&&b.overwritten,b!=null&&b.continueVote,
-            MemoryClient.climax,MemoryClient.station,MemoryClient.safe,selectedSlot,page,artifact,debt,width,height);
+            MemoryClient.climax,MemoryClient.station,MemoryClient.safe,selectedSlot,page,artifact,debt,width,height,
+            com.nightbeam.tbos.client.rpg.RpgClient.rerollAvailable());
         if(hash==stateHash&&!children().isEmpty())return;
         stateHash=hash;clearWidgets();
         int x=left()+12,y=top(),w=panelWidth()-24,third=(w-6)/3;
@@ -100,6 +101,10 @@ public final class MemoryScreen extends Screen {
             action(x,body+91,w,22,tr("memory.tbos.overwrite.accept"),null,-1,false,enabled,()->MemoryClient.request(3,artifact,debt),tr("memory.tbos.trial"));
         }
         action(x+w-72,y+panelHeight()-25,72,18,tr(journal==null?"gui.done":"memory.tbos.back_book"),null,-1,false,true,this::onClose,null);
+        if(b!=null&&page==3&&!b.offers.isEmpty()&&com.nightbeam.tbos.client.rpg.RpgClient.rerollAvailable()) {
+            action(x,y+panelHeight()-25,w-80,18,tr("memory.tbos.reroll"),null,-1,false,true,
+                ()->com.nightbeam.tbos.client.rpg.RpgClient.send("reroll"),tr("memory.tbos.reroll.description"));
+        }
         if(b!=null&&MemoryClient.climax&&page==2) {
             action(x,y+panelHeight()-25,90,18,tr("memory.tbos.extract"),null,-1,false,true,()->MemoryClient.request(5,0,0),tr("memory.tbos.extract.description"));
             action(x+94,y+panelHeight()-25,w-174,18,tr(b.continueVote?"memory.tbos.voted":"memory.tbos.continue"),null,-1,b.continueVote,!b.continueVote,()->MemoryClient.request(4,0,0),tr("memory.tbos.continue.description"));
