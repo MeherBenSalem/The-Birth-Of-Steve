@@ -69,6 +69,8 @@ public final class TbosNeoForgeClient {
         YesterglassClient.init();
         NeoForgeNetworkHelper.clientDispatch().put(com.nightbeam.tbos.network.payload.MemorySnapshotPayload.ID,
             packet -> com.nightbeam.tbos.client.MemoryClient.accept((com.nightbeam.tbos.network.payload.MemorySnapshotPayload) packet));
+        NeoForgeNetworkHelper.clientDispatch().put(com.nightbeam.tbos.network.payload.RpgSyncPayload.ID,
+            packet -> com.nightbeam.tbos.client.rpg.RpgClient.accept(((com.nightbeam.tbos.network.payload.RpgSyncPayload) packet).json()));
         registerClientDispatch();
     }
 
@@ -86,6 +88,11 @@ public final class TbosNeoForgeClient {
                 VanillaGuiOverlay.HOTBAR.id(),
                 "archive_floor_intro",
                 (forgeGui, graphics, partialTick, width, height) -> ArchiveFloorIntroHud.render(graphics, partialTick));
+        event.registerAbove(
+                VanillaGuiOverlay.HOTBAR.id(),
+                "expedition",
+                (forgeGui, graphics, partialTick, width, height) -> com.nightbeam.tbos.client.rpg.RpgHud.render(
+                        new com.nightbeam.tbos.client.rpg.Canvas(graphics)));
     }
 
     @SubscribeEvent
@@ -102,6 +109,7 @@ public final class TbosNeoForgeClient {
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(ModKeyMappings.TOGGLE_OBJECTIVES);
         event.register(ModKeyMappings.MEMORY_LOADOUT);
+        event.register(ModKeyMappings.CODEX);
         for(var key:ModKeyMappings.MEMORY_SLOTS) event.register(key);
     }
 
@@ -167,6 +175,7 @@ public final class TbosNeoForgeClient {
         public static void onClientTick(TickEvent.ClientTickEvent event) {
             if (event.phase == TickEvent.Phase.END) {
                 ClientEvents.onClientTick(Minecraft.getInstance());
+                com.nightbeam.tbos.client.rpg.RpgClient.tick(Minecraft.getInstance());
             }
         }
     }

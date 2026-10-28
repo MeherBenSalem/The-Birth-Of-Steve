@@ -54,6 +54,9 @@ public final class TbosFabricClient implements ClientModInitializer {
         registerRenderLayers();
         registerClientPayloads();
         KeyBindingHelper.registerKeyBinding(ModKeyMappings.TOGGLE_OBJECTIVES);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.MEMORY_LOADOUT);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.CODEX);
+        for (var key : ModKeyMappings.MEMORY_SLOTS) KeyBindingHelper.registerKeyBinding(key);
         YesterglassClient.forEachLayerDefinition(
                 (layer, definition) -> EntityModelLayerRegistry.registerModelLayer(layer, definition::get));
         registerRenderers();
@@ -61,8 +64,10 @@ public final class TbosFabricClient implements ClientModInitializer {
             ArchiveQuestHud.render(graphics, partialTick);
             ArchivePuzzleHud.render(graphics, partialTick);
             ArchiveFloorIntroHud.render(graphics, partialTick);
+            com.nightbeam.tbos.client.rpg.RpgHud.render(new com.nightbeam.tbos.client.rpg.Canvas(graphics));
         });
         ClientTickEvents.END_CLIENT_TICK.register(ClientEvents::onClientTick);
+        ClientTickEvents.END_CLIENT_TICK.register(com.nightbeam.tbos.client.rpg.RpgClient::tick);
         UseItemCallback.EVENT.register((player, level, hand) -> interactItem(player.getItemInHand(hand), hand));
         UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> interact(hand));
     }
@@ -107,6 +112,11 @@ public final class TbosFabricClient implements ClientModInitializer {
      * every server-to-client update, the journal snapshot included.
      */
     private static void registerClientPayloads() {
+        ClientPlayNetworking.registerGlobalReceiver(com.nightbeam.tbos.network.payload.RpgSyncPayload.ID,
+                (client, handler, buf, sender) -> {
+                    var payload = com.nightbeam.tbos.network.payload.RpgSyncPayload.read(buf);
+                    client.execute(() -> com.nightbeam.tbos.client.rpg.RpgClient.accept(payload.json()));
+                });
         ClientPlayNetworking.registerGlobalReceiver(MemorySnapshotPayload.ID,(client,handler,buf,sender) -> {
             MemorySnapshotPayload payload=MemorySnapshotPayload.read(buf);
             client.execute(() -> com.nightbeam.tbos.client.MemoryClient.accept(payload));

@@ -75,7 +75,9 @@ public final class NeoForgeNetworkHelper implements INetworkHelper {
             if (sender == null) {
                 return;
             }
-            if (packet instanceof com.nightbeam.tbos.network.payload.MemoryActionRequest request) {
+            if (packet instanceof com.nightbeam.tbos.network.payload.RpgActionPayload action) {
+                com.nightbeam.tbos.rpg.RpgNet.handleAction(sender, action.json());
+            } else if (packet instanceof com.nightbeam.tbos.network.payload.MemoryActionRequest request) {
                 com.nightbeam.tbos.memory.MemoryService.request(sender,request.action(),request.first(),request.second());
             } else if (packet.id().equals(LensUseRequest.ID)) {
                 YesterglassNetwork.handleLensUse(sender);
@@ -148,7 +150,11 @@ public final class NeoForgeNetworkHelper implements INetworkHelper {
         private static TbosMessage decode(FriendlyByteBuf buffer) {
             ResourceLocation id = buffer.readResourceLocation();
             TbosPacket packet;
-            if (id.equals(com.nightbeam.tbos.network.payload.MemoryActionRequest.ID)) {
+            if (id.equals(com.nightbeam.tbos.network.payload.RpgActionPayload.ID)) {
+                packet = com.nightbeam.tbos.network.payload.RpgActionPayload.read(buffer);
+            } else if (id.equals(com.nightbeam.tbos.network.payload.RpgSyncPayload.ID)) {
+                packet = com.nightbeam.tbos.network.payload.RpgSyncPayload.read(buffer);
+            } else if (id.equals(com.nightbeam.tbos.network.payload.MemoryActionRequest.ID)) {
                 packet=com.nightbeam.tbos.network.payload.MemoryActionRequest.read(buffer);
             } else if (id.equals(com.nightbeam.tbos.network.payload.MemorySnapshotPayload.ID)) {
                 packet=com.nightbeam.tbos.network.payload.MemorySnapshotPayload.read(buffer);

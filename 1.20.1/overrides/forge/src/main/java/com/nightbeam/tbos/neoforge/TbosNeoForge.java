@@ -62,6 +62,8 @@ public final class TbosNeoForge {
         MinecraftForge.EVENT_BUS.addListener(net.minecraftforge.eventbus.api.EventPriority.LOWEST, false,
                 net.minecraftforge.event.entity.living.LivingDamageEvent.class, TbosNeoForge::memoryDamaged);
         MinecraftForge.EVENT_BUS.addListener(TbosNeoForge::onLivingHeal);
+        MinecraftForge.EVENT_BUS.addListener(TbosNeoForge::onServerStopping);
+        MinecraftForge.EVENT_BUS.addListener(TbosNeoForge::onPlayerLoggedOut);
     }
 
     private static void registerGameTests(RegisterGameTestsEvent event) {
@@ -74,6 +76,7 @@ public final class TbosNeoForge {
 
     private static void onRegisterCommands(RegisterCommandsEvent event) {
         YesterglassCommands.register(event.getDispatcher());
+        com.nightbeam.tbos.rpg.RpgEvents.registerCommands(event.getDispatcher());
     }
 
     private static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -82,10 +85,22 @@ public final class TbosNeoForge {
         }
         TemporalSiteEvents.onServerTick(event.getServer());
         ArchiveRunEvents.onServerTick(event.getServer());
+        com.nightbeam.tbos.rpg.RpgEvents.onServerTick(event.getServer());
     }
 
     private static void onServerStarted(ServerStartedEvent event) {
         TemporalSiteEvents.onServerStarted(event.getServer());
+        com.nightbeam.tbos.rpg.RpgEvents.onServerStarted(event.getServer());
+    }
+
+    private static void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+        com.nightbeam.tbos.rpg.RpgEvents.onServerStopping(event.getServer());
+    }
+
+    private static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            com.nightbeam.tbos.rpg.RpgEvents.onPlayerLeave(player);
+        }
     }
 
     private static void onServerStopped(ServerStoppedEvent event) {
@@ -97,6 +112,7 @@ public final class TbosNeoForge {
         if (event.getEntity() instanceof ServerPlayer player) {
             TemporalSiteEvents.onPlayerLoggedIn(player);
             ArchiveRunEvents.onPlayerLoggedIn(player);
+            com.nightbeam.tbos.rpg.RpgEvents.onPlayerJoin(player);
         }
     }
 
@@ -146,7 +162,9 @@ public final class TbosNeoForge {
     private static void onLivingDeath(LivingDeathEvent event) {
         if (!ArchiveRunEvents.allowDeath(event.getEntity())) {
             event.setCanceled(true);
+            return;
         }
+        com.nightbeam.tbos.rpg.RpgEvents.onLivingDeath(event.getEntity(), event.getSource());
     }
 
     private static void onLivingHeal(LivingHealEvent event) {
