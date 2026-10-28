@@ -13,6 +13,13 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:${fabric_version}")
 }
 
+// Fabric API 0.109.0's own module list names Resource Loader 1.3.1, but its Loot API v2
+// asks for 2.0.0, whose Language mixin targets 1.21.2+ and fails on 1.21.1. Gradle would
+// pick the higher one for the dev runs and GameTests; players' Fabric API is unaffected.
+configurations.configureEach {
+    resolutionStrategy.force("net.fabricmc.fabric-api:fabric-resource-loader-v0:1.3.1+5b5275af19")
+}
+
 def accessWidener = resolveSharedFile('common', 'resources', "${mod_id}.accesswidener")
 
 // Loom scans source resource directories for fabric.mod.json before Gradle's

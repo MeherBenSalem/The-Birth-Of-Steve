@@ -331,6 +331,65 @@ manual sign-off items.
 Results remain unverified until recorded with the exact command or test
 procedure.
 
+## Automated results — 2026-10-28 (1.0.0 Remember or Forget)
+
+Each target was built with `./gradlew -p <version> build` and its GameTests run on
+both loaders with `./gradlew -p <version> :<loader>:runGameTestServer --console=plain`
+(JDK 17 for 1.20.1, 21 for 1.21.1, 25 for 26.x).
+
+| Minecraft | Build | NeoForge / Forge GameTests | Fabric GameTests |
+| --- | --- | --- | --- |
+| 26.1.2 | PASS | **All 68 required tests passed** | **All 68 required tests passed** |
+| 26.2 | PASS | **All 68 required tests passed** | **All 68 required tests passed** |
+| 26.3 | PASS | **All 68 required tests passed** | **All 68 required tests passed** |
+| 1.21.1 | PASS | **All 66 required tests passed** | **All 66 required tests passed** |
+| 1.20.1 | PASS | **All 66 required tests passed** (Forge) | **All 66 required tests passed** |
+
+- The ten release jars are `tbos-{fabric,neoforge}-{26.1.2,26.2,26.3,1.21.1}-1.0.0.jar`,
+  `tbos-fabric-1.20.1-1.0.0.jar` and `tbos-forge-1.20.1-1.0.0.jar`.
+- The six `rpg_*` tests (`rpg_key_round_trip`, `rpg_weekly_determinism`,
+  `rpg_relic_generation`, `rpg_renown_curve`, `rpg_hall_of_records` and
+  `rpg_distortion_mask`) are the 1.0 additions to the suite on every target.
+- **1.21.1 Fabric.** Its GameTests had not been able to start: Fabric API 0.109.0's
+  Loot API v2 asks for Resource Loader 2.0.0, Gradle picked it over the 1.3.1 that
+  Fabric API itself lists, and 2.0.0's `LanguageMixin` targets a `Map.copyOf` call that
+  1.21.1's `Language.loadDefault` does not make, so the first translated string
+  crashed the dev server. `1.21.1/fabric/build.gradle` now pins Resource Loader to
+  1.3.1. Players' Fabric API was never affected. CI runs only the NeoForge and Forge
+  suites, which is why this went unseen.
+- **1.20.1 Forge.** Its GameTest server reopened `forge/run/world`, so every local run
+  after the first started in the world the earlier runs had saved, and
+  `curator_runtime`, which counts the Curator Core items inside the Orrery's bounds,
+  failed with "Curator did not drop exactly one reward" twice in a row. CI was green
+  because it always starts from a clean checkout. The run now has its own
+  `forge/run/gametest` directory, and its world is deleted before every run.
+  Verified with two consecutive runs.
+
+## Manual results — 2026-10-28 (1.0.0 in-game QA)
+
+On the 26.1.2 Fabric dev server and client (`tools/qa/devrun.sh`, world
+`archive_showcase`, seed `remnants-archive`), driven by
+`marketing/source/capture.py`:
+
+- A Waystone opened Attunement for tier 7 and 9 keys. Toggling Distortions updated
+  Heat, Fracture, the reward factor and the Relic odds, and Begin started the
+  Expedition.
+- Rooms cleared one by one credited 15 × R Renown, wardens 40 × R and the floor boss
+  120 × R plus a sealed Relic (R = 2.17 at tier 7 with Heat 3).
+- The Remember or Forget choice opened by itself when the reward room was cleared.
+  Remember sent the player home and opened the Remembered reveal there with the
+  Renown, the Relic and a tier 9 key. Before the fix in this release the level
+  loading screen replaced that reveal.
+- The Codex levelled from banked Renown, Insights were spent from the Insights page,
+  the Bestiary credited only player kills, and Records and the Hall of Records
+  updated after each Remember.
+- This week's Weekly key was claimed from the Codex, played and Remembered, and the
+  Weekly tab ranked it.
+- A tier 9 key used on the well of the seed's nearest plains village opened
+  "Recollection of the Plains Village". Away from a structure piece the key said
+  where it can be used.
+- Relic tooltips showed rarity, item level, affixes, a Remnant signature and lore.
+
 ## Manual results — 2026-07-22
 
 - `gradlew.bat runClient --stacktrace --console=plain`: PASS for interactive client

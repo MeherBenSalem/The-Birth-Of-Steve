@@ -40,6 +40,10 @@ legacyForge {
         // rather than deferring to Fabric's.
         gameTestServer {
             type = 'gameTestServer'
+            // Its own directory, with the world deleted before every run (below): this
+            // test server reopens the last world, and an item an earlier run left behind
+            // fails the tests that count drops.
+            gameDirectory = project.file('run/gametest')
         }
     }
 
@@ -51,6 +55,12 @@ legacyForge {
 }
 
 sourceSets.main.resources.srcDir 'src/generated/resources'
+
+tasks.named('runGameTestServer') {
+    doFirst {
+        delete(project.file('run/gametest/world'))
+    }
+}
 
 // The forge module inherits the shared neoforge resource tree, but Minecraft
 // 1.20.1 Forge reads META-INF/mods.toml (provided by the target override), not
