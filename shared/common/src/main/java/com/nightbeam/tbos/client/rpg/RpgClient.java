@@ -23,6 +23,13 @@ public final class RpgClient {
     /** Renown level-up banner: the new level and when it was shown. */
     public static int bannerLevel;
     public static long bannerAt;
+    /**
+     * A reveal waiting to be seen. Remembering or failing ends the run and sends you
+     * home, and the level-loading screen would replace the reveal, so it is reopened
+     * once the new level is up.
+     */
+    private static JsonObject pendingReveal;
+    private static RecollectionScreen.Mode pendingMode;
     private static long lastHourglassSecond = -1;
     private static int lastLevel = -1;
 
@@ -90,16 +97,24 @@ public final class RpgClient {
                 choice = body;
                 Canvas.open(new RecollectionScreen(RecollectionScreen.Mode.CHOICE, body));
             }
-            case "banked" -> {
-                choice = null;
-                Canvas.open(new RecollectionScreen(RecollectionScreen.Mode.BANKED, body));
-            }
-            case "forgotten" -> {
-                choice = null;
-                Canvas.open(new RecollectionScreen(RecollectionScreen.Mode.FORGOTTEN, body));
-            }
+            case "banked" -> reveal(RecollectionScreen.Mode.BANKED, body);
+            case "forgotten" -> reveal(RecollectionScreen.Mode.FORGOTTEN, body);
             default -> {
             }
+        }
+    }
+
+    private static void reveal(RecollectionScreen.Mode mode, JsonObject body) {
+        choice = null;
+        pendingReveal = body;
+        pendingMode = mode;
+        Canvas.open(new RecollectionScreen(mode, body));
+    }
+
+    /** The player closed a Recollection screen showing {@code body}. */
+    static void dismissed(JsonObject body) {
+        if (body == pendingReveal) {
+            pendingReveal = null;
         }
     }
 
@@ -120,8 +135,13 @@ public final class RpgClient {
             party = null;
             attune = null;
             choice = null;
+            pendingReveal = null;
             lastLevel = -1;
             return;
+        }
+        // A reveal stays pending until the player closes it, so the trip home cannot swallow it.
+        if (pendingReveal != null && Canvas.current() == null) {
+            Canvas.open(new RecollectionScreen(pendingMode, pendingReveal));
         }
         // The Hourglass ticks audibly through its last minute.
         if (expedition != null) {

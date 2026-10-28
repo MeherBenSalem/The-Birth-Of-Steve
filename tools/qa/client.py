@@ -42,7 +42,9 @@ class Session:
             dx, dy, dz = facing[0] - x, facing[1] - (y + eye), facing[2] - z
             yaw = math.degrees(math.atan2(-dx, dz))
             pitch = -math.degrees(math.atan2(dy, math.hypot(dx, dz)))
-        return self.cmd(f'tp {PLAYER} {x} {y} {z} {yaw or 0:.2f} {pitch or 0:.2f}')
+        # Run at the player so the teleport stays in their dimension: a bare RCON `tp` runs in the
+        # overworld and would pull the player out of the Archive.
+        return self.cmd(f'execute at {PLAYER} run tp {PLAYER} {x} {y} {z} {yaw or 0:.2f} {pitch or 0:.2f}')
 
     # Client side
     def xdo(self, *args):

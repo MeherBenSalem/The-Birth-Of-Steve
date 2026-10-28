@@ -61,18 +61,15 @@ A file whose *body* differs on 1.20.1 still belongs here, at its shared
 ## GameTests
 
 `gradlew.bat -p 1.20.1 :fabric:runGameTestServer` is this target's test gate and
-runs all 56 shared tests green. The root `gameTest` task routes 1.20.1 there.
+runs all 66 shared tests green (60 dungeon and campaign tests plus the six 1.0
+`RpgGameTests`). The root `gameTest` task routes 1.20.1 there.
 
 `:forge:runGameTestServer` is wired to Forge's real `gameTestServer` launch
-target and does run the suite, but 14 tests fail on it for a reason outside this
-mod: `GameTestHelper.makeMockServerPlayerInLevel()` calls
-`PlayerList.placeNewPlayer` with a `Connection` that has no netty channel, and
-Forge patches that join path to call `NetworkFilters.injectIfNecessary`, which
-dereferences `channel().pipeline()`. Vanilla tolerates a channel-less connection
-— `Connection.send` only queues while disconnected — which is why the same tests
-pass under Fabric. Substituting a hand-built mock player was tried and rejected:
-it cannot reproduce what `placeNewPlayer` sets up, and it cost four Fabric tests
-to recover ten Forge ones.
+target and, as of 1.0.0, also passes all 66. Earlier builds lost 14 tests on Forge
+because `GameTestHelper.makeMockServerPlayerInLevel()` joins a mock player whose
+`Connection` has no netty channel, and Forge's join path dereferenced
+`channel().pipeline()`. If that ever returns, it is outside this mod: vanilla
+tolerates a channel-less connection, which is why Fabric was chosen as the gate.
 
 The all-air `tbos:empty` template is 97x32x97, preserving the 48-block test
 isolation that the 26.x data-driven instances supply as padding. Forge composes

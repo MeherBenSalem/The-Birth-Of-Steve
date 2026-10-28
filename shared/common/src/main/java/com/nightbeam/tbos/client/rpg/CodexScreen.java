@@ -20,7 +20,7 @@ import net.minecraft.network.chat.Component;
  */
 public final class CodexScreen extends RpgScreen {
     private static final int W = 368;
-    private static final int H = 244;
+    private static final int H = 256;
     private static final String[] TABS = {"insights", "bestiary", "records", "weekly"};
     private static final int[] TAB_ICONS = {Icons.INSIGHT, Icons.BESTIARY, Icons.RECORDS, Icons.WEEKLY};
     private final RpgUi ui = new RpgUi();
@@ -84,7 +84,6 @@ public final class CodexScreen extends RpgScreen {
     private void drawHeader(Canvas c, int x, int y, JsonObject data) {
         c.icon(Icons.RENOWN, x + 12, y + 8, 22, 0xFFFFFFFF);
         c.text(Component.translatable("screen.tbos.codex.title"), x + 38, y + 10, RpgUi.INK, false);
-        c.text(Component.translatable("screen.tbos.codex.subtitle"), x + 38, y + 21, RpgUi.MUTED, false);
         int level = Json.integer(data, "level", 1);
         int max = Json.integer(data, "max_level", 30);
         long progress = Json.lng(data, "progress", 0);
@@ -96,7 +95,10 @@ public final class CodexScreen extends RpgScreen {
         c.progress(rx - 110, y + 21, 110, 4, capped ? 1F : (float) progress / needed, capped);
         String renown = capped ? Component.translatable("screen.tbos.codex.max").getString()
                 : RpgUi.number(progress) + " / " + RpgUi.number(needed);
-        c.text(renown, rx - 110 - 4 - Canvas.width(renown), y + 19, RpgUi.MUTED, false);
+        int renownX = rx - 110 - 4 - Canvas.width(renown);
+        c.text(renown, renownX, y + 19, RpgUi.MUTED, false);
+        c.text(RpgUi.fit(Component.translatable("screen.tbos.codex.subtitle").getString(), renownX - 8 - (x + 38)), x + 38, y + 21,
+                RpgUi.MUTED, false);
     }
 
     // ---- Insights ---------------------------------------------------------------------------------------
@@ -126,15 +128,14 @@ public final class CodexScreen extends RpgScreen {
             int tile = maxed ? GreekGui.COMPLETE : rank > 0 ? GreekGui.SELECTED : over && learnable ? GreekGui.HOVER : learnable ? GreekGui.CARD : GreekGui.LOCKED;
             c.panel(tile, cx, cy, cardW, cardH);
             c.icon(Icons.insight(i), cx + 4, cy + 4, 22, rank > 0 || learnable ? 0xFFFFFFFF : 0x90FFFFFF);
-            boolean dark = tile == GreekGui.SELECTED;
-            c.text(RpgUi.fit(Component.translatable(insight.key()).getString(), cardW - 32), cx + 29, cy + 6,
-                    dark ? RpgUi.LIGHT : RpgUi.INK, dark);
+            // Learned tiles are the light parchment SELECTED tile with a teal rim, so the text stays ink.
+            RpgUi.twoLines(c, Component.translatable(insight.key()).getString(), cx + 29, cy + 4, cardW - 32, RpgUi.INK, false);
             for (int r = 0; r < insight.maxRanks; r++) {
-                int pip = r < rank ? (dark ? 0xFFF3EBDD : 0xFF205C59) : 0x55302B24;
-                c.fill(cx + 29 + r * 8, cy + 19, 6, 6, pip);
+                int pip = r < rank ? 0xFF205C59 : 0x55302B24;
+                c.fill(cx + 6 + r * 8, cy + 30, 6, 6, pip);
             }
-            c.text(rank + "/" + insight.maxRanks, cx + cardW - 6 - Canvas.width(rank + "/" + insight.maxRanks), cy + 28,
-                    dark ? RpgUi.LIGHT_TEAL : RpgUi.MUTED, false);
+            c.text(rank + "/" + insight.maxRanks, cx + cardW - 6 - Canvas.width(rank + "/" + insight.maxRanks), cy + 29,
+                    rank > 0 ? RpgUi.TEAL : RpgUi.MUTED, false);
             ui.area(cx, cy, cardW, cardH, learnable, () -> {
                 JsonObject body = new JsonObject();
                 body.addProperty("insight", insight.id());
@@ -268,10 +269,12 @@ public final class CodexScreen extends RpgScreen {
             int color = i == 0 ? 0xFFB07A1E : i < 3 ? RpgUi.BRONZE : RpgUi.INK;
             c.text((i + 1) + ".", x, y + i * 11, color, false);
             c.text(RpgUi.fit(Json.str(entry, "name", "?"), w - 70), x + 16, y + i * 11, color, false);
+            long floors = Json.lng(entry, "floor", 0);
             String value = weekly
-                    ? Component.translatable("screen.tbos.codex.records.floor_short", Json.lng(entry, "floor", 0)).getString()
-                    : Component.translatable("screen.tbos.codex.records.tier_short", Json.integer(entry, "tier", 0),
-                    Json.lng(entry, "floor", 0)).getString();
+                    ? (floors == 1 ? Component.translatable("screen.tbos.codex.records.floor_short_one")
+                            : Component.translatable("screen.tbos.codex.records.floor_short", floors)).getString()
+                    : (floors == 1 ? Component.translatable("screen.tbos.codex.records.tier_short_one", Json.integer(entry, "tier", 0))
+                            : Component.translatable("screen.tbos.codex.records.tier_short", Json.integer(entry, "tier", 0), floors)).getString();
             c.text(value, x + w - Canvas.width(value), y + i * 11, RpgUi.MUTED, false);
         }
     }
@@ -303,7 +306,9 @@ public final class CodexScreen extends RpgScreen {
             line += 15;
         }
         long best = Json.lng(weekly, "best", 0);
-        c.text(Component.translatable("screen.tbos.codex.weekly.best", best), x + 10, y + h - 46, RpgUi.MUTED, false);
+        String bestText = (best == 1 ? Component.translatable("screen.tbos.codex.weekly.best_one")
+                : Component.translatable("screen.tbos.codex.weekly.best", best)).getString();
+        c.text(RpgUi.fit(bestText, half - 20), x + 10, y + h - 46, RpgUi.MUTED, false);
         boolean claimed = Json.bool(weekly, "claimed", false);
         ui.button(c, x + 10, y + h - 30, half - 20, 20,
                 Component.translatable(claimed ? "screen.tbos.codex.weekly.claimed" : "screen.tbos.codex.weekly.claim"),

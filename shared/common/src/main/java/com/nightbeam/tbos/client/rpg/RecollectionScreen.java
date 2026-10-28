@@ -50,6 +50,12 @@ public final class RecollectionScreen extends RpgScreen {
     }
 
     @Override
+    public void onClose() {
+        RpgClient.dismissed(data);
+        super.onClose();
+    }
+
+    @Override
     protected void draw(Canvas c, int mx, int my, float partialTick) {
         ui.begin();
         switch (mode) {
@@ -63,7 +69,7 @@ public final class RecollectionScreen extends RpgScreen {
 
     private void drawChoice(Canvas c, int mx, int my) {
         JsonObject live = RpgClient.expedition != null ? RpgClient.expedition : data;
-        int h = 214;
+        int h = 226;
         int x = (c.width() - W) / 2;
         int y = (c.height() - h) / 2;
         c.fill(0, 0, c.width(), c.height(), 0xA0000000);
@@ -86,7 +92,9 @@ public final class RecollectionScreen extends RpgScreen {
         c.text(Component.translatable("screen.tbos.recollection.momentum", String.format(Locale.ROOT, "%.2f", momentum)),
                 wx + 34, wy + 20, RpgUi.MUTED, false);
         c.icon(Icons.RELIC, wx + ww / 2 + 6, wy + 7, 22, 0xFFFFFFFF);
-        c.text(Component.translatable("screen.tbos.recollection.sealed", Json.integer(live, "relics", 0)),
+        int sealed = Json.integer(live, "relics", 0);
+        c.text(sealed == 1 ? Component.translatable("screen.tbos.recollection.sealed_one")
+                : Component.translatable("screen.tbos.recollection.sealed", sealed),
                 wx + ww / 2 + 32, wy + 9, RpgUi.INK, false);
         int nextKey = Json.integer(live, "next_key", 0);
         c.text(nextKey > 0 ? Component.translatable("screen.tbos.recollection.next_key", nextKey)
@@ -109,10 +117,10 @@ public final class RecollectionScreen extends RpgScreen {
         boolean voted = Json.bool(live, "voted", false);
         int cardW = (W - 28 - 8) / 2;
         int cy = wy + 66;
-        card(c, mx, my, x + 14, cy, cardW, 74, Icons.REMEMBER, GreekGui.HOVER,
+        card(c, mx, my, x + 14, cy, cardW, 86, Icons.REMEMBER, GreekGui.HOVER,
                 Component.translatable("screen.tbos.recollection.remember"),
                 Component.translatable("screen.tbos.recollection.remember.description"), choice, () -> RpgClient.send("remember"));
-        card(c, mx, my, x + 14 + cardW + 8, cy, cardW, 74, Icons.FORGET, GreekGui.SELECTED,
+        card(c, mx, my, x + 14 + cardW + 8, cy, cardW, 86, Icons.FORGET, GreekGui.SELECTED,
                 Component.translatable(voted ? "screen.tbos.recollection.forget_voted" : "screen.tbos.recollection.forget"),
                 Component.translatable("screen.tbos.recollection.forget.description",
                         String.format(Locale.ROOT, "%.2f", momentum + 0.25)), choice && !voted, () -> RpgClient.send("forget"));
@@ -125,7 +133,7 @@ public final class RecollectionScreen extends RpgScreen {
         c.panel(!enabled ? GreekGui.DISABLED : over ? hoverTile : GreekGui.CARD, x, y, w, h);
         c.icon(icon, x + 8, y + 8, 28, enabled ? 0xFFFFFFFF : 0x80FFFFFF);
         c.text(RpgUi.fit(title.getString(), w - 50), x + 42, y + 12, enabled ? RpgUi.INK : RpgUi.MUTED, false);
-        RpgUi.paragraph(c, body, x + 8, y + 40, w - 16, RpgUi.MUTED, 3);
+        RpgUi.paragraph(c, body, x + 8, y + 40, w - 16, RpgUi.MUTED, 4);
         ui.area(x, y, w, h, enabled, action);
     }
 
@@ -221,7 +229,9 @@ public final class RecollectionScreen extends RpgScreen {
                 c.icon(Icons.KEY, cx + cardW / 2 - 14, cy + 14, 28, 0xFFFFFFFF);
                 Component tier = Component.translatable("screen.tbos.recollection.key_card", Json.integer(data, "key", 0));
                 String text = RpgUi.fit(tier.getString(), cardW - 6);
-                c.text(text, cx + (cardW - Canvas.width(text)) / 2, cy + 52, RpgUi.INK, false);
+                c.text(text, cx + (cardW - Canvas.width(text)) / 2, cy + 50, RpgUi.INK, false);
+                String kind = RpgUi.fit(Component.translatable("screen.tbos.recollection.key_card.kind").getString(), cardW - 6);
+                c.text(kind, cx + (cardW - Canvas.width(kind)) / 2, cy + 62, RpgUi.MUTED, false);
             }
         }
         boolean done = revealed >= total && t > 1300;

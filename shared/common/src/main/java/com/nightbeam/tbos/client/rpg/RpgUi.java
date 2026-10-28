@@ -45,15 +45,15 @@ public final class RpgUi {
         return mx >= x && my >= y && mx < x + w && my < y + h;
     }
 
-    /** A Greek-panel button. {@code primary} uses the gold tile at rest. */
+    /** A Greek-panel button. {@code primary} uses the teal-edged tile and teal label at rest. */
     public boolean button(Canvas c, int x, int y, int w, int h, Component label, int mx, int my,
             boolean enabled, boolean primary, Runnable action) {
         boolean hovered = enabled && over(mx, my, x, y, w, h);
         int tile = !enabled ? GreekGui.DISABLED : hovered ? GreekGui.HOVER : primary ? GreekGui.SELECTED : GreekGui.BUTTON;
         c.panel(tile, x, y, w, h);
-        int color = !enabled ? MUTED : primary && !hovered ? LIGHT : INK;
+        int color = !enabled ? MUTED : primary && !hovered ? TEAL : INK;
         String text = fit(label.getString(), w - 8);
-        c.text(text, x + (w - Canvas.width(text)) / 2, y + (h - 8) / 2, color, primary && !hovered);
+        c.text(text, x + (w - Canvas.width(text)) / 2, y + (h - 8) / 2, color, false);
         hits.add(new Hit(x, y, w, h, action, enabled, null));
         return hovered;
     }
@@ -112,6 +112,46 @@ public final class RpgUi {
         String ellipsis = "…";
         String cut = Canvas.font().plainSubstrByWidth(text, Math.max(0, width - Canvas.width(ellipsis)));
         return cut + ellipsis;
+    }
+
+    /**
+     * A short name in up to two lines within {@code width}. It shrinks (to no less than
+     * 70%) only when a single word cannot fit, so tile labels never end in an ellipsis.
+     */
+    public static void twoLines(Canvas c, String text, int x, int y, int width, int color, boolean shadow) {
+        String[] words = text.split(" ");
+        int longest = 0;
+        for (String word : words) {
+            longest = Math.max(longest, Canvas.width(word));
+        }
+        float scale = longest > width ? Math.max(0.7F, width / (float) longest) : 1F;
+        int room = Math.round(width / scale);
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        for (String word : words) {
+            String next = line.length() == 0 ? word : line + " " + word;
+            if (line.length() == 0 || Canvas.width(next) <= room) {
+                line.setLength(0);
+                line.append(next);
+            } else {
+                lines.add(line.toString());
+                line.setLength(0);
+                line.append(word);
+            }
+        }
+        if (line.length() > 0) {
+            lines.add(line.toString());
+        }
+        if (lines.size() > 2) {
+            lines = java.util.List.of(lines.get(0), fit(String.join(" ", lines.subList(1, lines.size())), room));
+        }
+        c.push();
+        c.translate(x, y);
+        c.scale(scale);
+        for (int i = 0; i < lines.size(); i++) {
+            c.text(lines.get(i), 0, i * 9, color, shadow);
+        }
+        c.pop();
     }
 
     public static String number(long value) {

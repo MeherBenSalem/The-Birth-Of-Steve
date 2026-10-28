@@ -1,34 +1,30 @@
-# Starting The Birth of Steve
+# Starting Remnants: Roguelite Dungeons
 
-This is the player guide for **The Birth of Steve**. You do not need commands
-or cheats to begin the adventure.
+This is the player guide for **Remnants: Roguelite Dungeons** (formerly *The Birth of
+Steve*). You do not need commands or cheats to begin the adventure.
 
 ## Install and launch
 
-1. Install **Minecraft Java Edition 1.21.1, 26.1.2, or 26.2** and a loader for
-   that Minecraft version — **NeoForge 21.1.80 or newer** on 1.21.1, **NeoForge
-   26.1.2.83 or newer** on 26.1.2, **NeoForge 26.2.0.1-beta or newer** on 26.2,
-   or Fabric Loader.
+1. Install **Minecraft Java Edition 1.20.1, 1.21.1, 26.1.2, 26.2 or 26.3** and a
+   loader for that version: **Forge** or Fabric on 1.20.1, **NeoForge** or Fabric on
+   the others.
 2. Put the JAR matching **both** your Minecraft version and your loader in the
-   instance's `mods` folder — for example,
-   `tbos-neoforge-1.21.1-<version>.jar` or
-   `tbos-fabric-1.21.1-<version>.jar`; corresponding 26.1.2 and 26.2 names use
-   the same pattern. The jar refuses to load on the wrong Minecraft version
-   rather than misbehaving, so if the game reports a version mismatch you have
-   the other one.
+   instance's `mods` folder, for example `tbos-neoforge-26.1.2-<version>.jar` or
+   `tbos-fabric-1.21.1-<version>.jar`. The jar refuses to load on the wrong
+   Minecraft version rather than misbehaving, so if the game reports a version
+   mismatch you have the other one.
 3. Launch the game and create or open an Overworld save. Existing worlds work:
    the first join still grants the Archivist's Journal, and Fracture Shrines
-   appear when their planned chunk is loaded — including terrain that already
+   appear when their planned chunk is loaded, including terrain that already
    existed before the mod was installed. For multiplayer, put the same JAR on
    both the server and every client.
-4. Because this is an alpha, make a backup before adding the mod to an existing
-   world. A shrine carves a small 9×9 ruin into whatever is there; the Meridian
-   Archive is placed later, when you use the Archive Survey Map.
+4. Make a backup before adding the mod to an existing world. A shrine carves a
+   small 9×9 ruin into whatever is there; the Meridian Archive is placed later, when
+   you use the Archive Survey Map.
 
-On NeoForge no other mod is required. On Fabric you also need **Fabric API**;
-the 1.21.1 build is tested with Fabric Loader 0.16.9 and Fabric API
-0.109.0+1.21.1. Server owners can tune dungeon settings in
-`config/tbos-common.json`.
+On NeoForge and Forge no other mod is required. On Fabric you also need **Fabric
+API**. Server owners can tune the dungeon in `config/tbos-common.json` and the 1.0
+Expeditions, Codex, Relics and parties in `config/tbos-expeditions.json`.
 
 ## Your first expedition
 
@@ -74,6 +70,41 @@ save that floor and return to the Overworld. Right-click a Waystone in the
 Overworld — including one you craft from Archive Stone, Chronicle Bronze, and
 Lenswork Crystal — to resume at the last floor you bound. Dungeon Waystones
 cannot be broken; the ones you place can.
+
+## Expeditions: Remember or Forget
+
+Once the Fractured Archive is open, every run is an **Expedition**:
+
+1. Craft a **Memory Key**: four Amethyst Shards in the corners, four Gold Ingots on
+   the edges and an Ender Pearl in the centre. It starts at tier 1.
+2. Use it on a Waystone or the Curator Gateway. The **Attunement** screen shows the
+   tier and lets you toggle **Distortions** for more Heat and better rewards. Press
+   **Begin**; party members within 24 blocks come with you.
+3. Cleared rooms, wardens and floor bosses add Renown and Relics to your
+   **Recollection**. At the floor's gateway choose **Remember** to bank everything
+   (and take home a better key), or **Forget** to vote to go deeper for more
+   Momentum. A failed run loses whatever you have not banked.
+4. Banked Renown levels up your **Archive Codex** (press **N** or use `/codex`).
+   Spend Insight on permanent perks, and claim the Weekly Recollection from it.
+
+Use a key inside any other structure, a village or the Trial Chambers for
+example, to open a **Recollection** of that place. `/party create`,
+`/party invite <player>` and `/party accept` bring friends along. The full rules and
+numbers are in [`remember-or-forget.md`](remember-or-forget.md).
+
+### Expedition commands
+
+| Command | What it does |
+| --- | --- |
+| `/codex` | Opens the Archive Codex (also `/codex insights`, `bestiary`, `records` and `weekly`). |
+| `/expedition` or `/expedition status` | Reports your current Expedition. |
+| `/expedition choose` | Reopens the Remember or Forget choice. |
+| `/expedition reroll` | Uses Second Draft to rewrite the current Living Memories draft. |
+| `/party create · invite · accept · decline · leave · kick · disband · list` | Party management; no operator permission needed. |
+| `/expedition key <tier> [distortions]` | Operator: gives a Memory Key. |
+| `/expedition weekly_key` | Operator: gives this week's Weekly key. |
+| `/expedition relic <tier> <rarity>` | Operator: gives a generated Relic. |
+| `/codex renown <player> <amount>` and `/codex reset <player>` | Operator: adjusts or resets a player's Codex. |
 
 ## Multiplayer notes
 

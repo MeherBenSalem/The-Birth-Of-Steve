@@ -65,10 +65,9 @@ public final class AttunementScreen extends RpgScreen {
             boolean over = RpgUi.over(mx, my, cx, cy, 86, 28);
             c.panel(on ? GreekGui.SELECTED : over && !weekly ? GreekGui.HOVER : GreekGui.CARD, cx, cy, 86, 28);
             c.icon(Icons.distortion(i), cx + 4, cy + 4, 20, on ? 0xFFFFFFFF : 0xB0FFFFFF);
-            c.text(RpgUi.fit(Component.translatable(distortion.key()).getString(), 56), cx + 27, cy + 6,
-                    on ? RpgUi.LIGHT : RpgUi.INK, on);
-            c.text(Component.translatable(on ? "screen.tbos.attune.active" : "screen.tbos.attune.heat"), cx + 27, cy + 16,
-                    on ? RpgUi.LIGHT_TEAL : RpgUi.MUTED, false);
+            c.text(RpgUi.fit(Component.translatable(distortion.key()).getString(), 56), cx + 27, cy + 6, RpgUi.INK, false);
+            c.text(RpgUi.fit(Component.translatable(on ? "screen.tbos.attune.active" : "screen.tbos.attune.heat").getString(), 56),
+                    cx + 27, cy + 16, on ? RpgUi.EMBER : RpgUi.MUTED, false);
             final int ordinal = i;
             ui.area(cx, cy, 86, 28, !weekly, () -> {
                 JsonObject body = new JsonObject();
@@ -111,12 +110,16 @@ public final class AttunementScreen extends RpgScreen {
                 continue;
             }
             Rarity rarity = Rarity.values()[r];
-            int barW = sw - 14 - 34;
-            c.fill(sx + 7, line + 2, barW, 4, 0x33302B24);
-            c.fill(sx + 7, line + 2, Math.max(1, (int) Math.round(barW * Math.min(1, percent / 60.0))), 4, RpgUi.opaque(rarity.color));
+            // Common's pale grey would vanish into the parchment, so its bar takes the muted ink.
+            int fill = rarity == Rarity.COMMON ? RpgUi.MUTED : RpgUi.opaque(rarity.color);
+            int barX = sx + 19;
+            int barW = sw - 12 - 40;
+            c.icon(Icons.rarity(r), sx + 7, line, 9, 0xFFFFFFFF);
+            c.fill(barX, line + 3, barW, 4, 0x33302B24);
+            c.fill(barX, line + 3, Math.max(1, (int) Math.round(barW * Math.min(1, percent / 60.0))), 4, fill);
             String label = percent < 1 ? String.format(Locale.ROOT, "%.1f%%", percent) : Math.round(percent) + "%";
-            c.text(label, sx + sw - 7 - Canvas.width(label), line, RpgUi.INK, false);
-            line += 8;
+            c.text(label, sx + sw - 7 - Canvas.width(label), line + 1, RpgUi.INK, false);
+            line += 11;
         }
 
         // Party

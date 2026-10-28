@@ -66,6 +66,7 @@ ul.points li::before { content: ''; position: absolute; left: 2px; top: 13px; wi
 .stats .v { font-family: RdDisplay, serif; font-size: 30px; color: var(--header); margin-top: 4px; white-space: nowrap; }
 b.hi { color: var(--header); font-weight: normal; }
 .tile { background: rgba(7,10,11,.9); border: 1px solid rgba(216,207,184,.32); box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+code { font-family: monospace; font-size: .8em; color: var(--teal-hi); }
 .icon { display: inline-block; background-image: url('${gui('rpg/icons.png')}'); background-repeat: no-repeat; flex: none; }
 `;
 
@@ -134,7 +135,169 @@ const tiles = (rows, columns = 2, size = 64) => `<div style="display:grid;grid-t
 
 const versionText = VERSIONS.map((v) => v.minecraft).join(' · ');
 
+// Where the 1.0 screens sit in the 1920x1080 captures (x, y, w, h), with a little of the scene around them.
+const PANEL = { attune: [462, 190, 996, 700], choice: [474, 186, 972, 706], banked: [474, 244, 972, 592],
+  codex: [396, 142, 1128, 792], memory: [378, 162, 1168, 758], hud: [1490, 155, 422, 150], abilities: [736, 834, 448, 104] };
+const panel = (file, box, W) => region(file, ...PANEL[box], W);
+
+// Numbered steps, as on the family's credit cards: [title, line].
+const steps = (rows) => `<div style="display:flex;flex-direction:column;gap:22px">${rows.map(([title, line], i) =>
+  `<div class="frame" style="background:rgba(7,10,11,.9);padding:24px 34px;display:flex;align-items:center;gap:28px">
+    <div class="display gold" style="font-size:52px;width:56px">${i + 1}</div>
+    <div><div class="display" style="font-size:32px;color:var(--header)">${title}</div><div style="font-size:26px;color:var(--dim);margin-top:4px">${line}</div></div></div>`).join('')}</div>`;
+
+// A JSON excerpt, coloured like an editor: keys teal, numbers gold, booleans and strings pale.
+const json = (title, text) => {
+  const body = text.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/"([a-z_]+)":/g, '<span style="color:#7fd8cf">"$1"</span>:')
+    .replace(/: (-?[\d.]+)/g, ': <span style="color:#f3d796">$1</span>')
+    .replace(/: (true|false)/g, ': <span style="color:#e0a0d8">$1</span>');
+  return `<div class="frame" style="background:rgba(7,10,11,.94);flex:1">
+    <div style="padding:12px 22px 10px;border-bottom:1px solid rgba(216,207,184,.25);font-family:RdDisplay,serif;font-size:19px;letter-spacing:.12em;color:var(--dim)">${title}</div>
+    <pre style="margin:0;padding:18px 26px 22px;font-family:monospace;font-size:21px;line-height:1.42;color:var(--text)">${body}</pre></div>`;
+};
+
+const DISTORTIONS = [
+  ['Fortified', 'Enemies have 30% more health'], ['Tyrannical', 'Bosses: +40% health and +15% damage'],
+  ['Bolstering', 'A fallen enemy rallies its allies to Strength'], ['Volatile', 'The fallen burst after 1.5 seconds'],
+  ['Haunted', 'A Shade slips in every 30 s of combat'], ['Frailty', 'One fewer shared revive'],
+  ['Hourglass', '8 minutes a floor. Beat it for +1 key tier'], ['Amnesia', 'Drafts offer two choices, not three'],
+];
+const RARITIES = [['Common', '1 affix'], ['Uncommon', '2 affixes'], ['Rare', '2 affixes'], ['Epic', '3 affixes'], ['Legendary', '4 affixes'],
+  ['Remnant', '4 + a signature']];
+
 const assets = {
+  banner: () => page(1800, 600, `
+    <img src="${shot('archive-boss.jpg')}" style="position:absolute;right:-330px;top:-200px;width:1640px;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 36%);mask-image:linear-gradient(90deg,transparent 0%,#000 36%)">
+    <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,8,10,.97) 0%,rgba(6,8,10,.9) 32%,rgba(6,8,10,.35) 58%,rgba(6,8,10,0) 78%)"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,8,10,.75) 0%,rgba(6,8,10,0) 32%)"></div>
+    <div class="vignette"></div>${motes}
+    <img src="${source('logo.png')}" style="position:absolute;right:70px;bottom:52px;width:150px;height:150px;image-rendering:pixelated;filter:drop-shadow(0 0 22px rgba(95,208,200,.45))">
+    <div style="position:absolute;left:90px;top:74px;width:1000px">
+      <div class="kicker"><span class="diamond"></span>${RELEASE.version} · ${RELEASE.name}</div>
+      <div class="display gold glow" style="font-size:80px;line-height:1.06;margin:22px 0 26px;white-space:nowrap">Remnants:<br>Roguelite Dungeons</div>
+      <div class="rule" style="width:640px;margin-bottom:26px"></div>
+      <div style="font-size:34px;color:var(--header);line-height:1.3">Attune a key. Delve the Fractured Archive.<br>Remember what you found, or forget it and go deeper.</div>
+      <div style="margin-top:34px">${LOADERS.map((l) => `<span class="pill">${l}</span>`).join('')}
+        <span style="font-size:24px;color:var(--dim);margin-left:8px">${versionText}</span></div>
+    </div>`),
+
+  'card-attunement': () => card({
+    kicker: 'Memory Keys', title: 'Attune<br>a key',
+    points: ['Craft a Memory Key from amethyst, gold and an ender pearl', 'Use it on a Waystone, the Curator Gateway or inside any structure',
+      'Each tier above 1: +10% enemy health and +5% damage', 'Toggle Distortions for Heat and better rewards',
+      'Party members within 24 blocks come with you'],
+    art: framed(panel('attunement.jpg', 'attune', 980)) + stats([['Tiers', '1 – 20'], ['Distortions', '8'], ['Party', 'Up to 4']]) }),
+
+  'card-distortions': () => card({
+    kicker: 'Distortions', title: 'Turn up<br>the Heat',
+    points: ['Every Distortion adds one Heat', 'Fracture is the tier plus the Heat', 'Each point of Heat adds 15% to the Renown you earn',
+      'Weekly keys come sealed with two of them'],
+    art: tiles(DISTORTIONS.map(([name, line], i) => [ICON.distortion(i), name, line]), 2, 60)
+      + stats([['Heat', '+1 each'], ['Renown', '+15% per Heat'], ['Weekly keys', '2 sealed']]) }),
+
+  'card-choice': () => card({
+    kicker: 'At every gateway', title: 'Remember<br>or Forget',
+    points: ['<b class="hi">Remember</b>: bank it all and take home a better key', '<b class="hi">Forget</b>: go a floor deeper for +0.25 Momentum',
+      'Momentum multiplies everything you bank', 'If the party falls, every unbanked Recollection is lost',
+      'Relics turn over card by card when you bank'],
+    art: `<div style="position:relative;height:760px">
+      ${framed(panel('choice.jpg', 'choice', 700), 'position:absolute;left:0;top:0')}
+      ${framed(panel('banked.jpg', 'banked', 560), 'position:absolute;right:0;bottom:0')}</div>` }),
+
+  'card-archive': () => card({
+    kicker: 'The Fractured Archive', title: 'Floor after<br>floor',
+    points: ['A procedural dungeon dimension, built anew for every floor', 'Eight floor themes and twenty room templates',
+      'Bespoke creatures with telegraphed signature moves', 'Lesser wardens, then a floor boss on every floor',
+      'Room modifiers, traps, secrets, and caches for every member'],
+    art: `<div style="position:relative">${framed(`<img src="${shot('archive-boss.jpg')}">`)}
+      <div class="frame" style="position:absolute;right:-24px;top:-36px;width:400px">${panel('expedition-hud.jpg', 'hud', 400)}</div>
+      ${label('Wake Cutter', 'left:20px;bottom:20px', 'Floor boss of the Parallax Wake')}</div>
+      ${stats([['Floor themes', '8'], ['Room templates', '20'], ['Bestiary', '23 creatures']])}` }),
+
+  'card-memories': () => card({
+    kicker: 'Living Memories', title: 'Build as<br>you delve',
+    points: ['Every room you clear earns a Living Memory draft', 'Pick an ability or an artifact from three',
+      'Six abilities on their own keys, twelve artifacts that change them', 'Second Draft rewrites a draft once per floor'],
+    art: `<div style="position:relative">${framed(panel('memory-draft.jpg', 'memory', 980))}
+      <div class="frame" style="position:absolute;right:-24px;bottom:-44px;width:400px">${panel('expedition-hud.jpg', 'abilities', 400)}</div></div>` }),
+
+  'card-recollections': () => card({
+    kicker: 'Recollections', title: 'Every ruin<br>has a before',
+    points: ['Use a Memory Key inside any structure', 'Villages, Trial Chambers, strongholds, and other mods’ structures too',
+      'The Expedition is seeded from that place and named after it', 'Each structure can be recollected once per player'],
+    art: framed(panel('recollection.jpg', 'attune', 980)) + stats([['Structures', 'Vanilla and modded'], ['Seeded from', 'The place'], ['Per player', 'Once each']]) }),
+
+  'card-codex': () => card({
+    kicker: 'The Archive Codex', title: 'Stronger<br>every run',
+    points: ['Banked Renown levels your Codex, up to level 30', 'Every level grants one Insight', 'Sixteen Insights, from Deep Recall to Last Stand',
+      'Respec for free outside a run'],
+    art: framed(panel('codex-insights.jpg', 'codex', 980)) + stats([['Levels', '30'], ['Insights', '16'], ['Respec', 'Free']]) }),
+
+  'card-bestiary': () => card({
+    kicker: 'The Bestiary', title: 'Know what<br>hunts you',
+    points: ['Every Archive creature you slay is recorded', 'Kills, home floor, threat and a line of lore',
+      'Creatures you have not slain stay sealed', 'Record all 23 for an advancement'],
+    art: framed(panel('codex-bestiary.jpg', 'codex', 980)) + stats([['Creatures', '23'], ['Floor bosses', '8'], ['Sealed until', 'You slay them']]) }),
+
+  'card-records': () => card({
+    kicker: 'Records and the Weekly', title: 'Hall of<br>Records',
+    points: ['Personal bests: highest tier, deepest floor, fastest Hourglass', 'The server’s Hall of Records, top ten',
+      'One Weekly Recollection key for everyone, every week', 'Same seed and Distortions for all, deepest floor ranked'],
+    art: `<div style="position:relative;height:760px">
+      ${framed(panel('codex-records.jpg', 'codex', 720), 'position:absolute;left:0;top:0')}
+      ${framed(panel('codex-weekly.jpg', 'codex', 560), 'position:absolute;right:0;bottom:0')}</div>` }),
+
+  'card-relics': () => card({
+    kicker: 'Relics', title: 'Loot with<br>a story',
+    points: ['Floor bosses drop Relics: vanilla weapons and armor', 'Six rarities, rolled affixes, a name and lore',
+      'Remnant Relics carry a signature power from tier 10', 'A beam of light marks every Rare or better find',
+      'Enchanting, anvils and Mending keep working'],
+    art: `${framed(region('relic-remnant.jpg', 700, 600, 940, 480, 980), '', rarity.remnant)}
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px">${RARITIES.map(([name, line], i) =>
+        `<div class="tile" style="display:flex;align-items:center;gap:14px;padding:10px 14px;border-left:3px solid ${Object.values(rarity)[i]}">${icon(ICON.rarity(i), 40)}
+          <div><div class="display" style="font-size:21px;color:${Object.values(rarity)[i]}">${name}</div><div style="font-size:19px;color:var(--dim)">${line}</div></div></div>`).join('')}</div>` }),
+
+  'card-parties': () => card({
+    kicker: 'Multiplayer', title: 'Delve<br>together',
+    points: ['Party commands need no operator', 'Up to four players on one key', 'Shared revives, personal loot and Recollections',
+      'Party frames show health and who is inside'],
+    art: steps([['Create', '<code>/party create</code>'], ['Invite', '<code>/party invite &lt;player&gt;</code> · invites last 60 s'],
+      ['Gather', 'within 24 blocks of the key holder'], ['Begin', 'the key holder presses Begin and the party goes in']]) }),
+
+  'card-config': () => card({
+    kicker: 'Configuration', title: 'Every number<br>is yours',
+    points: ['<code>config/tbos-expeditions.json</code>: tiers, Distortions, Renown, Codex, Relics, Weekly and parties',
+      '<code>config/tbos-common.json</code>: the dungeon itself', 'Every number on this page is a default',
+      'Exclude structures with the <code>#tbos:unrecollectable</code> tag'],
+    art: `<div style="display:flex;gap:20px;align-items:flex-start">
+      ${json('tbos-expeditions.json', `"expeditions": {
+  "max_tier": 20,
+  "health_per_tier": 0.1,
+  "damage_per_tier": 0.05,
+  "reward_per_tier": 0.12,
+  "reward_per_heat": 0.15,
+  "momentum_per_floor": 0.25,
+  "renown_room": 15,
+  "renown_warden": 40,
+  "renown_boss": 120,
+  "hourglass_seconds": 480,
+  "party_radius": 24
+},`)}
+      ${json('… further down', `"codex": {
+  "max_level": 30,
+  "level_base": 150,
+  "level_step": 50
+},
+"relics": {
+  "diamond_until_tier": 13,
+  "remnant_from_tier": 10
+},
+"weekly": {
+  "min_tier": 6,
+  "max_tier": 10
+}`)}</div>` }),
+
   icon: () => page(512, 512, `
     <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,#1a2526 0%,#0b1012 55%,#050708 100%)"></div>${motes}
     <div style="position:absolute;left:78px;top:78px;width:356px;height:356px;border-radius:50%;overflow:hidden;box-shadow:inset 0 0 30px rgba(0,0,0,.8)">
@@ -144,7 +307,12 @@ const assets = {
     ${[[256, 56], [456, 256], [256, 456], [56, 256]].map(([x, y]) => `<div style="position:absolute;left:${x - 12}px;top:${y - 12}px;width:24px;height:24px;background:var(--gold);transform:rotate(45deg);box-shadow:0 0 16px rgba(156,242,230,.75)"></div>`).join('')}`),
 };
 
-const headers = {};
+const headers = {
+  'header-expeditions': 'Expeditions', 'header-choice': 'Remember or Forget', 'header-archive': 'The Fractured Archive',
+  'header-recollections': 'Recollections', 'header-codex': 'The Archive Codex', 'header-relics': 'Relics', 'header-parties': 'Parties',
+  'header-config': 'Configuration', 'header-everything': 'Everything Else', 'header-compatibility': 'Downloads & Compatibility',
+  'header-faq': 'Questions', 'header-gallery': 'Gallery',
+};
 for (const [name, title] of Object.entries(headers)) assets[name] = () => header(title);
 assets.divider = () => page(1400, 40, `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:18px">
   <div class="rule" style="width:520px;transform:scaleX(-1)"></div><span class="diamond" style="margin:0"></span><div class="rule" style="width:520px"></div></div>`, true);
