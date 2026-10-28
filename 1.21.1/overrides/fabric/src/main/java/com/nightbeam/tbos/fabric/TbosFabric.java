@@ -51,13 +51,21 @@ public final class TbosFabric implements ModInitializer {
         registerPayloads();
 
         CommandRegistrationCallback.EVENT.register(
-                (dispatcher, registry, environment) -> YesterglassCommands.register(dispatcher));
+                (dispatcher, registry, environment) -> {
+                    YesterglassCommands.register(dispatcher);
+                    com.nightbeam.tbos.rpg.RpgEvents.registerCommands(dispatcher);
+                });
 
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             TemporalSiteEvents.onServerTick(server);
             ArchiveRunEvents.onServerTick(server);
+            com.nightbeam.tbos.rpg.RpgEvents.onServerTick(server);
         });
-        ServerLifecycleEvents.SERVER_STARTED.register(TemporalSiteEvents::onServerStarted);
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            TemporalSiteEvents.onServerStarted(server);
+            com.nightbeam.tbos.rpg.RpgEvents.onServerStarted(server);
+        });
+        ServerLifecycleEvents.SERVER_STOPPING.register(com.nightbeam.tbos.rpg.RpgEvents::onServerStopping);
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             TemporalSiteEvents.onServerStopped(server);
             ArchiveRunEvents.onServerStopped(server);
@@ -66,7 +74,10 @@ public final class TbosFabric implements ModInitializer {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             TemporalSiteEvents.onPlayerLoggedIn(handler.player);
             ArchiveRunEvents.onPlayerLoggedIn(handler.player);
+            com.nightbeam.tbos.rpg.RpgEvents.onPlayerJoin(handler.player);
         });
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+                com.nightbeam.tbos.rpg.RpgEvents.onPlayerLeave(handler.player));
         ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) -> {
             TemporalSiteEvents.onPlayerChangedDimension(player);
             ArchiveRunEvents.onPlayerChangedDimension(player);
@@ -88,11 +99,19 @@ public final class TbosFabric implements ModInitializer {
 
         ServerLivingEntityEvents.ALLOW_DEATH.register(
                 (entity, damageSource, damageAmount) -> ArchiveRunEvents.allowDeath(entity));
+        ServerLivingEntityEvents.AFTER_DEATH.register(com.nightbeam.tbos.rpg.RpgEvents::onLivingDeath);
     }
 
     private void registerPayloads() {
         PayloadTypeRegistry.playC2S().register(MemoryActionRequest.TYPE,MemoryActionRequest.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(MemorySnapshotPayload.TYPE,MemorySnapshotPayload.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(com.nightbeam.tbos.network.payload.RpgActionPayload.TYPE,
+                com.nightbeam.tbos.network.payload.RpgActionPayload.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(com.nightbeam.tbos.network.payload.RpgSyncPayload.TYPE,
+                com.nightbeam.tbos.network.payload.RpgSyncPayload.STREAM_CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(com.nightbeam.tbos.network.payload.RpgActionPayload.TYPE,
+                (payload, context) -> context.server().execute(
+                        () -> com.nightbeam.tbos.rpg.RpgNet.handleAction(context.player(), payload.json())));
         ServerPlayNetworking.registerGlobalReceiver(MemoryActionRequest.TYPE, (payload,context) -> context.server().execute(
             () -> MemoryService.request(context.player(),payload.action(),payload.first(),payload.second())));
 

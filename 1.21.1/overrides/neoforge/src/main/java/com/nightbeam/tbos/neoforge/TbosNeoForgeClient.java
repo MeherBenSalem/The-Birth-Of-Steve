@@ -64,6 +64,7 @@ public final class TbosNeoForgeClient {
     private static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(ModKeyMappings.TOGGLE_OBJECTIVES);
         event.register(ModKeyMappings.MEMORY_LOADOUT);
+        event.register(ModKeyMappings.CODEX);
         for(var key:ModKeyMappings.MEMORY_SLOTS) event.register(key);
     }
 
@@ -83,6 +84,11 @@ public final class TbosNeoForgeClient {
                 ResourceLocation.fromNamespaceAndPath(Yesterglass.MOD_ID, "archive_floor_intro"),
                 (graphics, deltaTracker) -> ArchiveFloorIntroHud.render(
                         graphics, deltaTracker.getGameTimeDeltaPartialTick(false)));
+        event.registerAbove(
+                VanillaGuiLayers.HOTBAR,
+                ResourceLocation.fromNamespaceAndPath(Yesterglass.MOD_ID, "expedition"),
+                (graphics, deltaTracker) -> com.nightbeam.tbos.client.rpg.RpgHud.render(
+                        new com.nightbeam.tbos.client.rpg.Canvas(graphics)));
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -129,5 +135,6 @@ public final class TbosNeoForgeClient {
 
     private static void onClientTick(ClientTickEvent.Post event) {
         ClientEvents.onClientTick(Minecraft.getInstance());
+        com.nightbeam.tbos.client.rpg.RpgClient.tick(Minecraft.getInstance());
     }
 }

@@ -54,6 +54,9 @@ public final class TbosFabricClient implements ClientModInitializer {
         registerRenderLayers();
         registerClientPayloads();
         KeyBindingHelper.registerKeyBinding(ModKeyMappings.TOGGLE_OBJECTIVES);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.MEMORY_LOADOUT);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.CODEX);
+        for (var key : ModKeyMappings.MEMORY_SLOTS) KeyBindingHelper.registerKeyBinding(key);
         YesterglassClient.forEachLayerDefinition(
                 (layer, definition) -> EntityModelLayerRegistry.registerModelLayer(layer, definition::get));
         registerRenderers();
@@ -62,8 +65,10 @@ public final class TbosFabricClient implements ClientModInitializer {
             ArchiveQuestHud.render(graphics, partialTick);
             ArchivePuzzleHud.render(graphics, partialTick);
             ArchiveFloorIntroHud.render(graphics, partialTick);
+            com.nightbeam.tbos.client.rpg.RpgHud.render(new com.nightbeam.tbos.client.rpg.Canvas(graphics));
         });
         ClientTickEvents.END_CLIENT_TICK.register(ClientEvents::onClientTick);
+        ClientTickEvents.END_CLIENT_TICK.register(com.nightbeam.tbos.client.rpg.RpgClient::tick);
         UseItemCallback.EVENT.register((player, level, hand) -> interactItem(player.getItemInHand(hand), hand));
         UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> interact(hand));
     }
@@ -98,6 +103,9 @@ public final class TbosFabricClient implements ClientModInitializer {
     }
 
     private static void registerClientPayloads() {
+        ClientPlayNetworking.registerGlobalReceiver(com.nightbeam.tbos.network.payload.RpgSyncPayload.TYPE,
+                (payload, context) -> context.client().execute(
+                        () -> com.nightbeam.tbos.client.rpg.RpgClient.accept(payload.json())));
         ClientPlayNetworking.registerGlobalReceiver(MemorySnapshotPayload.TYPE,(payload,context) -> context.client().execute(
             () -> com.nightbeam.tbos.client.MemoryClient.accept(payload)));
         ClientPlayNetworking.registerGlobalReceiver(BeginTransitionPayload.TYPE, (payload, context) -> context.client().execute(() -> ClientNetwork.handleBeginTransition(payload)));
