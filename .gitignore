@@ -8,6 +8,8 @@ run/
 !1.21.1/overrides/common/src/main/java/com/nightbeam/tbos/run/**
 !1.20.1/overrides/common/src/main/java/com/nightbeam/tbos/run/
 !1.20.1/overrides/common/src/main/java/com/nightbeam/tbos/run/**
+!26.3/overrides/common/src/main/java/com/nightbeam/tbos/run/
+!26.3/overrides/common/src/main/java/com/nightbeam/tbos/run/**
 runs/
 /run-*/
 .idea/

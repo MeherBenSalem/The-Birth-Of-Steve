@@ -10,6 +10,7 @@ shared/                 the mod: mod.properties plus common/, fabric/, neoforge/
 1.21.1/                 Java 21 target: build scripts, build-logic, overrides/
 26.1.2/                 one Minecraft target: build scripts, build-logic, overrides/
 26.2/                   another target, same shape
+26.3/                   another target; see 26.3/overrides/README.md for its API cheat-sheet
 settings.gradle         the composite that includes every version folder
 ```
 
@@ -24,7 +25,7 @@ Mod identity (`version`, `group`, `mod_id`, description) is declared once in
 `<version>/gradle.properties`. Neither can drift.
 
 The Java toolchain is target-local too: `1.21.1/` compiles and runs on Java 21,
-while `26.1.2/` and `26.2/` remain on Java 25. This keeps the old baseline's
+while `26.1.2/`, `26.2/` and `26.3/` remain on Java 25. This keeps the old baseline's
 toolchain from leaking into the 1.21.1 loader builds.
 
 ### Overrides
@@ -50,6 +51,12 @@ and `client.ClientCompat` (client) are ordinary shared classes whose *whole body
 each version may replace. 26.2 uses exactly these two overrides to absorb
 `EntityType`'s constants moving to `EntityTypes`, `LivingEntity.knockback` gaining
 a damage source, and `Gui` splitting into `Gui` + `Hud`.
+
+26.3 keeps those two seams and adds call-site overrides for API changes that
+the shared callers do not route through a seam. Its data-pack and block-model
+JSON format changes are a build-time rewrite in `26.3/build-logic`
+(`tbos/gradle/Json263.groovy`), not copied files, in the same way 1.20.1
+relocates its data directories.
 
 ## Modules
 

@@ -1,0 +1,3 @@
+// Distinct from the other versions' build-logic: two included builds in the
+// same composite must not share a name.
+rootProject.name = 'build-logic-26-3'

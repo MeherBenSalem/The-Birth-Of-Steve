@@ -12,6 +12,7 @@ def versionLoaders = [
         '1.21.1': ['fabric', 'neoforge'],
         '26.1.2': ['fabric', 'neoforge'],
         '26.2'  : ['fabric', 'neoforge'],
+        '26.3'  : ['fabric', 'neoforge'],
 ]
 def minecraftVersions = versionLoaders.keySet().toList()
 def allModules = minecraftVersions.collectMany { version ->

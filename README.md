@@ -3,7 +3,7 @@
 > Every ruin has a before.
 
 The Birth of Steve is an adventure mod for Minecraft Java Edition 1.21.1, 26.1.2,
-and 26.2, built for both NeoForge and Fabric from a single shared codebase. Its
+26.2, and 26.3, built for both NeoForge and Fabric from a single shared codebase. Its
 central mechanic reconstructs a remembered version of authored ruins at the same
 world coordinates.
 
@@ -51,13 +51,13 @@ On Linux or macOS, use `./gradlew` instead.
 
 `build` at the root builds **every** Minecraft version — six jars, one per
 loader per version. `-p <version>` drives a single target's own Gradle build;
-use `1.21.1`, `26.1.2`, or `26.2` to select a target.
+use `1.21.1`, `26.1.2`, `26.2`, or `26.3` to select a target.
 
 The mod's source lives once in `shared/`, in the MultiLoader-Template layout:
 `shared/common` holds nearly all of the mod and compiles against vanilla, while
 `shared/neoforge` and `shared/fabric` only load it and supply loader-specific
 glue. Each Minecraft version gets a top-level folder (`1.21.1/`, `26.1.2/`,
-`26.2/`) holding only that target's build scripts and an `overrides/` directory
+`26.2/`, `26.3/`) holding only that target's build scripts and an `overrides/` directory
 for the files that version has to do differently. See
 [`docs/architecture.md`](docs/architecture.md) for the full layout.
 
