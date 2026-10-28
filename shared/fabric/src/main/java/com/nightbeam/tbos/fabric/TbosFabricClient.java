@@ -51,6 +51,7 @@ public final class TbosFabricClient implements ClientModInitializer {
 
         KeyMappingHelper.registerKeyMapping(ModKeyMappings.TOGGLE_OBJECTIVES);
         KeyMappingHelper.registerKeyMapping(ModKeyMappings.MEMORY_LOADOUT);
+        KeyMappingHelper.registerKeyMapping(ModKeyMappings.CODEX);
         for(var key:ModKeyMappings.MEMORY_SLOTS) KeyMappingHelper.registerKeyMapping(key);
 
         YesterglassClient.forEachLayerDefinition(
@@ -59,6 +60,7 @@ public final class TbosFabricClient implements ClientModInitializer {
         registerHudElements();
 
         ClientTickEvents.END_CLIENT_TICK.register(ClientEvents::onClientTick);
+        ClientTickEvents.END_CLIENT_TICK.register(com.nightbeam.tbos.client.rpg.RpgClient::tick);
 
         // Two callbacks because a right-click that hits a block never reaches
         // UseItemCallback. Both funnel into the same verdict.
@@ -76,6 +78,9 @@ public final class TbosFabricClient implements ClientModInitializer {
     }
 
     private static void registerClientPayloads() {
+        ClientPlayNetworking.registerGlobalReceiver(com.nightbeam.tbos.network.payload.RpgSyncPayload.TYPE,
+                (payload, context) -> context.client().execute(
+                        () -> com.nightbeam.tbos.client.rpg.RpgClient.accept(payload.json())));
         ClientPlayNetworking.registerGlobalReceiver(MemorySnapshotPayload.TYPE,(payload,context) -> context.client().execute(
             () -> com.nightbeam.tbos.client.MemoryClient.accept(payload)));
         ClientPlayNetworking.registerGlobalReceiver(BeginTransitionPayload.TYPE,
@@ -131,5 +136,9 @@ public final class TbosFabricClient implements ClientModInitializer {
                 VanillaHudElements.HOTBAR,
                 Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "archive_floor_intro"),
                 ArchiveFloorIntroHud::render);
+        HudElementRegistry.attachElementAfter(
+                VanillaHudElements.HOTBAR,
+                Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "expedition"),
+                (graphics, delta) -> com.nightbeam.tbos.client.rpg.RpgHud.render(new com.nightbeam.tbos.client.rpg.Canvas(graphics)));
     }
 }

@@ -117,5 +117,166 @@
       { "name": "minecraft:block/amethyst/break1", "pitch": 0.7 }
     ],
     "subtitle": "subtitles.tbos.hour_cantor.hurt"
+  },
+  "expedition.attune": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/attune", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.attune"
+  },
+  "expedition.distortion": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/distortion", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.distortion"
+  },
+  "expedition.begin": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/begin", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.begin"
+  },
+  "expedition.recollection": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/recollection", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.recollection"
+  },
+  "expedition.recorded": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/recorded", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.recorded"
+  },
+  "expedition.key_rise": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/key_rise", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.key_rise"
+  },
+  "expedition.remember": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/remember", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.remember"
+  },
+  "expedition.forget": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/forget", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.forget"
+  },
+  "expedition.forgotten": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/forgotten", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.forgotten"
+  },
+  "expedition.hourglass_tick": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/hourglass_tick", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.hourglass_tick"
+  },
+  "expedition.hourglass_end": {
+    "sounds": [
+      { "name": "tbos:rpg/expedition/hourglass_end", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.expedition.hourglass_end"
+  },
+  "relic.reveal_common": {
+    "sounds": [
+      { "name": "tbos:rpg/relic/reveal_common", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.relic.reveal_common"
+  },
+  "relic.reveal_rare": {
+    "sounds": [
+      { "name": "tbos:rpg/relic/reveal_rare", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.relic.reveal_rare"
+  },
+  "relic.reveal_epic": {
+    "sounds": [
+      { "name": "tbos:rpg/relic/reveal_epic", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.relic.reveal_epic"
+  },
+  "relic.reveal_legendary": {
+    "sounds": [
+      { "name": "tbos:rpg/relic/reveal_legendary", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.relic.reveal_legendary"
+  },
+  "relic.reveal_remnant": {
+    "sounds": [
+      { "name": "tbos:rpg/relic/reveal_remnant", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.relic.reveal_remnant"
+  },
+  "codex.open": {
+    "sounds": [
+      { "name": "tbos:rpg/codex/open", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.codex.open"
+  },
+  "codex.page": {
+    "sounds": [
+      { "name": "tbos:rpg/codex/page", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.codex.page"
+  },
+  "codex.insight": {
+    "sounds": [
+      { "name": "tbos:rpg/codex/insight", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.codex.insight"
+  },
+  "codex.renown": {
+    "sounds": [
+      { "name": "tbos:rpg/codex/renown", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.codex.renown"
+  },
+  "party.invite": {
+    "sounds": [
+      { "name": "tbos:rpg/party/invite", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.party.invite"
+  },
+  "party.join": {
+    "sounds": [
+      { "name": "tbos:rpg/party/join", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.party.join"
+  },
+  "distortion.bolster": {
+    "sounds": [
+      { "name": "tbos:rpg/distortion/bolster", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.distortion.bolster"
+  },
+  "distortion.volatile_hiss": {
+    "sounds": [
+      { "name": "tbos:rpg/distortion/volatile_hiss", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.distortion.volatile_hiss"
+  },
+  "distortion.volatile_burst": {
+    "sounds": [
+      { "name": "tbos:rpg/distortion/volatile_burst", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.distortion.volatile_burst"
+  },
+  "distortion.haunt": {
+    "sounds": [
+      { "name": "tbos:rpg/distortion/haunt", "stream": false }
+    ],
+    "subtitle": "subtitles.tbos.distortion.haunt"
+  },
+  "ui.click": {
+    "sounds": [
+      { "name": "tbos:rpg/ui/click", "stream": false }
+    ]
   }
 }

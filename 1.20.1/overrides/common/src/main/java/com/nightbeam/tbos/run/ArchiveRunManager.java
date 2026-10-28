@@ -340,7 +340,8 @@ public final class ArchiveRunManager {
         if ((!com.nightbeam.tbos.memory.MemoryService.mayAdvance(storage, run)
                 || (storage.memories(run.runId()) != null && run.floor() >= 2
                     && run.members().stream().anyMatch(m -> player.level().getServer().getPlayerList().getPlayer(m.playerId()) == null)))) {
-            player.sendSystemMessage(Component.literal("Living Memories: open your loadout (K) at the gateway to extract or vote to continue."));
+            com.nightbeam.tbos.expedition.Expeditions.prompt(player);
+            player.sendSystemMessage(Component.translatable("expedition.tbos.choose_first"), true);
             return GatewayAdvanceResult.REWARD_LOCKED;
         }
         Optional<ArchiveRun> nextFloor = beginNextFloor(storage, player.getUUID());
@@ -613,7 +614,8 @@ public final class ArchiveRunManager {
         Vec3 center = Vec3.atCenterOf(thresholdPos);
         return activator.level().getServer().getPlayerList().getPlayers().stream()
                 .filter(candidate -> candidate.level() == activator.level())
-                .filter(candidate -> candidate == activator || team != null && team.equals(candidate.getTeam()))
+                .filter(candidate -> candidate == activator || team != null && team.equals(candidate.getTeam())
+                        || com.nightbeam.tbos.party.Parties.together(activator.getUUID(), candidate.getUUID()))
                 .filter(candidate -> candidate == activator || candidate.distanceToSqr(center) <= SHRINE_RING_RADIUS_SQR)
                 .sorted(Comparator.comparing(ServerPlayer::getUUID))
                 .limit(ArchiveRun.MAX_PARTY_SIZE)

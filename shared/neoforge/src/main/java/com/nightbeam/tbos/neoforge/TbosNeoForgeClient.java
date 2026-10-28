@@ -56,6 +56,8 @@ public final class TbosNeoForgeClient {
     }
 
     private static void registerClientPayloads(RegisterClientPayloadHandlersEvent event) {
+        event.register(com.nightbeam.tbos.network.payload.RpgSyncPayload.TYPE,
+                (payload, context) -> com.nightbeam.tbos.client.rpg.RpgClient.accept(payload.json()));
         event.register(com.nightbeam.tbos.network.payload.MemorySnapshotPayload.TYPE,(payload,context) -> com.nightbeam.tbos.client.MemoryClient.accept(payload));
         event.register(BeginTransitionPayload.TYPE,
                 (payload, context) -> ClientNetwork.handleBeginTransition(payload));
@@ -75,6 +77,7 @@ public final class TbosNeoForgeClient {
         event.registerCategory(ModKeyMappings.CATEGORY);
         event.register(ModKeyMappings.TOGGLE_OBJECTIVES);
         event.register(ModKeyMappings.MEMORY_LOADOUT);
+        event.register(ModKeyMappings.CODEX);
         for(var key:ModKeyMappings.MEMORY_SLOTS) event.register(key);
     }
 
@@ -91,6 +94,10 @@ public final class TbosNeoForgeClient {
                 VanillaGuiLayers.HOTBAR,
                 Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "archive_floor_intro"),
                 ArchiveFloorIntroHud::render);
+        event.registerAbove(
+                VanillaGuiLayers.HOTBAR,
+                Identifier.fromNamespaceAndPath(Yesterglass.MOD_ID, "expedition"),
+                (graphics, delta) -> com.nightbeam.tbos.client.rpg.RpgHud.render(new com.nightbeam.tbos.client.rpg.Canvas(graphics)));
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -137,5 +144,6 @@ public final class TbosNeoForgeClient {
 
     private static void onClientTick(ClientTickEvent.Post event) {
         ClientEvents.onClientTick(Minecraft.getInstance());
+        com.nightbeam.tbos.client.rpg.RpgClient.tick(Minecraft.getInstance());
     }
 }

@@ -88,6 +88,9 @@ public final class RiftThresholdBlock extends Block {
             Player player,
             InteractionHand hand,
             BlockHitResult hitResult) {
+        if (com.nightbeam.tbos.expedition.ExpeditionKey.isKey(stack)) {
+            return com.nightbeam.tbos.expedition.Attunement.useKey(level, pos, player, hand);
+        }
         return activate(level, pos, player);
     }
 

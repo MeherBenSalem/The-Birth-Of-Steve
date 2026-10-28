@@ -1,0 +1,28 @@
+{
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "item": "tbos:yesterglass_lens"
+    },
+    "title": {
+      "translate": "advancements.tbos.expedition.recollection.title"
+    },
+    "description": {
+      "translate": "advancements.tbos.expedition.recollection.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "parent": "tbos:expedition/root"
+}

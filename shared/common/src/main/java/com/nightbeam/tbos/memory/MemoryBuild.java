@@ -73,11 +73,15 @@ public final class MemoryBuild {
     }
     /** Stable personal offers; reopening/reconnecting never rerolls them. */
     public void offer(long seed, boolean activeOnly) {
+        offer(seed, activeOnly, 3);
+    }
+    /** {@code count} is three, or two under the Amnesia Distortion. */
+    public void offer(long seed, boolean activeOnly, int count) {
         if (!offers.isEmpty()) return;
         List<Integer> pool=new ArrayList<>();
         for(int id=activeOnly?0:6; id<(activeOnly?6:18); id++) if(!owns(id) && (activeOnly || (id!=14&&id!=17||owns(4)) && (id!=15||owns(5)) && (id!=16||owns(3)))) pool.add(id);
         Collections.shuffle(pool,new Random(seed ^ player.getMostSignificantBits() ^ player.getLeastSignificantBits() ^ (0x9E3779B97F4A7C15L * draft)));
-        offers.addAll(pool.subList(0,Math.min(3,pool.size())));
+        offers.addAll(pool.subList(0,Math.min(Math.max(1,Math.min(3,count)),pool.size())));
     }
     public boolean equip(int slot,int ability) {
         if(slot<0||slot>=3||ability<0||ability>=6||!owns(ability))return false;

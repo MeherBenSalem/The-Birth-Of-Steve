@@ -1,0 +1,28 @@
+{
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "id": "tbos:archivists_journal"
+    },
+    "title": {
+      "translate": "advancements.tbos.expedition.archivist_eternal.title"
+    },
+    "description": {
+      "translate": "advancements.tbos.expedition.archivist_eternal.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "parent": "tbos:expedition/storied"
+}

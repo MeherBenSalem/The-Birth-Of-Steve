@@ -41,6 +41,7 @@ public final class Yesterglass {
         ModEntities.register();
         ModSounds.register();
         ModItems.register();
+        com.nightbeam.tbos.rpg.RpgEvents.init();
         ModCreativeModeTabs.register();
         ModGameTests.register();
     }

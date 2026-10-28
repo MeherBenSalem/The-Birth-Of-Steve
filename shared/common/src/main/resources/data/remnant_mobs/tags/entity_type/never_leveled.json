@@ -1,0 +1,97 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tbos:phoenix_guardian",
+      "required": false
+    },
+    {
+      "id": "tbos:parallax_wraith",
+      "required": false
+    },
+    {
+      "id": "tbos:meridian_sentinel",
+      "required": false
+    },
+    {
+      "id": "tbos:memory_leech",
+      "required": false
+    },
+    {
+      "id": "tbos:lensward",
+      "required": false
+    },
+    {
+      "id": "tbos:minotaur",
+      "required": false
+    },
+    {
+      "id": "tbos:shard_drifter",
+      "required": false
+    },
+    {
+      "id": "tbos:wake_cutter",
+      "required": false
+    },
+    {
+      "id": "tbos:gallery_moth",
+      "required": false
+    },
+    {
+      "id": "tbos:null_portrait",
+      "required": false
+    },
+    {
+      "id": "tbos:armillary_scout",
+      "required": false
+    },
+    {
+      "id": "tbos:gnomon_knight",
+      "required": false
+    },
+    {
+      "id": "tbos:ash_chorister",
+      "required": false
+    },
+    {
+      "id": "tbos:dust_cantorile",
+      "required": false
+    },
+    {
+      "id": "tbos:shardling_swarm",
+      "required": false
+    },
+    {
+      "id": "tbos:prism_stalker",
+      "required": false
+    },
+    {
+      "id": "tbos:shelf_crawler",
+      "required": false
+    },
+    {
+      "id": "tbos:index_wight",
+      "required": false
+    },
+    {
+      "id": "tbos:metronome_hound",
+      "required": false
+    },
+    {
+      "id": "tbos:labyrinth_usher",
+      "required": false
+    },
+    {
+      "id": "tbos:hour_cantor",
+      "required": false
+    },
+    {
+      "id": "tbos:blank_chronist",
+      "required": false
+    },
+    {
+      "id": "tbos:hour_hand_wraith",
+      "required": false
+    }
+  ]
+}

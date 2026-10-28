@@ -134,6 +134,7 @@ public final class MemoryCombat {
         q.addLast(action);while(q.size()>MemoryBudget.MAX_RECORDS)q.removeFirst();
     }
     public static void successfulAttack(ServerPlayer p,LivingEntity target,float amount) {
+        com.nightbeam.tbos.rpg.RpgEvents.onPlayerAttack(p,target,amount);
         if(resolving || amount<=0 || target instanceof net.minecraft.world.entity.player.Player) return;
         ArchiveRun run=MemoryService.active(p); if(run==null) return;
         int room=ArchiveRoomPlacer.roomContaining(run,p.blockPosition()).orElse(-1);
@@ -145,6 +146,7 @@ public final class MemoryCombat {
         aftermath(r,p,(ServerLevel)p.level(),run,new Hit(p.getUUID(),room,run.floor(),root,0,b.artifacts,b.enhanced,target.getEyePosition(),target.getUUID(),amount,now,true),target,now);
     }
     public static float incoming(ServerPlayer p,net.minecraft.world.damagesource.DamageSource source,float amount) {
+        amount=com.nightbeam.tbos.rpg.RpgEvents.onPlayerIncoming(p,source,amount);
         ArchiveRun run=MemoryService.active(p);if(run==null)return amount;
         MemoryBuild b=MemoryService.build(p,run);Runtime r=runtime(run);long now=p.level().getGameTime();
         Vec3 sourcePos=source.getSourcePosition();

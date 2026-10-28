@@ -44,6 +44,9 @@ public final class WaystoneBlock extends Block {
             Player player,
             InteractionHand hand,
             BlockHitResult hitResult) {
+        if (com.nightbeam.tbos.expedition.ExpeditionKey.isKey(player.getItemInHand(hand))) {
+            return com.nightbeam.tbos.expedition.Attunement.useKey(level, pos, player, hand);
+        }
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }

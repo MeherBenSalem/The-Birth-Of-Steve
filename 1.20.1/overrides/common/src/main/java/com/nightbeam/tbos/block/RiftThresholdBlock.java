@@ -71,6 +71,9 @@ public final class RiftThresholdBlock extends Block {
     @Override
     public InteractionResult use(
             BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (com.nightbeam.tbos.expedition.ExpeditionKey.isKey(player.getItemInHand(hand))) {
+            return com.nightbeam.tbos.expedition.Attunement.useKey(level, pos, player, hand);
+        }
         return activate(level, pos, player);
     }
 

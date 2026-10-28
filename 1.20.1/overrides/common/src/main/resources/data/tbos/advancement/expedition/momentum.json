@@ -1,0 +1,28 @@
+{
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "item": "minecraft:recovery_compass"
+    },
+    "title": {
+      "translate": "advancements.tbos.expedition.momentum.title"
+    },
+    "description": {
+      "translate": "advancements.tbos.expedition.momentum.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "parent": "tbos:expedition/forget"
+}

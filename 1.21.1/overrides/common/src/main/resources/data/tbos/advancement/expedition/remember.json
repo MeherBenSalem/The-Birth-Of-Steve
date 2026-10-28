@@ -1,0 +1,28 @@
+{
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "id": "tbos:chronicle_shard"
+    },
+    "title": {
+      "translate": "advancements.tbos.expedition.remember.title"
+    },
+    "description": {
+      "translate": "advancements.tbos.expedition.remember.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "parent": "tbos:expedition/root"
+}

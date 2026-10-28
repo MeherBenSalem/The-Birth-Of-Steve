@@ -65,6 +65,8 @@ public final class TbosNeoForge {
         NeoForge.EVENT_BUS.addListener(TbosNeoForge::memoryIncoming);
         NeoForge.EVENT_BUS.addListener(TbosNeoForge::memoryDamaged);
         NeoForge.EVENT_BUS.addListener(TbosNeoForge::onLivingHeal);
+        NeoForge.EVENT_BUS.addListener(TbosNeoForge::onServerStopping);
+        NeoForge.EVENT_BUS.addListener(TbosNeoForge::onPlayerLoggedOut);
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -73,6 +75,14 @@ public final class TbosNeoForge {
             if(context.player() instanceof ServerPlayer player) com.nightbeam.tbos.memory.MemoryService.request(player,payload.action(),payload.first(),payload.second());
         });
         registrar.playToClient(MemorySnapshotPayload.TYPE,MemorySnapshotPayload.STREAM_CODEC);
+        registrar.playToServer(com.nightbeam.tbos.network.payload.RpgActionPayload.TYPE,
+                com.nightbeam.tbos.network.payload.RpgActionPayload.STREAM_CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) {
+                com.nightbeam.tbos.rpg.RpgNet.handleAction(player, payload.json());
+            }
+        });
+        registrar.playToClient(com.nightbeam.tbos.network.payload.RpgSyncPayload.TYPE,
+                com.nightbeam.tbos.network.payload.RpgSyncPayload.STREAM_CODEC);
 
         registrar.playToServer(
                 LensUseRequest.TYPE, LensUseRequest.STREAM_CODEC, TbosNeoForge::handleLensUse);
@@ -106,15 +116,28 @@ public final class TbosNeoForge {
 
     private static void onRegisterCommands(RegisterCommandsEvent event) {
         YesterglassCommands.register(event.getDispatcher());
+        com.nightbeam.tbos.rpg.RpgEvents.registerCommands(event.getDispatcher());
     }
 
     private static void onServerTick(ServerTickEvent.Post event) {
         TemporalSiteEvents.onServerTick(event.getServer());
         ArchiveRunEvents.onServerTick(event.getServer());
+        com.nightbeam.tbos.rpg.RpgEvents.onServerTick(event.getServer());
     }
 
     private static void onServerStarted(ServerStartedEvent event) {
         TemporalSiteEvents.onServerStarted(event.getServer());
+        com.nightbeam.tbos.rpg.RpgEvents.onServerStarted(event.getServer());
+    }
+
+    private static void onServerStopping(net.neoforged.neoforge.event.server.ServerStoppingEvent event) {
+        com.nightbeam.tbos.rpg.RpgEvents.onServerStopping(event.getServer());
+    }
+
+    private static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            com.nightbeam.tbos.rpg.RpgEvents.onPlayerLeave(player);
+        }
     }
 
     private static void onServerStopped(ServerStoppedEvent event) {
@@ -126,6 +149,7 @@ public final class TbosNeoForge {
         if (event.getEntity() instanceof ServerPlayer player) {
             TemporalSiteEvents.onPlayerLoggedIn(player);
             ArchiveRunEvents.onPlayerLoggedIn(player);
+            com.nightbeam.tbos.rpg.RpgEvents.onPlayerJoin(player);
         }
     }
 
@@ -176,7 +200,9 @@ public final class TbosNeoForge {
     private static void onLivingDeath(LivingDeathEvent event) {
         if (!ArchiveRunEvents.allowDeath(event.getEntity())) {
             event.setCanceled(true);
+            return;
         }
+        com.nightbeam.tbos.rpg.RpgEvents.onLivingDeath(event.getEntity(), event.getSource());
     }
 
     private static void onLivingHeal(LivingHealEvent event) {

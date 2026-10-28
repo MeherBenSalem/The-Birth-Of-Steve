@@ -52,16 +52,9 @@ public final class MemoryService {
                 if(!MemorySockets.startTrial(p,run,room,now))return;
                 b.enhanced|=1<<(first-6);b.debt=second;b.overwritten=true;
             }
-            case 4 -> {
-                if(!save.memories(run.runId()).climax || run.floor()<2 || !safe
-                    || p.distanceToSqr(Vec3.atCenterOf(ArchiveRoomPlacer.rewardGatewayPosition(run)))>36)return;
-                b.continueVote=true;
-            }
-            case 5 -> {
-                if(!save.memories(run.runId()).climax||!safe
-                    || p.distanceToSqr(Vec3.atCenterOf(ArchiveRoomPlacer.rewardGatewayPosition(run)))>36)return;
-                save.replace(run.beginReturn(now+40));
-            }
+            // Continue and extract are the expedition's Forget and Remember, offered after every floor boss.
+            case 4 -> {com.nightbeam.tbos.expedition.Expeditions.forget(p);return;}
+            case 5 -> {com.nightbeam.tbos.expedition.Expeditions.remember(p);return;}
             case 6 -> {snapshot(p,run,b,now);return;}
             case 7 -> {
                 if(!safe||run.members().size()<2)return;
@@ -86,7 +79,7 @@ public final class MemoryService {
             for(MemoryBuild b:expedition.members) {
                 ServerPlayer p=server.getPlayerList().getPlayer(b.player);
 
-                if(b.floor!=run.floor()){b.nextFloor(run.floor());MemoryCombat.forget(b.player);save.setDirty();}
+                if(b.floor!=run.floor()){b.nextFloor(run.floor());expedition.climax=false;MemoryCombat.forget(b.player);save.setDirty();}
                 // Grant personal credit to everyone in the party, including members who reconnect later.
                 for(int i=0;i<run.rooms().size();i++) {
                     ArchiveEncounterKind kind=run.rooms().get(i).encounterKind();
@@ -95,7 +88,6 @@ public final class MemoryService {
                         b.clears.add(i);b.earned++;save.setDirty();
                         if(p!=null&&p.level().dimension().equals(ArchiveDimensions.FRACTURED_ARCHIVE))line(run,p,p.position(),p.getEyePosition(),kind==ArchiveEncounterKind.BOSS?12:13);
                         if(kind==ArchiveEncounterKind.BOSS){b.debt=0;if(run.floor()==0)b.earned=Math.max(4,b.earned);if(run.floor()==2) {
-                            expedition.climax=true;
                             if(p!=null)com.nightbeam.tbos.advancement.ModAdvancements.awardMemoryVictory(p);
                         }}
                     }
@@ -109,7 +101,7 @@ public final class MemoryService {
                         for(int id:new int[]{10,13,15})if(!b.owns(id))b.offers.add(id);
                         b.rareCredits--;
                     }
-                    if(b.offers.isEmpty())b.offer(run.seed(),active);
+                    if(b.offers.isEmpty())b.offer(run.seed(),active,com.nightbeam.tbos.expedition.Expeditions.draftSize(run.runId()));
                     if(b.offers.isEmpty()) {b.draft++;var fallback=new net.minecraft.world.item.ItemStack(com.nightbeam.tbos.registry.ModItems.CHRONICLE_SHARD.get());if(!p.getInventory().add(fallback))p.drop(fallback,false);}
                     save.setDirty();
                 }
@@ -118,9 +110,10 @@ public final class MemoryService {
             }
         }
     }
+    /** Every floor ends on Remember or Forget: the party descends only when everyone still in it chose Forget. */
     public static boolean mayAdvance(ArchiveRunSavedData save,ArchiveRun run) {
         MemoryExpedition e=save.memories(run.runId());
-        return e==null||run.floor()<2||e.members.stream().allMatch(b->b.continueVote);
+        return e==null||e.members.stream().allMatch(b->b.continueVote);
     }
     public static void snapshot(ServerPlayer p,ArchiveRun run,MemoryBuild b,long now) {
         JsonObject json=new JsonObject();json.add("build",MemoryBuild.CODEC.encodeStart(JsonOps.INSTANCE,b).result().orElseThrow());
