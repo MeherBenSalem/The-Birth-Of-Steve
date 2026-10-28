@@ -2,6 +2,7 @@ package com.nightbeam.tbos.codex;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.nightbeam.tbos.compat.RpgCompat;
 import com.nightbeam.tbos.expedition.ExpeditionKey;
 import com.nightbeam.tbos.expedition.Expeditions;
 import com.nightbeam.tbos.relic.RelicGenerator;
@@ -101,9 +102,7 @@ public final class Codex {
     }
 
     private static void give(ServerPlayer player, ItemStack stack) {
-        if (!player.getInventory().add(stack)) {
-            player.drop(stack, false);
-        }
+        RpgCompat.give(player, stack);
     }
 
     public static void sync(ServerPlayer player) {

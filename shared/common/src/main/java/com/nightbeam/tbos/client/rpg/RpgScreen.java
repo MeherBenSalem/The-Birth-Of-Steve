@@ -1,5 +1,6 @@
 package com.nightbeam.tbos.client.rpg;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -12,13 +13,13 @@ import net.minecraft.network.chat.Component;
  * be written once. This is the 26.1.2 shape; other targets override this file.
  */
 public abstract class RpgScreen extends Screen {
-    public static final int KEY_ESCAPE = 256;
-    public static final int KEY_ENTER = 257;
-    public static final int KEY_TAB = 258;
-    public static final int KEY_RIGHT = 262;
-    public static final int KEY_LEFT = 263;
-    public static final int KEY_DOWN = 264;
-    public static final int KEY_UP = 265;
+    public static final int KEY_ESCAPE = InputConstants.KEY_ESCAPE;
+    public static final int KEY_ENTER = InputConstants.KEY_RETURN;
+    public static final int KEY_TAB = InputConstants.KEY_TAB;
+    public static final int KEY_RIGHT = InputConstants.KEY_RIGHT;
+    public static final int KEY_LEFT = InputConstants.KEY_LEFT;
+    public static final int KEY_DOWN = InputConstants.KEY_DOWN;
+    public static final int KEY_UP = InputConstants.KEY_UP;
 
     protected RpgScreen(Component title) {
         super(title);

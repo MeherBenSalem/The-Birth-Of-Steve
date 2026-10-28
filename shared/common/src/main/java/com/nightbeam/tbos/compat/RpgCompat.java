@@ -178,6 +178,13 @@ public final class RpgCompat {
         return Optional.of(BuiltInRegistries.ITEM.getValue(key));
     }
 
+    /** Into the player's inventory, or dropped at their feet when it is full. */
+    public static void give(net.minecraft.server.level.ServerPlayer player, ItemStack stack) {
+        if (!player.getInventory().add(stack)) {
+            player.drop(stack, false);
+        }
+    }
+
     public static String itemId(ItemStack stack) {
         return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
     }
@@ -194,6 +201,11 @@ public final class RpgCompat {
 
     public static java.util.Set<String> tags(Entity entity) {
         return entity.entityTags();
+    }
+
+    /** Lets the next hit land at once, skipping the half-second damage cooldown. */
+    public static void resetHurtCooldown(Entity entity) {
+        entity.invulnerableTime = 0;
     }
 
     // ---- World ------------------------------------------------------------------------------------------

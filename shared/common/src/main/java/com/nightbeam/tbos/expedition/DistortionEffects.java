@@ -114,7 +114,7 @@ final class DistortionEffects {
         AABB box = new AABB(burst.at, burst.at).inflate(burst.radius);
         for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, box)) {
             if (!player.isSpectator() && player.position().distanceTo(burst.at) <= burst.radius) {
-                player.invulnerableTime = 0;
+                RpgCompat.resetHurtCooldown(player);
                 VanillaCompat.memoryDamage(level, player, null, burst.damage);
             }
         }

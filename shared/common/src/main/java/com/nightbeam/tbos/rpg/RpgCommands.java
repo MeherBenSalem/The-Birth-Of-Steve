@@ -162,9 +162,7 @@ public final class RpgCommands {
     }
 
     private static void give(ServerPlayer player, ItemStack stack) {
-        if (!player.getInventory().add(stack)) {
-            player.drop(stack, false);
-        }
+        RpgCompat.give(player, stack);
     }
 
     private static ServerPlayer player(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {

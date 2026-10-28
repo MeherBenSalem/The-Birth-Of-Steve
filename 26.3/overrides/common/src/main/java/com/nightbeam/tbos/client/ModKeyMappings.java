@@ -18,6 +18,8 @@ public final class ModKeyMappings {
         new KeyMapping("key.tbos.memory_3", InputConstants.KEY_V, CATEGORY)
     };
     public static final KeyMapping MEMORY_LOADOUT = new KeyMapping("key.tbos.memory_loadout", InputConstants.KEY_K, CATEGORY);
+    /** Opens the Archive Codex, or the Remember-or-Forget choice when one is waiting. */
+    public static final KeyMapping CODEX = new KeyMapping("key.tbos.codex", InputConstants.KEY_N, CATEGORY);
     private static boolean objectivesHidden;
 
     private ModKeyMappings() {

@@ -141,7 +141,7 @@ public final class RelicEffects {
         }
         applyingBonus = true;
         try {
-            target.invulnerableTime = 0;
+            RpgCompat.resetHurtCooldown(target);
             VanillaCompat.memoryDamage(level, target, player, amount);
         } finally {
             applyingBonus = false;
@@ -168,7 +168,7 @@ public final class RelicEffects {
             if (reflected > 0.25F) {
                 applyingBonus = true;
                 try {
-                    attacker.invulnerableTime = 0;
+                    RpgCompat.resetHurtCooldown(attacker);
                     VanillaCompat.memoryDamage(level, attacker, null, reflected);
                 } finally {
                     applyingBonus = false;

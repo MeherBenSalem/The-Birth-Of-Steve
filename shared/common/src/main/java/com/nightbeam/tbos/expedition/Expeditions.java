@@ -516,9 +516,7 @@ public final class Expeditions {
 
         if (player != null) {
             for (ItemStack stack : items) {
-                if (!player.getInventory().add(stack)) {
-                    player.drop(stack, false);
-                }
+                RpgCompat.give(player, stack);
             }
             if (renown > 0) {
                 RasBridge.addValor(player, renown * config.valorFraction);
@@ -607,9 +605,7 @@ public final class Expeditions {
             ServerPlayer holder = server.getPlayerList().getPlayer(state.holder);
             if (holder != null) {
                 ItemStack key = dimmed.stack();
-                if (!holder.getInventory().add(key)) {
-                    holder.drop(key, false);
-                }
+                RpgCompat.give(holder, key);
                 holder.sendSystemMessage(Component.translatable("expedition.tbos.key_dimmed", dimmed.tier()));
             } else {
                 Profiles.get(server, state.holder).pendingKeys.add(new int[]{dimmed.tier(), dimmed.distortions()});

@@ -1,9 +1,9 @@
 package com.nightbeam.tbos.client.rpg;
 
 /**
- * Cells of {@code textures/gui/rpg/icons.png}: an 8×8 sheet of 64-pixel painted
+ * Cells of {@code textures/gui/rpg/icons.png}: an 8-column sheet of 128-pixel painted
  * icons in the Greek GUI's bronze-and-patina style. The authoring source and the
- * cell order live in {@code tools/textures/rpg_icons.py}; keep both in step.
+ * cell order live in {@code tools/rpg/icons.py}; keep both in step.
  */
 public final class Icons {
     /** 0–7: the Distortions, in {@code Distortion} order. */

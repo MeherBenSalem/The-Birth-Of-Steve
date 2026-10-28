@@ -24,8 +24,8 @@ import net.minecraft.world.item.ItemStack;
 public final class Canvas {
     public static final String ICONS = "textures/gui/rpg/icons.png";
     public static final int ICON_COLUMNS = 8;
-    public static final int ICON_CELL = 64;
-    public static final int ICON_SHEET = 512;
+    public static final int ICON_CELL = 128;
+    public static final int ICON_SHEET = 1024;
 
     private final GuiGraphicsExtractor g;
     private List<Component> tooltip;
