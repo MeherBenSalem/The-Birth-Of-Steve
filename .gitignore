@@ -26,6 +26,6 @@ crash-reports/
 graphify-out/
 **/src/generated/resources/.cache/
 __pycache__/
-/tools
+/tools/*
 !/tools/publish-local.mjs
 !/tools/rpg/
