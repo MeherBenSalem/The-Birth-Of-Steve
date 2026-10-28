@@ -1021,5 +1021,6 @@
     "subtitles.tbos.distortion.volatile_burst": "Corpse bursts",
     "subtitles.tbos.distortion.haunt": "Shade appears",
     "memory.tbos.reroll": "Rewrite Draft",
-    "memory.tbos.reroll.description": "Second Draft: replace these choices with a fresh draft, once per floor."
+    "memory.tbos.reroll.description": "Second Draft: replace these choices with a fresh draft, once per floor.",
+    "expedition.tbos.relic_found": "%s recovered a %s Relic: %s"
 }

@@ -203,6 +203,7 @@ def language() -> dict:
         'itemGroup.tbos.yesterglass': 'Remnants: Roguelite Dungeons',
         'key.tbos.codex': 'Open Archive Codex',
         'memory.tbos.reroll': 'Rewrite Draft',
+        'expedition.tbos.relic_found': '%s recovered a %s Relic: %s',
         'memory.tbos.reroll.description': 'Second Draft: replace these choices with a fresh draft, once per floor.',
         'item.tbos.memory_key': 'Memory Key',
         'item.tbos.memory_key.tiered_name': 'Memory Key · Tier %s',

@@ -10,6 +10,7 @@ import com.nightbeam.tbos.codex.Profiles;
 import com.nightbeam.tbos.compat.RpgCompat;
 import com.nightbeam.tbos.memory.MemoryBuild;
 import com.nightbeam.tbos.memory.MemoryExpedition;
+import com.nightbeam.tbos.party.Parties;
 import com.nightbeam.tbos.relic.Rarity;
 import com.nightbeam.tbos.relic.RelicEffects;
 import com.nightbeam.tbos.relic.RelicGenerator;
@@ -522,6 +523,7 @@ public final class Expeditions {
                 RasBridge.addValor(player, renown * config.valorFraction);
             }
             player.level().playSound(null, player.blockPosition(), RpgSounds.EXPEDITION_REMEMBER.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            celebrateRelics(player, items);
             JsonObject body = new JsonObject();
             body.addProperty("renown", renown);
             body.addProperty("momentum", state.momentum);
@@ -541,6 +543,44 @@ public final class Expeditions {
                 profile.pendingKeys.add(new int[]{keyTier, state.key.distortions()});
             }
         }
+    }
+
+    /**
+     * A Rare or better find raises a beam of its colour over the player, and an Epic
+     * or better one is announced to the rest of their party.
+     */
+    private static void celebrateRelics(ServerPlayer player, List<ItemStack> items) {
+        com.nightbeam.tbos.relic.Relic best = null;
+        ItemStack bestStack = ItemStack.EMPTY;
+        for (ItemStack stack : items) {
+            com.nightbeam.tbos.relic.Relic relic = com.nightbeam.tbos.relic.Relic.read(stack);
+            if (relic != null && (best == null || relic.rarity().ordinal() > best.rarity().ordinal())) {
+                best = relic;
+                bestStack = stack;
+            }
+        }
+        if (best == null || best.rarity().ordinal() < Rarity.RARE.ordinal()) {
+            return;
+        }
+        ServerLevel level = (ServerLevel) player.level();
+        for (int i = 0; i < 14; i++) {
+            RpgCompat.dust(level, player.getX(), player.getY() + 0.3 + i * 0.32, player.getZ(), best.rarity().color, 1.5F, 3, 0.06, 0.0);
+        }
+        if (best.rarity().ordinal() < Rarity.EPIC.ordinal() || !RpgConfig.get().relics.announceEpic) {
+            return;
+        }
+        Rarity rarity = best.rarity();
+        Component message = Component.translatable("expedition.tbos.relic_found", player.getDisplayName(),
+                Component.translatable(rarity.key()).withStyle(net.minecraft.network.chat.Style.EMPTY.withColor(rarity.color)),
+                bestStack.getHoverName());
+        Parties.of(player.getUUID()).ifPresent(party -> {
+            for (UUID member : party.members) {
+                ServerPlayer other = level.getServer().getPlayerList().getPlayer(member);
+                if (other != null && other != player) {
+                    other.sendSystemMessage(message);
+                }
+            }
+        });
     }
 
     private static void awardBanked(ServerPlayer player, ExpeditionState state, PlayerProfile profile, JsonArray relics) {

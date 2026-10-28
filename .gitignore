@@ -29,3 +29,4 @@ __pycache__/
 /tools/*
 !/tools/publish-local.mjs
 !/tools/rpg/
+!/tools/qa/

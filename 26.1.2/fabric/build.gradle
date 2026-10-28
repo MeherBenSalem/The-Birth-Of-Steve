@@ -33,6 +33,14 @@ loom {
             runDir('runs/server')
             programArgs('--nogui')
         }
+        // QA client: joins a server on localhost:25565 straight away (see tools/qa/).
+        qaClient {
+            client()
+            setConfigName('Fabric QA Client')
+            ideConfigGenerated(false)
+            runDir('runs/client')
+            programArgs('--quickPlayMultiplayer', 'localhost:25565', '--username', 'Archivist', '--width', '1920', '--height', '1080')
+        }
         gameTestServer {
             server()
             setConfigName('Fabric Game Test')

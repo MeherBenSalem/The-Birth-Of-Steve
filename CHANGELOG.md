@@ -2,6 +2,46 @@
 
 ## Unreleased
 
+## 1.0.0 - 2026-10-28
+
+The Birth of Steve is now **Remnants: Roguelite Dungeons**. The campaign stays as its
+prologue, and the Fractured Archive becomes a repeatable endgame. Full notes:
+[`patchnotes/1.0.0.md`](patchnotes/1.0.0.md).
+
+### Remember or Forget
+
+- **Memory Keys** (tier 1 to 20) open Expeditions from any Waystone or the Curator
+  Gateway. Each tier adds 10% enemy health and 5% damage.
+- **Eight Distortions** add Heat for better rewards: Fortified, Tyrannical,
+  Bolstering, Volatile, Haunted, Frailty, Hourglass and Amnesia.
+- **Remember or Forget** at every gateway: bank your Recollection (Renown, Relics and
+  a better key, multiplied by Momentum) or vote to go deeper for +0.25 Momentum.
+  Failing a run loses everything unbanked.
+- **Recollections**: use a key inside any vanilla or modded structure for an
+  Expedition seeded from it, once per structure.
+
+### Progression
+
+- **The Archive Codex** (N or `/codex`): Renown levels 1 to 30, sixteen Insights with
+  free respec, a Bestiary, personal records, the server's Hall of Records and a
+  Weekly Recollection.
+- **Relics**: generated vanilla weapons and armor in six rarities with rolled affixes
+  and four Remnant signatures. Rare finds raise a beam, Epic ones are announced.
+- **Parties**: `/party` with up to four players, party frames, and shared Expeditions.
+
+### Also
+
+- Expedition HUD, an Expeditions advancement tab, 27 new sounds, a new icon set and
+  logo, and `/expedition reroll` plus a Rewrite Draft button for Second Draft.
+- **Minecraft 26.3** support (Fabric and NeoForge).
+- Archive creatures are tagged `#remnant_mobs:never_leveled` for Remnants: RPG Mobs,
+  and Remembering grants RPG Attribute System Valor when it is installed.
+
+### Fixes
+
+- Fabric 1.20.1 and 1.21.1 now register the Memory loadout and Memory slot keys.
+- The Waystone can be crafted on 1.21.1 again (its recipe failed to parse).
+
 ## 0.10.1 - 2026-09-12
 
 ### Existing worlds
