@@ -6,7 +6,7 @@
 
 The Birth of Steve is now **Remnants: Roguelite Dungeons**. The campaign stays as its
 prologue, and the Fractured Archive becomes a repeatable endgame. Full notes:
-[`patchnotes/1.0.0.md`](patchnotes/1.0.0.md).
+[`patchnotes/1.0.0.md`](https://github.com/MeherBenSalem/The-Birth-Of-Steve/blob/main/patchnotes/1.0.0.md).
 
 ### Remember or Forget
 
