@@ -1853,6 +1853,42 @@ public final class ModGameTests {
         });
     }
 
+    /**
+     * Regression for the integrated-server freeze reported on NeoForge 1.21.1:
+     * the chunk-load hook must not write site geometry from inside the loader
+     * callback, and the deferred write must still land on a following tick.
+     */
+    public static void chunkLoadDefersPhaseGeometry(GameTestHelper helper) {
+        net.minecraft.server.level.ServerLevel level = helper.getLevel();
+        BlockPos origin = helper.absolutePos(new BlockPos(2, 1, 2));
+        TemporalSite site = TemporalSiteManager.placePrototype(level, origin);
+        TemporalSiteManager.data(level).replace(site.beginTransition(level.getGameTime(), 40, 23L));
+        TemporalSiteManager.recover(level);
+
+        helper.runAfterDelay(45L, () -> {
+            TemporalSite remembered = TemporalSiteManager.data(level).findNearest(origin, 32.0D).orElseThrow();
+            helper.assertTrue(remembered.state() == TemporalState.REMEMBERED, "Fixture did not reach remembered state");
+            List<BlockPos> phase = TemporalSiteManager.phasePositions(origin);
+            for (BlockPos pos : phase) {
+                level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            }
+
+            com.nightbeam.tbos.site.TemporalSiteEvents.onChunkLoaded(level, new net.minecraft.world.level.ChunkPos(origin));
+            for (BlockPos pos : phase) {
+                helper.assertTrue(level.getBlockState(pos).isAir(),
+                        "Site geometry was written inside the chunk-load callback");
+            }
+
+            helper.runAfterDelay(3L, () -> {
+                for (BlockPos pos : phase) {
+                    helper.assertTrue(level.getBlockState(pos).is(ModBlocks.PHASE_PLATFORM.get()),
+                            "Deferred site geometry was not applied on the server tick");
+                }
+                helper.succeed();
+            });
+        });
+    }
+
     public static void definitionRotationResolvesMarkers(GameTestHelper helper) {
         TemporalSiteDefinition definition = BuiltInTemporalSites.parallaxAtrium();
         BlockPos origin = new BlockPos(100, 40, 200);

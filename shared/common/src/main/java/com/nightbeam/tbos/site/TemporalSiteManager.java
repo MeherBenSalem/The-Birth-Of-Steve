@@ -1127,15 +1127,25 @@ public final class TemporalSiteManager {
     private static boolean hasLoadedChunks(ServerLevel level, TemporalSite site) {
         TemporalSiteDefinition definition = BuiltInTemporalSites.require(site.definitionId());
         BlockPos origin = site.origin();
-        return level.isLoaded(definition.worldPosition(origin, BlockPos.ZERO, site.rotation()))
-                && level.isLoaded(definition.worldPosition(
-                        origin, new BlockPos(definition.sizeX() - 1, 0, 0), site.rotation()))
-                && level.isLoaded(definition.worldPosition(
-                        origin, new BlockPos(0, 0, definition.sizeZ() - 1), site.rotation()))
-                && level.isLoaded(definition.worldPosition(
-                        origin,
-                        new BlockPos(definition.sizeX() - 1, 0, definition.sizeZ() - 1),
-                        site.rotation()));
+        BlockPos a = definition.worldPosition(origin, BlockPos.ZERO, site.rotation());
+        BlockPos b = definition.worldPosition(
+                origin, new BlockPos(definition.sizeX() - 1, 0, definition.sizeZ() - 1), site.rotation());
+        // Every chunk under the footprint, not only the corners: a site wider
+        // than two chunks has interior chunks, and a geometry write into one
+        // that is not resident would load it synchronously.
+        int minChunkX = Math.min(a.getX(), b.getX()) >> 4;
+        int maxChunkX = Math.max(a.getX(), b.getX()) >> 4;
+        int minChunkZ = Math.min(a.getZ(), b.getZ()) >> 4;
+        int maxChunkZ = Math.max(a.getZ(), b.getZ()) >> 4;
+        int y = a.getY();
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                if (!level.isLoaded(new BlockPos(chunkX << 4, y, chunkZ << 4))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     static boolean isSiteLoaded(ServerLevel level, TemporalSite site) {

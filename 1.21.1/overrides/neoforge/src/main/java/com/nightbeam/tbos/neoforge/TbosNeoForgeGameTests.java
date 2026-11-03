@@ -251,6 +251,10 @@ public final class TbosNeoForgeGameTests {
         ModGameTests.parallaxWraithDisplacesBehindTarget(helper);
     }
     @GameTest(template = "empty", batch = "tbos", timeoutTicks = 1000)
+    public void chunkLoadDefersPhaseGeometry(GameTestHelper helper) {
+        ModGameTests.chunkLoadDefersPhaseGeometry(helper);
+    }
+    @GameTest(template = "empty", batch = "tbos", timeoutTicks = 1000)
     public void phaseGeometryRoundTrip(GameTestHelper helper) {
         ModGameTests.phaseGeometryRoundTrip(helper);
     }

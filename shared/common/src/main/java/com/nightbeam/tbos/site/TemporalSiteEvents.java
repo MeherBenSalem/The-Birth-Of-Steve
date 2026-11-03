@@ -5,9 +5,13 @@ import com.nightbeam.tbos.world.AdventureWorldManager;
 import com.nightbeam.tbos.world.FractureShrineQueue;
 import com.nightbeam.tbos.world.PlayerOnboarding;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,10 +28,15 @@ import net.minecraft.world.level.Level;
  * same answer from the same code.
  */
 public final class TemporalSiteEvents {
+    /** Chunks whose site geometry is waiting for a tick, keyed by dimension. */
+    private static final Map<ResourceKey<Level>, Set<ChunkPos>> PENDING_SITE_GEOMETRY =
+            new ConcurrentHashMap<>();
+
     private TemporalSiteEvents() {
     }
 
     public static void onServerTick(MinecraftServer server) {
+        drainPendingSiteGeometry(server);
         TemporalSiteManager.tick(server);
         FractureShrineQueue.drain(server.overworld());
         for (ServerLevel level : server.getAllLevels()) {
@@ -60,6 +69,7 @@ public final class TemporalSiteEvents {
 
     public static void onServerStopped(MinecraftServer server) {
         TemporalSiteManager.clearRuntimeState();
+        PENDING_SITE_GEOMETRY.clear();
         FractureShrineQueue.clear();
     }
 
@@ -109,12 +119,42 @@ public final class TemporalSiteEvents {
     }
 
     public static void onChunkLoaded(ServerLevel level, ChunkPos chunk) {
-        TemporalSiteManager.onChunkLoaded(level, chunk);
+        // Chunk-load callbacks must not trigger nested chunk loading, so the
+        // chunk is only recorded here; the server tick does the work.
+        //
+        // Site phase geometry writes blocks. The loaders fire this callback
+        // while the chunk is still being promoted to FULL, and a write that
+        // reaches a chunk which is not yet resident re-enters the chunk loader
+        // and parks the server thread on a future only that same thread can
+        // complete: the integrated server freezes the first time a chunk
+        // holding a site loads (reported on NeoForge 1.21.1 with large
+        // world-generation packs).
+        PENDING_SITE_GEOMETRY
+                .computeIfAbsent(level.dimension(), key -> ConcurrentHashMap.newKeySet())
+                .add(chunk);
         if (level.dimension().equals(Level.OVERWORLD)) {
-            // Chunk-load callbacks must not trigger nested chunk loading, so a
-            // chunk covering a planned shrine only queues it; the server tick
-            // builds it.
+            // A chunk covering a planned shrine only queues it; the server
+            // tick builds it.
             FractureShrineQueue.onChunkLoaded(level, chunk);
+        }
+    }
+
+    /** Applies the geometry the chunk-load callbacks deferred, on the tick. */
+    private static void drainPendingSiteGeometry(MinecraftServer server) {
+        if (PENDING_SITE_GEOMETRY.isEmpty()) {
+            return;
+        }
+        for (ServerLevel level : server.getAllLevels()) {
+            Set<ChunkPos> pending = PENDING_SITE_GEOMETRY.remove(level.dimension());
+            if (pending == null) {
+                continue;
+            }
+            // A site whose chunks are not all resident is skipped by
+            // TemporalSiteManager's loaded-chunk guard and is applied when its
+            // last chunk loads.
+            for (ChunkPos chunk : pending) {
+                TemporalSiteManager.onChunkLoaded(level, chunk);
+            }
         }
     }
 }

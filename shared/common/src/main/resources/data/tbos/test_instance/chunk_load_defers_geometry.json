@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:function",
+  "function": "tbos:chunk_load_defers_geometry",
+  "environment": "tbos:default",
+  "structure": "minecraft:empty",
+  "max_ticks": 140,
+  "padding": 48
+}

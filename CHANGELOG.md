@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.0.1 - 2026-11-03
+
+### Fixes
+
+- **Server freeze when a dungeon site loads.** On 1.21.1, 26.1.2, 26.2 and 26.3 the
+  server could stop permanently, with the client still rendering and quitting
+  hanging, the first time a chunk holding a Meridian Archive site loaded. It was most
+  likely with large world-generation packs. Site blocks were being placed from
+  inside the chunk-load callback; they are now placed on the next server tick, the
+  way 1.20.1 already did.
+- Site blocks now wait until every chunk under the site is loaded, not only its four
+  corners, so wide sites no longer force their middle chunks to load.
+
 ## 1.0.0 - 2026-10-28
 
 The Birth of Steve is now **Remnants: Roguelite Dungeons**. The campaign stays as its
