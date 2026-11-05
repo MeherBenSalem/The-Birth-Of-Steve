@@ -1,5 +1,9 @@
 ![Remnants: Roguelite Dungeons 1.0: Remember or Forget](https://raw.githubusercontent.com/MeherBenSalem/The-Birth-Of-Steve/main/marketing/images/banner.png)
 
+**[Discord](https://discord.gg/TJc3CxR4jK) · [The modpack](https://www.curseforge.com/minecraft/modpacks/remnants-ashen-legacy) · [Support NightBeam](https://nightbeam.dev/support) · [NightBeam Pro](https://nightbeam.dev/memberships) · [All projects](https://nightbeam.dev/projects)**
+
+> **Play it in [Remnants: Ashen Legacy](https://www.curseforge.com/minecraft/modpacks/remnants-ashen-legacy)**, NightBeam's story-driven soulslike RPG modpack. It builds Remnants: Roguelite Dungeons into one rule set with the rest of the Remnants series.
+
 ## Every ruin has a before
 
 Craft a **Memory Key**, attune it at a Waystone and lead your party into the **Fractured Archive**, a procedural dungeon that builds a new floor every time you go deeper. Every room you clear adds Renown and Relics to your **Recollection**. At each floor's gateway you choose: **Remember** it all and take it home, or **Forget** it and go a floor deeper for a bigger payout, knowing that a wipe loses everything you have not banked. Banked Renown levels your **Archive Codex**, and its Insights make every run after it stronger.
@@ -155,11 +159,11 @@ Floor bosses drop **Relics**: swords, axes, bows, crossbows and armor with a rar
 
 | Minecraft | Loaders | Java | Also install |
 | --- | --- | --- | --- |
-| 1.20.1 | Fabric, Forge | 17+ | Fabric API (Fabric only) |
-| 1.21.1 | Fabric, NeoForge | 21+ | Fabric API (Fabric only) |
-| 26.1.2 | Fabric, NeoForge | 25+ | Fabric API (Fabric only) |
-| 26.2 | Fabric, NeoForge | 25+ | Fabric API (Fabric only) |
-| 26.3 | Fabric, NeoForge | 25+ | Fabric API (Fabric only) |
+| 1.20.1 | Fabric, Forge | 17+ | Fabric API (on Fabric) |
+| 1.21.1 | Fabric, NeoForge | 21+ | Fabric API (on Fabric) |
+| 26.1.2 | Fabric, NeoForge | 25+ | Fabric API (on Fabric) |
+| 26.2 | Fabric, NeoForge | 25+ | Fabric API (on Fabric) |
+| 26.3 | Fabric, NeoForge | 25+ | Fabric API (on Fabric) |
 
 - Download the file with your loader and Minecraft version in its name, for example `tbos-fabric-26.1.2-1.0.0.jar` or `tbos-forge-1.20.1-1.0.0.jar`.
 - Install it on **both the server and every client**, at the same version.
@@ -168,7 +172,7 @@ Floor bosses drop **Relics**: swords, axes, bows, crossbows and armor with a rar
 
 ![Questions](https://raw.githubusercontent.com/MeherBenSalem/The-Birth-Of-Steve/main/marketing/images/header-faq.png)
 
-**Do I have to play the campaign first?**
+**Do I have to play the campaign before this?**
 No. Any Waystone works, and a Memory Key used inside any structure opens a Recollection straight away. Craft a key and go. The Curator Gateway opens when you defeat the Last Curator.
 
 **What happens if we die?**
@@ -218,3 +222,15 @@ Yes. Parties are optional, and every number is tuned for one to four players.
 ![A Legendary Relic](https://raw.githubusercontent.com/MeherBenSalem/The-Birth-Of-Steve/main/marketing/images/screenshots/relic-legendary.jpg)
 
 ![A Remnant Relic](https://raw.githubusercontent.com/MeherBenSalem/The-Birth-Of-Steve/main/marketing/images/screenshots/relic-remnant.jpg)
+
+---
+
+### More from NightBeam Studio
+
+- **[Remnants: Ashen Legacy](https://www.curseforge.com/minecraft/modpacks/remnants-ashen-legacy)**: the story-driven soulslike RPG modpack built on NightBeam's mods
+- **[Premium server plugins](https://nightbeam.dev/store)**: anti-cheat, ranked PvP, SMP setups and more on BuiltByBit
+- **[NightBeam Pro](https://nightbeam.dev/memberships)**: the model library and NightBeam Forge credits, from $5 a month
+- **[Discord](https://discord.gg/TJc3CxR4jK)**: support, bug reports, suggestions and early looks
+- **[Support NightBeam](https://nightbeam.dev/support)**: help keep every mod free
+
+**Follow:** [YouTube](https://www.youtube.com/@nightbeamstudio) · [Instagram](https://www.instagram.com/nightbeamstudio/) · [X](https://x.com/NightBeamLLC) · [Facebook](https://www.facebook.com/profile.php?id=61574823331471) · [Source and issues](https://github.com/MeherBenSalem/The-Birth-Of-Steve)
