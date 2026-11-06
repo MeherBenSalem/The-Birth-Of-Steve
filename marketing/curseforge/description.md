@@ -1,6 +1,6 @@
 ![Remnants: Roguelite Dungeons 1.0: Remember or Forget](https://raw.githubusercontent.com/MeherBenSalem/The-Birth-Of-Steve/main/marketing/images/banner.png)
 
-**[Discord](https://discord.gg/TJc3CxR4jK) · [Source and issues](https://github.com/MeherBenSalem/The-Birth-Of-Steve)**
+**[Docs](https://nightbeam.dev/docs/remnants-roguelite-dungeons) · [Discord](https://discord.gg/TJc3CxR4jK) · [Source and issues](https://github.com/MeherBenSalem/The-Birth-Of-Steve)**
 
 ## Every ruin has a before
 
