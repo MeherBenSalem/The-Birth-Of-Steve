@@ -230,7 +230,12 @@ actual reward.
 Combat doors are transactional: the server checks every party member's full
 collision box against a padded seal volume, then writes the locked run state only
 after the doorway is physically clear. A player crossing the threshold therefore
-defers the close instead of being sealed inside a block. Vertical connectors use
+defers the close instead of being sealed inside a block. A sealed room still lets
+its party in: `ArchivePartyDoors` moves a member who walks up to the seal from the
+corridor or stairwell side just inside, so nobody a few steps behind is shut out
+until the room is cleared. Routes to a room that is shut without a fight in it (the
+final-boss gate before its quest, the reward route before victory) never admit
+anyone. Vertical connectors use
 actual stair collision, floor-level landings on both ends, and three blocks of
 headroom.
 

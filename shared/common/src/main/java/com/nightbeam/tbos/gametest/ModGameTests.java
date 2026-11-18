@@ -1016,6 +1016,65 @@ public final class ModGameTests {
                         List.of(new AABB(safeRoomCenter).inflate(0.1D))),
                 "Archive doorway safety rejected an occupant who had cleared the threshold");
 
+        // Party members outside a room sealed in combat are let in from the far
+        // side of its seal only: the stair's other half or the corridor, never
+        // the room itself, and never through a gate such as the boss entrance.
+        int lowerRoom = vertical.getValue().direction() == com.nightbeam.tbos.run.ArchiveDirection.UP
+                ? vertical.getKey()
+                : vertical.getValue().targetRoom();
+        int upperRoom = lowerRoom == vertical.getKey() ? vertical.getValue().targetRoom() : vertical.getKey();
+        AABB fromAbove = com.nightbeam.tbos.run.ArchivePartyDoors.approachVolume(
+                run, lowerRoom, com.nightbeam.tbos.run.ArchiveDirection.UP);
+        AABB fromBelow = com.nightbeam.tbos.run.ArchivePartyDoors.approachVolume(
+                run, upperRoom, com.nightbeam.tbos.run.ArchiveDirection.DOWN);
+        int sealX = firstSeal.get(0).getX();
+        int sealZ = firstSeal.get(0).getZ();
+        int sealBottom = firstSeal.stream().mapToInt(BlockPos::getY).min().orElseThrow();
+        helper.assertTrue(
+                fromAbove.contains(sealX + 1.5D, sealBottom + 1.5D, sealZ + 0.5D)
+                        && !fromAbove.contains(sealX - 0.5D, sealBottom + 0.5D, sealZ + 0.5D)
+                        && fromBelow.contains(sealX - 0.5D, sealBottom + 0.5D, sealZ + 0.5D)
+                        && !fromBelow.contains(sealX + 1.5D, sealBottom + 1.5D, sealZ + 0.5D),
+                "A stairwell seal let party members in from the wrong side");
+        for (int stairRoom : new int[] {lowerRoom, upperRoom}) {
+            BlockPos entry = ArchiveRoomPlacer.roomSpawn(run, stairRoom);
+            helper.assertTrue(
+                    !fromAbove.contains(entry.getX() + 0.5D, entry.getY() + 0.5D, entry.getZ() + 0.5D)
+                            && !fromBelow.contains(entry.getX() + 0.5D, entry.getY() + 0.5D, entry.getZ() + 0.5D),
+                    "A stairwell party approach reached into a room's entry");
+        }
+        ArchiveRoomNode walled = maximum.rooms().stream()
+                .filter(room -> room.connections().stream().anyMatch(connection -> !connection.direction().vertical()))
+                .findFirst()
+                .orElseThrow();
+        com.nightbeam.tbos.run.ArchiveConnection wallDoor = walled.connections().stream()
+                .filter(connection -> !connection.direction().vertical())
+                .findFirst()
+                .orElseThrow();
+        AABB corridor = com.nightbeam.tbos.run.ArchivePartyDoors.approachVolume(
+                run, walled.index(), wallDoor.direction());
+        BlockPos outsideDoor = ArchiveRoomPlacer.doorPositions(run, walled.index(), wallDoor.direction()).get(0)
+                .offset(wallDoor.direction().stepX(), 0, wallDoor.direction().stepZ());
+        BlockPos insideDoor = ArchiveRoomPlacer.doorPositions(run, walled.index(), wallDoor.direction()).get(0)
+                .offset(-wallDoor.direction().stepX(), 0, -wallDoor.direction().stepZ());
+        helper.assertTrue(
+                ArchiveRoomPlacer.roomContaining(run, outsideDoor).isEmpty()
+                        && corridor.contains(outsideDoor.getX() + 0.5D, outsideDoor.getY() + 0.5D, outsideDoor.getZ() + 0.5D)
+                        && !corridor.contains(insideDoor.getX() + 0.5D, insideDoor.getY() + 0.5D, insideDoor.getZ() + 0.5D),
+                "A wall seal's party approach is not the corridor outside it");
+        int bossRoom = maximum.bossRoom();
+        ArchiveRoomNode bossNeighbour = maximum.rooms().stream()
+                .filter(room -> room.index() != bossRoom && room.connections().stream()
+                        .anyMatch(connection -> connection.targetRoom() == bossRoom))
+                .findFirst()
+                .orElseThrow();
+        helper.assertTrue(
+                bossNeighbour.connections().stream()
+                        .filter(connection -> connection.targetRoom() == bossRoom)
+                        .noneMatch(connection -> com.nightbeam.tbos.run.ArchivePartyDoors.opensForParty(
+                                run, bossNeighbour, connection)),
+                "A party member could be let through the final boss gate before its quest");
+
         ArchiveRoomNode combat = maximum.rooms().stream()
                 .filter(room -> room.category().combat() && room.category() != ArchiveRoomCategory.FINAL_BOSS)
                 .findFirst()
