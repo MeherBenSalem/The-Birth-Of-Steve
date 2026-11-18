@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 1.0.2
+
+### Fixes
+
+- **Party members are no longer shut out of a sealed room.** A combat room seals as
+  soon as the first member is inside, which left anyone a few steps behind locked
+  out until it was cleared. Walking up to the seal from the corridor or stairwell now
+  brings a party member inside to join the fight. The seal still keeps monsters in
+  and nobody can leave early; the final-boss gate and the reward route stay shut
+  until their usual conditions are met.
+- The 1.20.1 Forge file now only accepts Minecraft 1.20.1. It used to accept every
+  version up to 1.21.x, so it could be loaded on the wrong game version and crash
+  instead of showing a clear version error.
+
+### Config
+
+- The Memory ability strip can be moved or hidden. In `config/tbos-client.json`,
+  under `abilityHud`: `visible` (true or false), `anchor` (BOTTOM_CENTER, BOTTOM_LEFT,
+  BOTTOM_RIGHT, TOP_LEFT, TOP_CENTER or TOP_RIGHT) and `offsetX` / `offsetY` in GUI
+  pixels. The defaults keep it where it was, above the hotbar. Restart the game after
+  changing them.
+
 ## 1.0.1 - 2026-11-03
 
 ### Fixes

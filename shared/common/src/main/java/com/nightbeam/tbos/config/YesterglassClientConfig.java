@@ -18,6 +18,31 @@ public final class YesterglassClientConfig {
             "overlayIntensity", 0.65D, 0.0D, 1.0D,
             "Reserved intensity control for the Lens HUD overlay.");
 
+    static {
+        SCHEMA.push("abilityHud");
+    }
+
+    public static final ConfigValue.Bool ABILITY_HUD_VISIBLE = SCHEMA.define(
+            "visible", true,
+            "Show the Memory ability strip and its pending-choice hint.");
+
+    public static final ConfigValue.OfEnum<HudAnchor> ABILITY_HUD_ANCHOR = SCHEMA.defineEnum(
+            "anchor", HudAnchor.BOTTOM_CENTER,
+            "Where the ability strip is placed from: BOTTOM_CENTER (above the hotbar), BOTTOM_LEFT,"
+                    + " BOTTOM_RIGHT, TOP_LEFT, TOP_CENTER or TOP_RIGHT.");
+
+    public static final ConfigValue.Int ABILITY_HUD_OFFSET_X = SCHEMA.defineInRange(
+            "offsetX", 0, -4000, 4000,
+            "GUI pixels to move the ability strip right from its anchor (negative moves it left).");
+
+    public static final ConfigValue.Int ABILITY_HUD_OFFSET_Y = SCHEMA.defineInRange(
+            "offsetY", 0, -4000, 4000,
+            "GUI pixels to move the ability strip down from its anchor (negative moves it up).");
+
+    static {
+        SCHEMA.pop();
+    }
+
     private YesterglassClientConfig() {
     }
 

@@ -72,6 +72,9 @@ public final class ArchiveEncounterManager {
         // permits party splits without two stale snapshots overwriting one another.
         for (ArchiveRoomNode room : run.dungeonGraph().rooms()) {
             int roomIndex = room.index();
+            // A sealed room still lets the rest of the party in from outside.
+            // Arrivals are recorded below on the next tick, like any entry.
+            ArchivePartyDoors.admitPartyMembers(level, run, roomIndex);
             List<UUID> presentMembers = membersInRoom(server, run, roomIndex);
             if (presentMembers.isEmpty()) {
                 continue;
